@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { SectionType, SectionPromptResponse, SectionState, Message } from '../types';
+import type { SectionType, SectionState, Message } from '../types';
 import * as api from '../lib/apiClient';
+import type { SectionMessage } from '../lib/apiClient';
 
 interface UseSectionPromptsConfig {
   chatId: string | null;
@@ -10,25 +11,12 @@ interface UseSectionPromptsConfig {
 
 interface UseSectionPromptsReturn {
   sections: Record<SectionType, SectionState>;
+  sectionMessages: Record<SectionType, SectionMessage[]>;
   activeSection: SectionType | null;
   setActiveSection: (type: SectionType | null) => void;
   generateSection: (type: SectionType, userRequest?: string) => Promise<void>;
-}
-
-const STORAGE_KEY_PREFIX = 'promptDesigner_sections_';
-
-function loadPersistedSections(chatId: string): Record<SectionType, SectionPromptResponse | null> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_PREFIX + chatId);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return { coding: null, 'ui-ux': null, audit: null };
-}
-
-function persistSections(chatId: string, data: Record<SectionType, SectionPromptResponse | null>): void {
-  try {
-    localStorage.setItem(STORAGE_KEY_PREFIX + chatId, JSON.stringify(data));
-  } catch {}
+  addSectionMessage: (type: SectionType, role: 'user' | 'assistant', content: string) => void;
+  loadSectionMessages: (chatId: string, sectionType: SectionType) => Promise<void>;
 }
 
 function createEmptyState(): Record<SectionType, SectionState> {
@@ -39,8 +27,13 @@ function createEmptyState(): Record<SectionType, SectionState> {
   };
 }
 
+function createEmptyMessages(): Record<SectionType, SectionMessage[]> {
+  return { coding: [], 'ui-ux': [], audit: [] };
+}
+
 export function useSectionPrompts(config: UseSectionPromptsConfig): UseSectionPromptsReturn {
   const [sections, setSections] = useState<Record<SectionType, SectionState>>(createEmptyState);
+  const [sectionMessages, setSectionMessages] = useState<Record<SectionType, SectionMessage[]>>(createEmptyMessages);
   const [activeSection, setActiveSection] = useState<SectionType | null>(null);
 
   const configRef = useRef(config);
@@ -53,6 +46,7 @@ export function useSectionPrompts(config: UseSectionPromptsConfig): UseSectionPr
     const chatId = config.chatId;
     if (!chatId) {
       setSections(createEmptyState());
+      setSectionMessages(createEmptyMessages());
       chatIdRef.current = null;
       return;
     }
@@ -60,13 +54,39 @@ export function useSectionPrompts(config: UseSectionPromptsConfig): UseSectionPr
     if (chatId === chatIdRef.current) return;
     chatIdRef.current = chatId;
 
-    const persisted = loadPersistedSections(chatId);
-    setSections({
-      coding: { isGenerating: false, data: persisted.coding, error: null },
-      'ui-ux': { isGenerating: false, data: persisted['ui-ux'], error: null },
-      audit: { isGenerating: false, data: persisted.audit, error: null },
-    });
+    setSections(createEmptyState());
+    setSectionMessages(createEmptyMessages());
   }, [config.chatId]);
+
+  const loadSectionMessages = useCallback(async (chatId: string, sectionType: SectionType) => {
+    try {
+      const messages = await api.getSectionMessages(chatId, sectionType);
+      setSectionMessages((prev) => ({ ...prev, [sectionType]: messages }));
+    } catch (err) {
+      console.error('Failed to load section messages:', err);
+    }
+  }, []);
+
+  const addSectionMessage = useCallback((type: SectionType, role: 'user' | 'assistant', content: string) => {
+    const chatId = configRef.current.chatId;
+    if (!chatId) return;
+
+    const msg: SectionMessage = {
+      id: `section-${Date.now()}-${Math.random()}`,
+      chatId,
+      sectionType: type,
+      role,
+      content,
+      timestamp: Date.now(),
+    };
+
+    setSectionMessages((prev) => ({ ...prev, [type]: [...prev[type], msg] }));
+
+    // Persist to backend (fire and forget)
+    api.saveSectionMessage(chatId, type, role, content).catch((err) => {
+      console.error('Failed to persist section message:', err);
+    });
+  }, []);
 
   const generateSection = useCallback(async (type: SectionType, userRequest?: string) => {
     const { chatId, masterPrompt, conversationHistory } = configRef.current;
@@ -77,6 +97,11 @@ export function useSectionPrompts(config: UseSectionPromptsConfig): UseSectionPr
       [type]: { isGenerating: true, data: prev[type].data, error: null },
     }));
 
+    // Add user message if provided
+    if (userRequest) {
+      addSectionMessage(type, 'user', userRequest);
+    }
+
     try {
       const response = await api.generateSectionPrompt(type, {
         chatId,
@@ -85,19 +110,21 @@ export function useSectionPrompts(config: UseSectionPromptsConfig): UseSectionPr
         conversationHistory,
       });
 
-      setSections((prev) => {
-        const next = {
-          ...prev,
-          [type]: { isGenerating: false, data: response, error: null },
-        };
-        // Persist to localStorage
-        persistSections(chatId, {
-          coding: next.coding.data,
-          'ui-ux': next['ui-ux'].data,
-          audit: next.audit.data,
-        });
-        return next;
-      });
+      setSections((prev) => ({
+        ...prev,
+        [type]: { isGenerating: false, data: response, error: null },
+      }));
+
+      // Add assistant message with the generated content
+      const assistantContent = [
+        response.summary ? `Summary: ${response.summary}` : '',
+        response.analysis ? `Analysis: ${response.analysis}` : '',
+        response.masterPrompt ? `\nMaster Prompt:\n${response.masterPrompt}` : '',
+      ].filter(Boolean).join('\n\n');
+
+      if (assistantContent) {
+        addSectionMessage(type, 'assistant', assistantContent);
+      }
     } catch (err: any) {
       setSections((prev) => ({
         ...prev,
@@ -108,12 +135,15 @@ export function useSectionPrompts(config: UseSectionPromptsConfig): UseSectionPr
         },
       }));
     }
-  }, []);
+  }, [addSectionMessage]);
 
   return {
     sections,
+    sectionMessages,
     activeSection,
     setActiveSection,
     generateSection,
+    addSectionMessage,
+    loadSectionMessages,
   };
 }

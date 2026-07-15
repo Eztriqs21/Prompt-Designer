@@ -19,15 +19,27 @@ interface ChatsState {
   loading: boolean;
 }
 
+function sanitizeTitle(text: string): string {
+  // Remove control characters, limit length, clean punctuation
+  return text
+    .replace(/[\x00-\x1f\x7f]/g, '')
+    .replace(/[^\w\s\-.,!?&'()]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 50);
+}
+
 function generateSmartTitle(form: NewChatFormValues): string {
   const parts: string[] = [];
   if (form.audience) parts.push(form.audience);
   if (form.goal) parts.push(form.goal);
   if (parts.length > 0) {
-    const title = parts.join(' — ');
-    return title.length > 40 ? title.slice(0, 37) + '...' : title;
+    return sanitizeTitle(parts.join(' — '));
   }
-  return form.websiteType;
+  if (form.websiteType) {
+    return sanitizeTitle(form.websiteType);
+  }
+  return 'New Chat';
 }
 
 export function useChats() {
@@ -122,9 +134,11 @@ export function useChats() {
         };
 
         const title = form.title || generateSmartTitle(form);
+        const isDefaultTitle = !form.title;
 
         const chat = await api.createChat({
           title,
+          isDefaultTitle,
           presetKey: presetKeyMap[form.websiteType] || 'custom',
           metadata: {
             websiteType: form.websiteType,
@@ -195,6 +209,7 @@ export function useChats() {
     async (chatId: string) => {
       try {
         await api.deleteChat(chatId);
+        let newActiveId: string | null = null;
         setState((prev) => {
           const newChats = prev.chats.filter((c) => c.id !== chatId);
           const newMsgs = { ...prev.messagesByChatId };
@@ -202,12 +217,10 @@ export function useChats() {
           delete newMsgs[chatId];
           delete newPrompts[chatId];
 
-          let newActiveId = prev.activeChatId;
-          if (newActiveId === chatId) {
+          if (prev.activeChatId === chatId) {
             newActiveId = newChats.length > 0 ? newChats[0].id : null;
-            if (newActiveId && !newMsgs[newActiveId]) {
-              loadChatData(newActiveId);
-            }
+          } else {
+            newActiveId = prev.activeChatId;
           }
 
           return {
@@ -218,6 +231,10 @@ export function useChats() {
             activeChatId: newActiveId,
           };
         });
+        // Load data for the new active chat outside setState
+        if (newActiveId) {
+          loadChatData(newActiveId);
+        }
       } catch (err) {
         console.error('Failed to delete chat:', err);
       }

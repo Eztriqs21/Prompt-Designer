@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Bot, User } from 'lucide-react';
 import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
@@ -8,7 +9,7 @@ interface QuestionBubbleProps {
   message: Message;
 }
 
-export default function QuestionBubble({ message }: QuestionBubbleProps) {
+export default memo(function QuestionBubble({ message }: QuestionBubbleProps) {
   const isUser = message.role === 'user';
   const reducedMotion = useReducedMotionSafe();
 
@@ -41,4 +42,4 @@ export default function QuestionBubble({ message }: QuestionBubbleProps) {
       </div>
     </motion.div>
   );
-}
+});

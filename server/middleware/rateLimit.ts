@@ -3,6 +3,16 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const DAILY_LIMIT = 5;
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
+// Periodic cleanup of expired entries to prevent memory leak
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of rateLimitStore) {
+    if (now > record.resetTime) {
+      rateLimitStore.delete(ip);
+    }
+  }
+}, DAY_IN_MS);
+
 export function checkRateLimit(ip: string): { allowed: boolean; remaining: number; resetTime: number } {
   const now = Date.now();
   const record = rateLimitStore.get(ip);

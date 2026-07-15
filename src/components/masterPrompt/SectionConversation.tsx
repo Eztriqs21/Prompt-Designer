@@ -2,11 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Copy, Check, Code, Palette, ShieldCheck, Loader2, User } from 'lucide-react';
 import type { SectionType, SectionState } from '../../types';
+import type { SectionMessage } from '../../lib/apiClient';
 
 interface SectionConversationProps {
   sectionType: SectionType;
   state: SectionState;
+  messages: SectionMessage[];
   onGenerate: (userRequest?: string) => void;
+  onLoadMessages: () => Promise<void>;
 }
 
 const SECTION_META: Record<SectionType, { label: string; icon: typeof Code; color: string }> = {
@@ -15,33 +18,26 @@ const SECTION_META: Record<SectionType, { label: string; icon: typeof Code; colo
   audit: { label: 'Audit', icon: ShieldCheck, color: 'text-amber-400' },
 };
 
-interface SectionMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: number;
-}
-
-export default function SectionConversation({ sectionType, state, onGenerate }: SectionConversationProps) {
-  const [messages, setMessages] = useState<SectionMessage[]>([]);
+export default function SectionConversation({ sectionType, state, messages, onGenerate, onLoadMessages }: SectionConversationProps) {
   const [input, setInput] = useState('');
   const [copied, setCopied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const meta = SECTION_META[sectionType];
+  const loadedRef = useRef(false);
 
-  // Initialize with section data when it first loads
+  // Load messages from backend on mount
   useEffect(() => {
-    if (state.data && messages.length === 0) {
-      const initialMessage: SectionMessage = {
-        id: 'section-data',
-        role: 'assistant',
-        content: formatSectionData(state.data),
-        timestamp: Date.now(),
-      };
-      setMessages([initialMessage]);
+    if (!loadedRef.current) {
+      loadedRef.current = true;
+      onLoadMessages();
     }
-  }, [state.data]);
+  }, [onLoadMessages]);
+
+  // Reset loaded ref when section changes
+  useEffect(() => {
+    loadedRef.current = false;
+  }, [sectionType]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -58,18 +54,9 @@ export default function SectionConversation({ sectionType, state, onGenerate }: 
 
   const handleSend = () => {
     if (!input.trim()) return;
-
-    const userMsg: SectionMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: input.trim(),
-      timestamp: Date.now(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
+    const request = input.trim();
     setInput('');
-
-    // Trigger regeneration with the user's request
-    onGenerate(input.trim());
+    onGenerate(request);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -93,23 +80,6 @@ export default function SectionConversation({ sectionType, state, onGenerate }: 
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
-  // Update messages when new section data arrives
-  useEffect(() => {
-    if (state.data && messages.length > 0) {
-      const lastMsg = messages[messages.length - 1];
-      // If the last message was a user message, add the new assistant response
-      if (lastMsg.role === 'user' && lastMsg.id !== 'section-data') {
-        const assistantMsg: SectionMessage = {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: formatSectionData(state.data),
-          timestamp: Date.now(),
-        };
-        setMessages((prev) => [...prev, assistantMsg]);
-      }
-    }
-  }, [state.data]);
 
   if (!state.data && !state.isGenerating) {
     return (
@@ -234,12 +204,4 @@ export default function SectionConversation({ sectionType, state, onGenerate }: 
       </div>
     </div>
   );
-}
-
-function formatSectionData(data: { summary: string; analysis: string; masterPrompt: string }): string {
-  const parts: string[] = [];
-  if (data.summary) parts.push(`Summary: ${data.summary}`);
-  if (data.analysis) parts.push(`Analysis: ${data.analysis}`);
-  if (data.masterPrompt) parts.push(`\nMaster Prompt:\n${data.masterPrompt}`);
-  return parts.join('\n\n');
 }

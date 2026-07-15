@@ -47,6 +47,9 @@ export function useMasterPrompt(config: MasterPromptConfig) {
   const configRef = useRef(config);
   configRef.current = config;
 
+  // Dedup guard: prevent concurrent generation requests
+  const generatingRef = useRef(false);
+
   // Reset state when chat changes
   const prevChatIdRef = useRef<string | null>(null);
   const loadedChatIdRef = useRef<string | null>(null);
@@ -107,7 +110,9 @@ export function useMasterPrompt(config: MasterPromptConfig) {
     async (idea: string) => {
       const chatId = configRef.current.chatId;
       if (!chatId) return;
+      if (generatingRef.current) return; // Dedup: skip if already generating
 
+      generatingRef.current = true;
       setState((prev) => ({ ...prev, isGenerating: true, error: null }));
 
       try {
@@ -140,7 +145,7 @@ export function useMasterPrompt(config: MasterPromptConfig) {
           generatedSummary: response.summary,
           generatedAnalysis: response.analysis,
           isGenerating: false,
-          remaining: response.remaining ?? prev.remaining - 1,
+          remaining: Math.max(0, response.remaining ?? prev.remaining - 1),
         }));
 
         return response;
@@ -151,6 +156,8 @@ export function useMasterPrompt(config: MasterPromptConfig) {
           error: err.message || 'Failed to generate master prompt',
         }));
         return null;
+      } finally {
+        generatingRef.current = false;
       }
     },
     []

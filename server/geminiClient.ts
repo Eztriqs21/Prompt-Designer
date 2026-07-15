@@ -57,6 +57,7 @@ async function callOpenCode(
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(60000),
   });
 
   if (!response.ok) {

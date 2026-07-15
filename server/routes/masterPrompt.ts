@@ -54,6 +54,11 @@ router.post('/', async (req, res) => {
       return;
     }
 
+    if (idea && idea.length > 10000) {
+      res.status(400).json({ error: 'Idea exceeds maximum length (10000 characters).' });
+      return;
+    }
+
     const conversationSummary = buildConversationSummary(conversationHistory as Message[] || []);
 
     // Build structured user content with labeled blocks
@@ -131,8 +136,8 @@ router.post('/', async (req, res) => {
       });
       // Update chat title if it was default
       const chat = getChatSessionById(chatId);
-      if (chat && chat.title === 'New Chat') {
-        updateChatSession(chatId, { title });
+      if (chat && chat.isDefaultTitle) {
+        updateChatSession(chatId, { title, isDefaultTitle: false });
       }
     }
 
@@ -152,7 +157,6 @@ router.post('/', async (req, res) => {
     console.error('Error in /api/master-prompt:', error);
     res.status(500).json({
       error: 'Failed to generate master prompt',
-      details: error?.message ?? 'Unknown error',
     });
   }
 });

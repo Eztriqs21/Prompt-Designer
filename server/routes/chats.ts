@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   saveChatSession,
+  updateChatSession,
   getAllChatSessions,
   getChatSessionById,
   deleteChatSession,
@@ -52,6 +53,10 @@ router.post('/:chatId/messages', (req, res) => {
     res.status(400).json({ error: 'role and content are required' });
     return;
   }
+  if (role !== 'user' && role !== 'assistant') {
+    res.status(400).json({ error: 'role must be "user" or "assistant"' });
+    return;
+  }
   const msg = saveMessage({ chatId: req.params.chatId, role, content });
   res.status(201).json(msg);
 });
@@ -68,17 +73,16 @@ router.delete('/:chatId', (req, res) => {
 
 // Rename chat session
 router.patch('/:chatId', (req, res) => {
-  const chat = getChatSessionById(req.params.chatId);
-  if (!chat) {
-    res.status(404).json({ error: 'Chat not found' });
-    return;
-  }
   const { title } = req.body ?? {};
   if (!title || typeof title !== 'string') {
     res.status(400).json({ error: 'title is required' });
     return;
   }
-  const updated = saveChatSession({ ...chat, title });
+  const updated = updateChatSession(req.params.chatId, { title });
+  if (!updated) {
+    res.status(404).json({ error: 'Chat not found' });
+    return;
+  }
   res.json(updated);
 });
 

@@ -1,6 +1,7 @@
 export interface ChatSession {
   id: string;
   title: string;
+  isDefaultTitle?: boolean;
   presetKey?: string;
   metadata?: {
     websiteType?: string;

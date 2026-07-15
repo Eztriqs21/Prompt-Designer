@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Check, Trash2, ChevronDown, FileText, Loader2 } from 'lucide-react';
+import { Copy, Check, Trash2, ChevronDown, FileText, Loader2, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { getPrompts, deletePrompt } from '../lib/apiClient';
 import { useReducedMotionSafe } from '../hooks/useReducedMotionSafe';
+import FormattedPrompt from '../components/masterPrompt/FormattedPrompt';
 import {
   fadeInUp,
   staggerContainer,
@@ -83,6 +85,15 @@ export default function HistoryPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] via-transparent to-transparent pointer-events-none" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-20">
+        {/* Back link */}
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/60 transition-colors mb-8"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to Prompt Designer
+        </Link>
+
         {/* Header */}
         <motion.div
           variants={staggerContainer}
@@ -223,9 +234,9 @@ export default function HistoryPage() {
                         className="overflow-hidden"
                       >
                         <div className="px-4 pb-4 border-t border-white/[0.06]">
-                          <pre className="mt-3 font-mono text-[11px] text-white/50 whitespace-pre-wrap leading-relaxed max-h-[300px] overflow-y-auto p-3 bg-black/40 rounded-xl border border-white/[0.06]">
-                            {prompt.masterPrompt}
-                          </pre>
+                          <div className="mt-3">
+                            <FormattedPrompt content={prompt.masterPrompt} />
+                          </div>
                         </div>
                       </motion.div>
                     )}

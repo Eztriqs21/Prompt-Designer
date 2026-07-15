@@ -3,7 +3,6 @@ import {
   getPromptVersionsByChatId,
   getPromptVersionById,
   pinPromptVersion,
-  deletePromptVersion,
   savePromptVersion,
   saveChatSession,
   getChatSessionById,

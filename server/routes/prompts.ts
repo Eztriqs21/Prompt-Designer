@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { v4 as uuidv4 } from 'uuid';
 import { savePrompt, getAllPrompts, getPromptById, deletePrompt } from '../db/store.js';
 
 const router = Router();

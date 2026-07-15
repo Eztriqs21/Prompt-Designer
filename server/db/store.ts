@@ -8,14 +8,33 @@ const DB_DIR = path.join(process.cwd(), 'server', 'db');
 const PROMPTS_PATH = path.join(DB_DIR, 'prompts.json');
 const CHATS_PATH = path.join(DB_DIR, 'chats.json');
 const MESSAGES_PATH = path.join(DB_DIR, 'messages.json');
-
 const PROMPT_VERSIONS_PATH = path.join(DB_DIR, 'promptVersions.json');
+const SECTION_MESSAGES_PATH = path.join(DB_DIR, 'sectionMessages.json');
+
+// Simple mutex to prevent concurrent JSON writes from corrupting state
+const writeLocks = new Map<string, Promise<void>>();
+
+async function withWriteLock<T>(key: string, fn: () => T): Promise<T> {
+  // Wait for any existing lock on this key
+  while (writeLocks.has(key)) {
+    await writeLocks.get(key);
+  }
+  let release: () => void;
+  const lock = new Promise<void>((resolve) => { release = resolve; });
+  writeLocks.set(key, lock);
+  try {
+    return fn();
+  } finally {
+    writeLocks.delete(key);
+    release!();
+  }
+}
 
 function ensureDbExists() {
   if (!fs.existsSync(DB_DIR)) {
     fs.mkdirSync(DB_DIR, { recursive: true });
   }
-  for (const filePath of [PROMPTS_PATH, CHATS_PATH, MESSAGES_PATH, PROMPT_VERSIONS_PATH]) {
+  for (const filePath of [PROMPTS_PATH, CHATS_PATH, MESSAGES_PATH, PROMPT_VERSIONS_PATH, SECTION_MESSAGES_PATH]) {
     if (!fs.existsSync(filePath)) {
       fs.writeFileSync(filePath, '[]', 'utf-8');
     }
@@ -164,6 +183,7 @@ export function deletePromptVersion(id: string): boolean {
 export interface ChatSession {
   id: string;
   title: string;
+  isDefaultTitle?: boolean;
   presetKey?: string;
   metadata?: {
     websiteType?: string;
@@ -205,7 +225,7 @@ export function getChatSessionById(id: string): ChatSession | undefined {
   return chats.find((c) => c.id === id);
 }
 
-export function updateChatSession(id: string, updates: Partial<Pick<ChatSession, 'title' | 'updatedAt'>>): ChatSession | undefined {
+export function updateChatSession(id: string, updates: Partial<Pick<ChatSession, 'title' | 'updatedAt' | 'isDefaultTitle'>>): ChatSession | undefined {
   const chats = readJson<ChatSession>(CHATS_PATH);
   const idx = chats.findIndex((c) => c.id === id);
   if (idx === -1) return undefined;
@@ -219,10 +239,18 @@ export function deleteChatSession(id: string): boolean {
   const filtered = chats.filter((c) => c.id !== id);
   if (filtered.length === chats.length) return false;
   writeJson(CHATS_PATH, filtered);
-  // Also delete associated messages
+  // Cascade delete associated messages
   const messages = readJson<ChatMessage>(MESSAGES_PATH);
   const filteredMsgs = messages.filter((m) => m.chatId !== id);
   writeJson(MESSAGES_PATH, filteredMsgs);
+  // Cascade delete associated prompt versions
+  const versions = readPromptVersions();
+  const filteredVersions = versions.filter((v) => v.chatId !== id);
+  if (filteredVersions.length !== versions.length) {
+    writePromptVersions(filteredVersions);
+  }
+  // Cascade delete associated section messages
+  deleteSectionMessages(id);
   return true;
 }
 
@@ -264,4 +292,56 @@ export function getMessagesByChatId(chatId: string): ChatMessage[] {
 export function getMasterPromptByChatId(chatId: string): SavedPrompt | undefined {
   const prompts = readPrompts();
   return prompts.find((p) => p.chatId === chatId);
+}
+
+// ─── Section Messages ─────────────────────────────────────
+
+export interface SectionMessage {
+  id: string;
+  chatId: string;
+  sectionType: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
+}
+
+function readSectionMessages(): SectionMessage[] {
+  return readJson<SectionMessage>(SECTION_MESSAGES_PATH);
+}
+
+export function getSectionMessages(chatId: string, sectionType: string): SectionMessage[] {
+  const messages = readSectionMessages();
+  return messages
+    .filter((m) => m.chatId === chatId && m.sectionType === sectionType)
+    .sort((a, b) => a.timestamp - b.timestamp);
+}
+
+export function saveSectionMessage(data: {
+  chatId: string;
+  sectionType: string;
+  role: 'user' | 'assistant';
+  content: string;
+}): SectionMessage {
+  const messages = readSectionMessages();
+  const newMsg: SectionMessage = {
+    id: uuidv4(),
+    chatId: data.chatId,
+    sectionType: data.sectionType,
+    role: data.role,
+    content: data.content,
+    timestamp: Date.now(),
+  };
+  messages.push(newMsg);
+  writeJson(SECTION_MESSAGES_PATH, messages);
+  return newMsg;
+}
+
+export function deleteSectionMessages(chatId: string, sectionType?: string): boolean {
+  const messages = readSectionMessages();
+  const filtered = sectionType
+    ? messages.filter((m) => !(m.chatId === chatId && m.sectionType === sectionType))
+    : messages.filter((m) => m.chatId !== chatId);
+  if (filtered.length === messages.length) return false;
+  writeJson(SECTION_MESSAGES_PATH, filtered);
+  return true;
 }

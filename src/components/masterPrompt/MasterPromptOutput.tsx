@@ -7,15 +7,19 @@ import FormattedPrompt from './FormattedPrompt';
 import SectionCard from './SectionCard';
 import SectionConversation from './SectionConversation';
 import type { SectionType, SectionState } from '../../types';
+import type { SectionMessage } from '../../lib/apiClient';
 
 interface MasterPromptOutputProps {
   summary: string | null;
   analysis: string | null;
   masterPrompt: string | null;
   sections: Record<SectionType, SectionState>;
+  sectionMessages: Record<SectionType, SectionMessage[]>;
   activeSection: SectionType | null;
   onSelectSection: (type: SectionType | null) => void;
   onGenerateSection: (type: SectionType, userRequest?: string) => void;
+  chatId: string | null;
+  onLoadSectionMessages: (chatId: string, sectionType: SectionType) => Promise<void>;
 }
 
 export default function MasterPromptOutput({
@@ -23,9 +27,12 @@ export default function MasterPromptOutput({
   analysis,
   masterPrompt,
   sections,
+  sectionMessages,
   activeSection,
   onSelectSection,
   onGenerateSection,
+  chatId,
+  onLoadSectionMessages,
 }: MasterPromptOutputProps) {
   const [copied, setCopied] = useState(false);
   const reducedMotion = useReducedMotionSafe();
@@ -77,7 +84,9 @@ export default function MasterPromptOutput({
           <SectionConversation
             sectionType={activeSection}
             state={sections[activeSection]}
+            messages={sectionMessages[activeSection]}
             onGenerate={(request) => onGenerateSection(activeSection, request)}
+            onLoadMessages={() => chatId ? onLoadSectionMessages(chatId, activeSection) : Promise.resolve()}
           />
         </div>
       </motion.div>
@@ -161,13 +170,26 @@ export default function MasterPromptOutput({
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={reducedMotion ? { duration: 0 } : { ...transitionEnter, delay: 0.18 }}
-          className="space-y-3"
+          className="space-y-4"
         >
-          {/* Divider with label */}
-          <div className="flex items-center gap-3 py-2">
+          {/* Branch heading */}
+          <div className="text-center py-3">
+            <h3
+              className="text-lg text-white/80 tracking-tight mb-1"
+              style={{ fontFamily: "'Instrument Serif', serif" }}
+            >
+              Your master prompt is ready
+            </h3>
+            <p className="text-[12px] text-white/30">
+              Choose a section to dive deeper
+            </p>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-white/[0.06]" />
-            <span className="text-[11px] font-medium text-white/25 tracking-wide uppercase">
-              Continue with a section
+            <span className="text-[10px] font-medium text-white/20 tracking-widest uppercase">
+              Sections
             </span>
             <div className="flex-1 h-px bg-white/[0.06]" />
           </div>

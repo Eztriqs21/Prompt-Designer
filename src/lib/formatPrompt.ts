@@ -135,6 +135,29 @@ export function formatPromptContent(raw: string): string {
         continue;
       }
 
+      // Horizontal rule: --- or ***
+      if (/^[-*_]{3,}$/.test(trimmed)) {
+        if (inList) {
+          htmlParts.push('</ul>');
+          inList = false;
+        }
+        htmlParts.push('<hr class="border-white/[0.06] my-4" />');
+        continue;
+      }
+
+      // Blockquote: > text
+      if (trimmed.startsWith('>')) {
+        if (inList) {
+          htmlParts.push('</ul>');
+          inList = false;
+        }
+        const quoteText = trimmed.replace(/^>\s*/, '');
+        htmlParts.push(
+          `<blockquote class="border-l-2 border-white/10 pl-4 my-2 text-[13px] text-white/45 italic">${processInlineFormatting(escapeHtml(quoteText))}</blockquote>`
+        );
+        continue;
+      }
+
       // Regular paragraph
       if (inList) {
         htmlParts.push('</ul>');

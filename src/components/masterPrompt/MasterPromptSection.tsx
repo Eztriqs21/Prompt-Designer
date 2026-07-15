@@ -29,9 +29,10 @@ interface MasterPromptSectionProps {
   chatsState: ChatsState;
   onToggleLibrary: () => void;
   showLibrary: boolean;
+  onPromptCountChange?: (count: number) => void;
 }
 
-export default function MasterPromptSection({ chatsState, onToggleLibrary, showLibrary }: MasterPromptSectionProps) {
+export default function MasterPromptSection({ chatsState, onToggleLibrary, showLibrary, onPromptCountChange }: MasterPromptSectionProps) {
   const {
     activeChatId,
     chats,
@@ -40,7 +41,6 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     setActiveChat,
     addMessage,
     setPrompt,
-    renameChat,
   } = chatsState;
 
   const activeChat = chats.find((c) => c.id === activeChatId);
@@ -76,9 +76,11 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
 
   const {
     sections,
+    sectionMessages,
     activeSection,
     setActiveSection,
     generateSection,
+    loadSectionMessages,
   } = useSectionPrompts({
     chatId: activeChatId,
     masterPrompt: generatedPrompt,
@@ -106,14 +108,10 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     }
   }, [activeChatId, loadPromptVersions]);
 
-  // Listen for rename events from sidebar
+  // Report prompt count to parent
   useEffect(() => {
-    const handleRename = (e: CustomEvent<{ chatId: string; title: string }>) => {
-      renameChat(e.detail.chatId, e.detail.title);
-    };
-    window.addEventListener('sidebar:rename', handleRename as EventListener);
-    return () => window.removeEventListener('sidebar:rename', handleRename as EventListener);
-  }, [renameChat]);
+    onPromptCountChange?.(promptVersions.length);
+  }, [promptVersions.length, onPromptCountChange]);
 
   const handleSend = async (content: string) => {
     if (!activeChatId) return;
@@ -167,9 +165,12 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
                 analysis={generatedAnalysis}
                 masterPrompt={generatedPrompt}
                 sections={sections}
+                sectionMessages={sectionMessages}
                 activeSection={activeSection}
                 onSelectSection={setActiveSection}
                 onGenerateSection={generateSection}
+                chatId={activeChatId}
+                onLoadSectionMessages={loadSectionMessages}
               />
             )}
           </ConversationPane>

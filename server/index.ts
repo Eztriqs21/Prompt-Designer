@@ -6,6 +6,7 @@ import promptsRoutes from './routes/prompts.js';
 import chatsRoutes from './routes/chats.js';
 import promptVersionRoutes from './routes/promptVersions.js';
 import sectionPromptsRoutes from './routes/sectionPrompts.js';
+import sectionMessagesRoutes from './routes/sectionMessages.js';
 import { loadSectionBlueprints } from './prompts/sectionBlueprints.js';
 
 const app = express();
@@ -31,7 +32,7 @@ app.use(cors({
     }
   },
 }));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 app.use('/api/master-prompt', masterPromptRoutes);
 app.use('/api/prompts', promptsRoutes);
@@ -39,6 +40,7 @@ app.use('/api/chats', chatsRoutes);
 app.use('/api/chats', promptVersionRoutes);
 app.use('/api/prompt', promptVersionRoutes);
 app.use('/api/sections', sectionPromptsRoutes);
+app.use('/api/section-messages', sectionMessagesRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
@@ -46,7 +48,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use((err: any, _req: any, res: any, _next: any) => {
   console.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal server error', details: err?.message });
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 app.listen(PORT, () => {

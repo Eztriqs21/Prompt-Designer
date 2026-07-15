@@ -1,5 +1,14 @@
 import type { MasterPromptRequest, MasterPromptResponse, SavedPrompt, ChatSession, PromptVersion, SectionType, SectionPromptRequest, SectionPromptResponse, Message } from '../types';
 
+export interface SectionMessage {
+  id: string;
+  chatId: string;
+  sectionType: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 // ─── Prompts ───────────────────────────────────────────────
@@ -47,6 +56,7 @@ export async function getChats(): Promise<ChatSession[]> {
 
 export async function createChat(data: {
   title: string;
+  isDefaultTitle?: boolean;
   presetKey?: string;
   metadata?: ChatSession['metadata'];
 }): Promise<ChatSession> {
@@ -61,7 +71,7 @@ export async function createChat(data: {
 
 export async function getChat(chatId: string): Promise<
   ChatSession & {
-    messages: import('../types').Message[];
+    messages: Message[];
     lastPrompt: SavedPrompt | null;
   }
 > {
@@ -145,5 +155,28 @@ export async function generateSectionPrompt(
     throw new Error(message);
   }
 
+  return res.json();
+}
+
+// ─── Section Messages ─────────────────────────────────────
+
+export async function getSectionMessages(chatId: string, sectionType: string): Promise<SectionMessage[]> {
+  const res = await fetch(`${API_BASE}/section-messages/${chatId}/${sectionType}`);
+  if (!res.ok) throw new Error('Failed to fetch section messages');
+  return res.json();
+}
+
+export async function saveSectionMessage(
+  chatId: string,
+  sectionType: string,
+  role: 'user' | 'assistant',
+  content: string
+): Promise<SectionMessage> {
+  const res = await fetch(`${API_BASE}/section-messages/${chatId}/${sectionType}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role, content }),
+  });
+  if (!res.ok) throw new Error('Failed to save section message');
   return res.json();
 }

@@ -11,6 +11,7 @@ export default function HomePage() {
   const reducedMotion = useReducedMotionSafe();
   const [showLibrary, setShowLibrary] = useState(false);
   const [showNewChatForm, setShowNewChatForm] = useState(false);
+  const [promptCount, setPromptCount] = useState(0);
 
   const chatsState = useChats();
 
@@ -31,9 +32,6 @@ export default function HomePage() {
       transition={reducedMotion ? { duration: 0 } : transitionEnter}
       className="h-screen bg-black text-white overflow-hidden"
     >
-      {/* Clean gradient background */}
-      <div className="fixed inset-0 z-0 bg-gradient-to-br from-[#08080c] via-[#050508] to-black" />
-
       {/* Content */}
       <div className="relative z-10 flex h-full">
         {/* Sidebar */}
@@ -41,9 +39,10 @@ export default function HomePage() {
           chats={chatsState.chats}
           activeChatId={chatsState.activeChatId}
           loading={chatsState.loading}
-          promptCount={0}
+          promptCount={promptCount}
           onSelectChat={chatsState.setActiveChat}
           onDeleteChat={chatsState.deleteChat}
+          onRenameChat={chatsState.renameChat}
           onNewChat={() => setShowNewChatForm(true)}
           onToggleLibrary={() => setShowLibrary((v) => !v)}
           showLibrary={showLibrary}
@@ -80,6 +79,7 @@ export default function HomePage() {
             chatsState={chatsState}
             onToggleLibrary={() => setShowLibrary((v) => !v)}
             showLibrary={showLibrary}
+            onPromptCountChange={setPromptCount}
           />
         </main>
       </div>

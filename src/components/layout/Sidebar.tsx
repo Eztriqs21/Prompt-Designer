@@ -13,6 +13,7 @@ interface SidebarProps {
   promptCount: number;
   onSelectChat: (chatId: string) => void;
   onDeleteChat: (chatId: string) => void;
+  onRenameChat: (chatId: string, title: string) => void;
   onNewChat: () => void;
   onToggleLibrary: () => void;
   showLibrary: boolean;
@@ -25,6 +26,7 @@ export default function Sidebar({
   promptCount,
   onSelectChat,
   onDeleteChat,
+  onRenameChat,
   onNewChat,
   onToggleLibrary,
   showLibrary,
@@ -58,9 +60,7 @@ export default function Sidebar({
 
   const handleRename = (chatId: string, newTitle: string) => {
     if (newTitle.trim()) {
-      // Emit rename event through a callback prop or directly
-      const event = new CustomEvent('sidebar:rename', { detail: { chatId, title: newTitle.trim() } });
-      window.dispatchEvent(event);
+      onRenameChat(chatId, newTitle.trim());
     }
     setEditingId(null);
   };

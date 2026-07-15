@@ -49,9 +49,7 @@ export default function UserInputBar({ onSend, onGenerate, disabled, isGeneratin
       <motion.div
         animate={reducedMotion ? {} : { boxShadow: focused ? '0 0 0 2px rgba(129, 140, 248, 0.25)' : '0 0 0 0px rgba(129, 140, 248, 0)' }}
         transition={reducedMotion ? { duration: 0 } : { duration: 0.2 }}
-        className={`liquid-glass rounded-xl px-4 py-2.5 flex items-end gap-2 transition-shadow duration-200 ${
-          focused ? 'ring-2 ring-indigo-500/40' : ''
-        }`}
+        className="liquid-glass rounded-xl px-4 py-2.5 flex items-end gap-2"
       >
         <textarea
           ref={textareaRef}

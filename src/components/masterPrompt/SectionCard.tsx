@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Code, Palette, ShieldCheck, Loader2, ChevronRight } from 'lucide-react';
 import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
@@ -32,7 +33,7 @@ const SECTION_CONFIG: Record<SectionType, { label: string; icon: typeof Code; co
   },
 };
 
-export default function SectionCard({ type, state, isActive, onClick }: SectionCardProps) {
+export default memo(function SectionCard({ type, state, isActive, onClick }: SectionCardProps) {
   const reducedMotion = useReducedMotionSafe();
   const config = SECTION_CONFIG[type];
   const Icon = config.icon;
@@ -84,4 +85,4 @@ export default function SectionCard({ type, state, isActive, onClick }: SectionC
       </div>
     </motion.button>
   );
-}
+});

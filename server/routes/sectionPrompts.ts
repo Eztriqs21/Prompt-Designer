@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { generateWithFallback } from '../geminiClient.js';
 import { getSectionBlueprint } from '../prompts/sectionBlueprints.js';
+import { checkRateLimit } from '../middleware/rateLimit.js';
 import type { SectionType, Message } from '../src/types/index.js';
 
 const router = Router();
@@ -26,8 +27,23 @@ const SECTION_LABELS: Record<SectionType, string> = {
   audit: 'AUDIT',
 };
 
+function getClientIp(req: any): string {
+  return (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || 'unknown';
+}
+
 router.post('/:sectionType', async (req, res) => {
   try {
+    const ip = getClientIp(req);
+    const rateCheck = checkRateLimit(ip);
+
+    if (!rateCheck.allowed) {
+      res.status(429).json({
+        error: 'Daily limit reached. You can generate up to 5 prompts per day.',
+        resetTime: rateCheck.resetTime,
+      });
+      return;
+    }
+
     const { sectionType } = req.params;
 
     if (!VALID_SECTION_TYPES.includes(sectionType as SectionType)) {
@@ -41,6 +57,11 @@ router.post('/:sectionType', async (req, res) => {
 
     if (!masterPrompt) {
       res.status(400).json({ error: 'Missing masterPrompt in request body.' });
+      return;
+    }
+
+    if (masterPrompt.length > 100000) {
+      res.status(400).json({ error: 'masterPrompt exceeds maximum length (100000 characters).' });
       return;
     }
 
@@ -99,7 +120,6 @@ router.post('/:sectionType', async (req, res) => {
     console.error(`Error in /api/sections/${req.params.sectionType}:`, error);
     res.status(500).json({
       error: 'Failed to generate section prompt',
-      details: error?.message ?? 'Unknown error',
     });
   }
 });
