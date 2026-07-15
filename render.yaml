@@ -3,7 +3,7 @@ services:
     name: prompt-designer-api
     runtime: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm install && npx playwright install --with-deps chromium
     startCommand: npm run start
     healthCheckPath: /api/health
     envVars:
