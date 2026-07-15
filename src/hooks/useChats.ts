@@ -21,24 +21,13 @@ export function useChats(initialChatId: string | null = null) {
   } = useChatContext();
 
   useEffect(() => {
-    if (hydrated && chats.length === 0) {
-      loadChats();
-    }
-  }, [hydrated, chats.length, loadChats]);
-
-  useEffect(() => {
     if (initialChatId && hydrated) {
       const chatExists = chats.some((c) => c.id === initialChatId);
-      const messagesLoaded = (messagesByChatId[initialChatId]?.length ?? 0) > 0;
-      if (!chatExists || !messagesLoaded) {
-        loadChatData(initialChatId).then(() => {
-          setActiveChat(initialChatId);
-        });
-      } else {
+      if (chatExists) {
         setActiveChat(initialChatId);
       }
     }
-  }, [initialChatId, hydrated, chats, messagesByChatId, loadChatData, setActiveChat]);
+  }, [initialChatId, hydrated, chats, setActiveChat]);
 
   return {
     activeChatId,

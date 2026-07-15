@@ -6,6 +6,7 @@ import PromptLibraryPane from './PromptLibraryPane';
 import { useMasterPrompt } from '../../hooks/useMasterPrompt';
 import { usePromptLibrary } from '../../hooks/usePromptLibrary';
 import { useSectionPrompts } from '../../hooks/useSectionPrompts';
+import { useChatContext } from '../../context/ChatContext';
 import { saveChatMessage } from '../../lib/apiClient';
 import type { ChatSession, Message, MasterPromptResponse } from '../../types';
 import type { PromptVersion } from '../../types';
@@ -40,6 +41,8 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     addMessage,
     setPrompt,
   } = chatsState;
+
+  const { addPromptVersion } = useChatContext();
 
   const activeChat = chats.find((c) => c.id === activeChatId);
   const presetKey = activeChat?.presetKey;
@@ -115,6 +118,7 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     const response = await generate(idea);
     if (response) {
       setPrompt(activeChatId, response);
+      addPromptVersion(activeChatId, response);
       loadPromptVersions(activeChatId);
     }
   };

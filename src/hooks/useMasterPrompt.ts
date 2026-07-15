@@ -130,7 +130,7 @@ export function useMasterPrompt(config: MasterPromptConfig) {
       setState((prev) => ({ ...prev, isGenerating: true, error: null }));
 
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('GENERATION_TIMEOUT')), 60000)
+        setTimeout(() => reject(new Error('GENERATION_TIMEOUT')), 180000)
       );
 
       try {
@@ -161,7 +161,7 @@ export function useMasterPrompt(config: MasterPromptConfig) {
         // Persist assistant message
         addMessage(chatId, assistantMsg);
 
-        // Update context
+        // Update context (handleGenerate also records the version history)
         setPrompt(chatId, response);
 
         // Update local state
@@ -179,8 +179,51 @@ export function useMasterPrompt(config: MasterPromptConfig) {
         return response;
       } catch (err: any) {
         const isTimeout = err?.message === 'GENERATION_TIMEOUT';
+
+        // On a client timeout the server often keeps running and saves the
+        // result. Recover it from the server's prompt-version history so the
+        // user sees the generated prompt instead of a false error.
+        if (isTimeout) {
+          try {
+            const versions = await api.getPromptVersions(chatId);
+            const latest = versions && versions[0];
+            const recentMs = 10 * 60 * 1000;
+            if (latest && Date.now() - (latest.createdAt || latest.updatedAt || 0) < recentMs) {
+              const recovered: MasterPromptResponse = {
+                id: latest.id,
+                chatId,
+                summary: latest.summary,
+                analysis: latest.analysis,
+                masterPrompt: latest.masterPrompt,
+                timestamp: latest.createdAt,
+              };
+              const assistantMsg: Message = {
+                id: uuidv4(),
+                chatId,
+                role: 'assistant',
+                content: `Here's your master prompt:\n\n${latest.masterPrompt.slice(0, 500)}${latest.masterPrompt.length > 500 ? '...' : ''}`,
+                timestamp: Date.now(),
+              };
+              addMessage(chatId, assistantMsg);
+              setState((prev) => ({
+                ...prev,
+                messages: [...prev.messages, assistantMsg],
+                generatedPrompt: recovered.masterPrompt,
+                generatedSummary: recovered.summary,
+                generatedAnalysis: recovered.analysis,
+                isGenerating: false,
+                error: null,
+                remaining: prev.remaining,
+              }));
+              return recovered;
+            }
+          } catch {
+            // fall through to error display
+          }
+        }
+
         const message = isTimeout
-          ? 'Generation timed out (60s). The server may be busy. Please try again.'
+          ? 'Generation timed out (3 min). The server may be busy — your prompt may still have been saved. Try refreshing or generating again.'
           : err?.message || 'Failed to generate master prompt';
 
         setState((prev) => ({

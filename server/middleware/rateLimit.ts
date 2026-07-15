@@ -1,6 +1,6 @@
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
-const DAILY_LIMIT = 5;
+const DAILY_LIMIT = 100;
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 // Periodic cleanup of expired entries to prevent memory leak
