@@ -1,7 +1,8 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Message, MasterPromptResponse, MasterPromptRequest } from '../types';
 import * as api from '../lib/apiClient';
+import { useChatContext } from '../context/ChatContext';
 
 export interface MasterPromptConfig {
   chatId: string | null;
@@ -29,6 +30,8 @@ const WELCOME_MESSAGE: Message = {
 };
 
 export function useMasterPrompt(config: MasterPromptConfig) {
+  const { activeChatId, messagesByChatId, promptsByChatId, addMessage, setPrompt } = useChatContext();
+
   const [state, setState] = useState<MasterPromptState>({
     messages: [WELCOME_MESSAGE],
     isGenerating: false,
@@ -39,52 +42,69 @@ export function useMasterPrompt(config: MasterPromptConfig) {
     remaining: 5,
   });
 
-  const messagesRef = useRef(state.messages);
-  messagesRef.current = state.messages;
-
   const configRef = useRef(config);
   configRef.current = config;
 
   const generatingRef = useRef(false);
-
   const prevChatIdRef = useRef<string | null>(null);
-  const loadedChatIdRef = useRef<string | null>(null);
 
-  const resetForChat = useCallback((messages: Message[], prompt: MasterPromptResponse | null) => {
-    const currentChatId = configRef.current.chatId;
+  // Sync messages from chat context when active chat changes
+  useEffect(() => {
+    const chatId = configRef.current.chatId ?? activeChatId;
+    if (chatId !== prevChatIdRef.current) {
+      prevChatIdRef.current = chatId;
+      if (!chatId) {
+        setState((prev) => ({
+          ...prev,
+          messages: [WELCOME_MESSAGE],
+          generatedPrompt: null,
+          generatedSummary: null,
+          generatedAnalysis: null,
+          isGenerating: false,
+          error: null,
+        }));
+        return;
+      }
+      const chatMessages = messagesByChatId[chatId] || [];
+      const chatPrompt = promptsByChatId[chatId] || null;
 
-    if (currentChatId !== prevChatIdRef.current) {
-      prevChatIdRef.current = currentChatId;
-      loadedChatIdRef.current = null;
+      if (chatMessages.length > 0) {
+        setState((prev) => ({
+          ...prev,
+          messages: chatMessages,
+          generatedPrompt: chatPrompt?.masterPrompt ?? null,
+          generatedSummary: chatPrompt?.summary ?? null,
+          generatedAnalysis: chatPrompt?.analysis ?? null,
+          isGenerating: false,
+          error: null,
+        }));
+      } else {
+        setState((prev) => ({
+          ...prev,
+          messages: [WELCOME_MESSAGE],
+          generatedPrompt: null,
+          generatedSummary: null,
+          generatedAnalysis: null,
+          isGenerating: false,
+          error: null,
+        }));
+      }
     }
+  }, [activeChatId, messagesByChatId, promptsByChatId]);
 
-    if (messages.length > 0) {
-      loadedChatIdRef.current = currentChatId;
+  // When config.chatId changes (e.g., from URL param), sync with context
+  useEffect(() => {
+    if (config.chatId && config.chatId !== activeChatId) {
+      // This handles the case where URL has a chatId but context doesn't
+      // The context's setActiveChat should be called by parent
     }
-
-    if (
-      currentChatId === loadedChatIdRef.current &&
-      messages.length === 0 &&
-      !prompt
-    ) {
-      return;
-    }
-
-    setState({
-      messages: messages.length > 0 ? messages : [WELCOME_MESSAGE],
-      isGenerating: false,
-      generatedPrompt: prompt?.masterPrompt ?? null,
-      generatedSummary: prompt?.summary ?? null,
-      generatedAnalysis: prompt?.analysis ?? null,
-      error: null,
-      remaining: 5,
-    });
-  }, []);
+  }, [config.chatId, activeChatId]);
 
   const addUserMessage = useCallback(
     (content: string) => {
-      const chatId = configRef.current.chatId;
+      const chatId = configRef.current.chatId ?? activeChatId;
       if (!chatId) return;
+
       const msg: Message = {
         id: uuidv4(),
         chatId,
@@ -92,15 +112,17 @@ export function useMasterPrompt(config: MasterPromptConfig) {
         content,
         timestamp: Date.now(),
       };
+
+      addMessage(chatId, msg);
       setState((prev) => ({ ...prev, messages: [...prev.messages, msg] }));
       return msg;
     },
-    []
+    [activeChatId, addMessage]
   );
 
   const generate = useCallback(
     async (idea: string) => {
-      const chatId = configRef.current.chatId;
+      const chatId = configRef.current.chatId ?? activeChatId;
       if (!chatId) return;
       if (generatingRef.current) return;
 
@@ -112,7 +134,7 @@ export function useMasterPrompt(config: MasterPromptConfig) {
       );
 
       try {
-        const conversationHistory: Message[] = messagesRef.current.map((m) => ({
+        const conversationHistory: Message[] = state.messages.map((m) => ({
           ...m,
           chatId,
         }));
@@ -136,6 +158,13 @@ export function useMasterPrompt(config: MasterPromptConfig) {
           timestamp: Date.now(),
         };
 
+        // Persist assistant message
+        addMessage(chatId, assistantMsg);
+
+        // Update context
+        setPrompt(chatId, response);
+
+        // Update local state
         setState((prev) => ({
           ...prev,
           messages: [...prev.messages, assistantMsg],
@@ -164,11 +193,22 @@ export function useMasterPrompt(config: MasterPromptConfig) {
         generatingRef.current = false;
       }
     },
-    []
+    [activeChatId, state.messages, addMessage, setPrompt]
   );
 
   const clearError = useCallback(() => {
     setState((prev) => ({ ...prev, error: null }));
+  }, []);
+
+  // Expose a reset function that only clears ephemeral generation state
+  const resetForChat = useCallback((_messages: Message[] = [], _prompt: MasterPromptResponse | null = null) => {
+    // This is now a no-op for persisted data.
+    // Local ephemeral state (isGenerating, error) can be cleared if needed.
+    setState((prev) => ({
+      ...prev,
+      isGenerating: false,
+      error: null,
+    }));
   }, []);
 
   return {

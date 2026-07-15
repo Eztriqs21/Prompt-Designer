@@ -1,4 +1,4 @@
-﻿import { useLayoutEffect, useRef, useMemo, useEffect } from 'react';
+﻿import { useMemo, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import ConversationPane from './ConversationPane';
 import MasterPromptOutput from './MasterPromptOutput';
@@ -36,8 +36,6 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
   const {
     activeChatId,
     chats,
-    messagesByChatId,
-    promptsByChatId,
     setActiveChat,
     addMessage,
     setPrompt,
@@ -60,7 +58,6 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     generatedAnalysis,
     addUserMessage,
     generate,
-    resetForChat,
     error,
     clearError,
   } = useMasterPrompt(masterPromptConfig);
@@ -88,21 +85,6 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     masterPrompt: generatedPrompt,
     conversationHistory: messages,
   });
-
-  const prevChatIdRef = useRef<string | null>(null);
-
-  useLayoutEffect(() => {
-    if (activeChatId !== prevChatIdRef.current) {
-      prevChatIdRef.current = activeChatId;
-      if (activeChatId) {
-        const chatMessages = messagesByChatId[activeChatId] || [];
-        const chatPrompt = promptsByChatId[activeChatId] || null;
-        resetForChat(chatMessages, chatPrompt);
-      } else {
-        resetForChat([], null);
-      }
-    }
-  }, [activeChatId, messagesByChatId, promptsByChatId, resetForChat]);
 
   useEffect(() => {
     if (activeChatId) {
@@ -229,7 +211,7 @@ function PromptViewModal({ prompt, onClose }: { prompt: PromptVersion; onClose: 
         <div className="px-5 py-4 border-b border-border-soft shrink-0 flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold text-ink-primary">
-              v{prompt.version} ÔÇö {prompt.title}
+              v{prompt.version} \u2014 {prompt.title}
             </h3>
             <p className="text-xs text-ink-muted mt-0.5">
               {prompt.isPinned ? 'Pinned' : 'Not pinned'}

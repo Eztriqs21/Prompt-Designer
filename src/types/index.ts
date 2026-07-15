@@ -14,6 +14,15 @@ export interface ChatSession {
   updatedAt: number;
 }
 
+export interface NewChatFormValues {
+  title: string;
+  websiteType: string;
+  audience: string;
+  goal: string;
+  preferredStack: string;
+  style: string;
+}
+
 export interface Message {
   id: string;
   chatId: string;
