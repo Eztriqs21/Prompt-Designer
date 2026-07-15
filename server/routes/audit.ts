@@ -54,7 +54,8 @@ router.post('/', upload.array('files', 20), async (req, res) => {
       return;
     }
 
-    const { inputType, source, mode } = req.body ?? {};
+    const { inputType, mode } = req.body ?? {};
+    let source = (req.body?.source || '') as string;
 
     // Validate input type
     if (!inputType || !VALID_INPUT_TYPES.includes(inputType)) {
@@ -78,6 +79,8 @@ router.post('/', upload.array('files', 20), async (req, res) => {
         res.status(400).json({ error: 'source (URL) is required for url input type' });
         return;
       }
+      // Sanitize URL: trim, strip trailing dots/slashes that break navigation
+      source = source.trim().replace(/\.+$/, '').replace(/\/+$/, '') + '/';
       const urlCheck = validateUrl(source);
       if (!urlCheck.valid) {
         res.status(400).json({ error: urlCheck.error });
@@ -88,6 +91,7 @@ router.post('/', upload.array('files', 20), async (req, res) => {
         res.status(400).json({ error: 'source (GitHub URL) is required for github input type' });
         return;
       }
+      source = source.trim().replace(/\.+$/, '').replace(/\/+$/, '') + '/';
       const ghCheck = validateGitHubUrl(source);
       if (!ghCheck.valid) {
         res.status(422).json({ error: ghCheck.error });

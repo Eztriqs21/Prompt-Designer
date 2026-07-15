@@ -78,7 +78,7 @@ async function tryInstallBrowsersAtRuntime(): Promise<boolean> {
     execSync('npx playwright install chromium', {
       env,
       stdio: 'pipe',
-      timeout: 120_000,
+      timeout: 300_000,
     });
     // Update parent process env so pw.chromium.launch() finds the browsers
     process.env.PLAYWRIGHT_BROWSERS_PATH = cachePath;
@@ -106,19 +106,38 @@ async function loadPlaywright(): Promise<PlaywrightModules | null> {
 }
 
 async function launchBrowser(pw: PlaywrightModules): Promise<ReturnType<typeof pw.chromium.launch> | null> {
-  // Attempt 1: Launch directly
+  // Ensure PLAYWRIGHT_BROWSERS_PATH is set before any launch attempt
+  getPlaywrightCachePath();
+
+  // Attempt 1: Launch directly (env var now set)
   try {
-    return await pw.chromium.launch({ headless: true });
+    const browser = await pw.chromium.launch({ headless: true });
+    console.log('[Playwright] Browser launched successfully (attempt 1)');
+    return browser;
   } catch (err: any) {
     console.error(`[Playwright] Initial launch failed: ${err.message}`);
     logPlaywrightDiagnostics();
+  }
+
+  // Check if browsers exist at the expected path before attempting install
+  const cachePath = getPlaywrightCachePath();
+  if (cachePath) {
+    const shellPath = path.join(cachePath, 'chromium_headless_shell-1228', 'chrome-headless-shell-linux64', 'chrome-headless-shell');
+    const chromiumPath = path.join(cachePath, 'chromium-1228', 'chrome-linux', 'chrome');
+    if (fs.existsSync(shellPath) || fs.existsSync(chromiumPath)) {
+      console.log(`[Playwright] Browsers exist at ${cachePath} but launch still failed — possible system dependency issue`);
+      logPlaywrightDiagnostics();
+      return null;
+    }
   }
 
   // Attempt 2: Install browsers at runtime if missing, then retry
   const installed = await tryInstallBrowsersAtRuntime();
   if (installed) {
     try {
-      return await pw.chromium.launch({ headless: true });
+      const browser = await pw.chromium.launch({ headless: true });
+      console.log('[Playwright] Browser launched successfully (attempt 2, after runtime install)');
+      return browser;
     } catch (err: any) {
       console.error(`[Playwright] Launch after runtime install still failed: ${err.message}`);
       logPlaywrightDiagnostics();
