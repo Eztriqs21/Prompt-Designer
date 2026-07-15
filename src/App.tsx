@@ -31,14 +31,16 @@ export default function App() {
           loop
           muted
           playsInline
-          className="fixed inset-0 w-full h-full object-cover pointer-events-none z-0"
-          style={{ opacity: 0.3, filter: 'grayscale(100%) brightness(0.7)' }}
+          className="fixed inset-0 w-full h-full object-cover pointer-events-none"
+          style={{ opacity: 0.45, filter: 'brightness(0.55) saturate(0.7)', zIndex: 0 }}
         >
           <source src={bgVideo} type="video/mp4" />
         </video>
+        {/* Dark overlay to ensure text readability */}
+        <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 1, background: 'linear-gradient(180deg, rgba(5,5,10,0.6) 0%, rgba(5,5,10,0.85) 100%)' }} />
 
         {/* App content */}
-        <div className="relative z-10">
+        <div className="relative" style={{ zIndex: 2 }}>
           <PageShell>
             <AnimatedRoutes />
           </PageShell>

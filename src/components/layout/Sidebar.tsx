@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, MessageSquare, Trash2, BookOpen, PanelLeftClose, Pencil, Check, X, ShieldCheck } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, BookOpen, PanelLeftClose, Pencil, Check, X, ShieldCheck, Sparkles } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
 import { hoverScaleSmall } from '../../motion/presets';
@@ -48,7 +48,6 @@ export default function Sidebar({
     }
   }, [editingId]);
 
-  // Close sidebar on outside click (mobile)
   useEffect(() => {
     if (!isOpen) return;
     const handleClick = (e: MouseEvent) => {
@@ -70,14 +69,19 @@ export default function Sidebar({
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 pt-5 pb-3 shrink-0">
-        <div className="flex items-center justify-between mb-4">
-          <h1
-            className="text-[15px] font-semibold text-white tracking-tight"
-            style={{ fontFamily: "'Instrument Serif', serif" }}
-          >
-            Prompt Designer
-          </h1>
+      <div className="px-4 pt-5 pb-4 shrink-0">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center border border-white/[0.08]">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400/80" />
+            </div>
+            <h1
+              className="text-[15px] font-semibold text-white/90 tracking-tight"
+              style={{ fontFamily: "'Instrument Serif', serif" }}
+            >
+              Prompt Designer
+            </h1>
+          </div>
           <button
             onClick={() => setIsOpen(false)}
             className="md:hidden p-1.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/[0.06] transition-colors"
@@ -93,7 +97,7 @@ export default function Sidebar({
             onNewChat();
             setIsOpen(false);
           }}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-white/70 hover:text-white text-[13px] font-medium transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-white/80 hover:text-white text-[13px] font-medium transition-all duration-200 border border-white/[0.06] hover:border-white/[0.12]"
         >
           <Plus className="w-4 h-4" />
           New Chat
@@ -103,10 +107,10 @@ export default function Sidebar({
         <Link
           to="/audit"
           onClick={() => setIsOpen(false)}
-          className={`mt-2 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[13px] font-medium transition-all duration-200 ${
+          className={`mt-2 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 border ${
             location.pathname === '/audit'
-              ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
-              : 'bg-white/[0.03] border-white/[0.06] text-white/40 hover:text-white/60 hover:bg-white/[0.05] hover:border-white/[0.08]'
+              ? 'bg-indigo-500/15 border-indigo-500/25 text-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.08)]'
+              : 'bg-white/[0.03] border-white/[0.06] text-white/40 hover:text-white/60 hover:bg-white/[0.06] hover:border-white/[0.1]'
           }`}
         >
           <ShieldCheck className="w-4 h-4" />
@@ -114,21 +118,28 @@ export default function Sidebar({
         </Link>
       </div>
 
+      {/* Divider */}
+      <div className="mx-4 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+
       {/* Chat list */}
-      <div className="flex-1 overflow-y-auto px-2 py-1 min-h-0">
+      <div className="flex-1 overflow-y-auto px-3 py-2 min-h-0">
         {loading && (
           <div className="px-4 py-8 text-center">
-            <p className="text-[12px] text-white/25">Loading...</p>
+            <div className="w-5 h-5 border-2 border-white/10 border-t-white/40 rounded-full animate-spin mx-auto mb-2" />
+            <p className="text-[11px] text-white/25">Loading chats...</p>
           </div>
         )}
 
         {!loading && chats.length === 0 && (
           <div className="px-4 py-8 text-center">
-            <MessageSquare className="w-6 h-6 text-white/15 mx-auto mb-2" />
-            <p className="text-[12px] text-white/25 leading-relaxed">
+            <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3">
+              <MessageSquare className="w-4 h-4 text-white/15" />
+            </div>
+            <p className="text-[12px] text-white/30 leading-relaxed">
               No chats yet.
-              <br />
-              Create one to get started.
+            </p>
+            <p className="text-[11px] text-white/15 mt-1">
+              Start a new conversation
             </p>
           </div>
         )}
@@ -140,9 +151,9 @@ export default function Sidebar({
           return (
             <div
               key={chat.id}
-              className={`group relative mb-0.5 rounded-lg transition-colors ${
+              className={`group relative mb-0.5 rounded-lg transition-all duration-150 ${
                 isActive
-                  ? 'bg-white/[0.08]'
+                  ? 'bg-white/[0.08] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]'
                   : 'hover:bg-white/[0.04]'
               }`}
             >
@@ -157,17 +168,17 @@ export default function Sidebar({
                       if (e.key === 'Escape') setEditingId(null);
                     }}
                     onBlur={() => handleRename(chat.id, editTitle)}
-                    className="flex-1 min-w-0 bg-white/[0.06] border border-white/[0.1] rounded px-2 py-1 text-[12px] text-white outline-none focus:border-white/20"
+                    className="flex-1 min-w-0 bg-white/[0.06] border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-[12px] text-white outline-none focus:border-indigo-500/40 focus:ring-1 focus:ring-indigo-500/20"
                   />
                   <button
                     onClick={() => handleRename(chat.id, editTitle)}
-                    className="p-1 rounded text-emerald-400 hover:bg-emerald-400/10"
+                    className="p-1 rounded-md text-emerald-400 hover:bg-emerald-400/10"
                   >
                     <Check className="w-3 h-3" />
                   </button>
                   <button
                     onClick={() => setEditingId(null)}
-                    className="p-1 rounded text-white/30 hover:text-white/60"
+                    className="p-1 rounded-md text-white/30 hover:text-white/60"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -178,11 +189,15 @@ export default function Sidebar({
                     onSelectChat(chat.id);
                     setIsOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2.5 flex items-center gap-2.5"
+                  className="w-full text-left px-3 py-2.5 flex items-center gap-2.5 group/item"
                 >
-                  <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white/60' : 'text-white/25'}`} />
-                  <span className={`flex-1 min-w-0 text-[12px] truncate ${
-                    isActive ? 'text-white/80' : 'text-white/45'
+                  <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-colors ${
+                    isActive ? 'bg-white/[0.08]' : 'bg-white/[0.03] group-hover/item:bg-white/[0.06]'
+                  }`}>
+                    <MessageSquare className={`w-3 h-3 ${isActive ? 'text-white/60' : 'text-white/25'}`} />
+                  </div>
+                  <span className={`flex-1 min-w-0 text-[12px] truncate transition-colors ${
+                    isActive ? 'text-white/80' : 'text-white/45 group-hover/item:text-white/60'
                   }`}>
                     {chat.title}
                   </span>
@@ -195,7 +210,7 @@ export default function Sidebar({
                         setEditingId(chat.id);
                         setEditTitle(chat.title);
                       }}
-                      className="p-1 rounded text-white/20 hover:text-white/60 hover:bg-white/[0.06] transition-colors"
+                      className="p-1 rounded-md text-white/20 hover:text-white/60 hover:bg-white/[0.06] transition-colors"
                     >
                       <Pencil className="w-3 h-3" />
                     </button>
@@ -204,7 +219,7 @@ export default function Sidebar({
                         e.stopPropagation();
                         setDeletingId(chat.id);
                       }}
-                      className="p-1 rounded text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                      className="p-1 rounded-md text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-colors"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -217,19 +232,20 @@ export default function Sidebar({
       </div>
 
       {/* Library toggle */}
-      <div className="px-4 py-3 border-t border-white/[0.06] shrink-0">
+      <div className="px-3 py-3 shrink-0">
+        <div className="mx-1 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent mb-3" />
         <button
           onClick={onToggleLibrary}
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-medium transition-colors ${
+          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-medium transition-all duration-150 ${
             showLibrary
-              ? 'bg-white/[0.08] text-white/70'
-              : 'text-white/35 hover:text-white/60 hover:bg-white/[0.04]'
+              ? 'bg-white/[0.08] text-white/70 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]'
+              : 'text-white/35 hover:text-white/55 hover:bg-white/[0.04]'
           }`}
         >
           <BookOpen className="w-3.5 h-3.5" />
           Prompt Library
           {promptCount > 0 && (
-            <span className="text-[10px] text-white/25 ml-auto">({promptCount})</span>
+            <span className="text-[10px] text-white/25 ml-auto bg-white/[0.04] px-1.5 py-0.5 rounded-full">({promptCount})</span>
           )}
         </button>
       </div>
@@ -253,7 +269,7 @@ export default function Sidebar({
       {/* Mobile hamburger button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-white/60 hover:text-white transition-colors"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-white/60 hover:text-white transition-colors backdrop-blur-sm border border-white/[0.06]"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -282,15 +298,21 @@ export default function Sidebar({
             animate={{ x: 0 }}
             exit={{ x: -280 }}
             transition={reducedMotion ? { duration: 0 } : { duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-            className="md:hidden fixed inset-y-0 left-0 z-50 w-[280px] bg-[#0a0a0f] border-r border-white/[0.06] flex flex-col"
+            className="md:hidden fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col"
+            style={{ background: 'linear-gradient(180deg, rgba(10,10,15,0.98) 0%, rgba(8,8,12,0.99) 100%)', backdropFilter: 'blur(20px)' }}
           >
+            <div className="absolute inset-0 border-r border-white/[0.06] pointer-events-none" />
             {sidebarContent}
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Desktop sidebar */}
-      <div className="hidden md:flex flex-col w-[280px] shrink-0 h-screen bg-[#0a0a0f] border-r border-white/[0.06] sticky top-0">
+      <div
+        className="hidden md:flex flex-col w-[280px] shrink-0 h-screen sticky top-0"
+        style={{ background: 'linear-gradient(180deg, rgba(10,10,15,0.95) 0%, rgba(8,8,12,0.98) 100%)', backdropFilter: 'blur(20px)' }}
+      >
+        <div className="absolute inset-0 border-r border-white/[0.06] pointer-events-none" />
         {sidebarContent}
       </div>
     </>
