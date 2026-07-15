@@ -1,0 +1,51 @@
+[
+  {
+    "id": "ce0d6de4-e36b-4abd-8cd5-d4e4d87a87c4",
+    "chatId": "13f2f0d2-1d35-4884-8084-caa377bcf024",
+    "role": "assistant",
+    "content": "Here's your master prompt:\n\n=== SECTION 1: ROLE & CONTEXT ===\nYou are a senior full-stack engineer building the landing, feature showcase, and waitlist page for \"DevelopIT\"—an advanced vibe coding automation software designed specifically for developers, builders, and software engineers. Your goal is to build a production-ready, highly accessible, and visually stunning single-page application (SPA). The website must be optimized to maximize waitlist signups while establishing trust and showcasing the product's high-tech ca...",
+    "timestamp": 1784014447366
+  },
+  {
+    "id": "b220d8de-61e5-4cf8-9d02-f481370e28bc",
+    "chatId": "13f2f0d2-1d35-4884-8084-caa377bcf024",
+    "role": "assistant",
+    "content": "Here's your master prompt:\n\n=== SECTION 1: ROLE & CONTEXT ===\nYou are a senior full-stack engineer building DevStudy.AI, an AI-powered academic assistant and chatbot platform designed specifically for computer science students and developers. Your task is to build a high-converting, production-ready, and fully accessible single-page web application using a dark, developer-centric aesthetic. The site must be optimized for performance, look exceptional across all device sizes, and guide users seamlessly toward signing up for...",
+    "timestamp": 1784015016273
+  },
+  {
+    "id": "33366231-81d0-491f-9d80-89c993a8422b",
+    "chatId": "f684af8d-eb6a-4b05-9739-3c46b2f1fda7",
+    "role": "assistant",
+    "content": "Here's your master prompt:\n\n=== SECTION 1: ROLE & CONTEXT ===\nYou are a senior full-stack engineer building 'Sovereign OS', a premium, minimalist SaaS platform designed to consolidate operations, invoicing, and analytics for modern business owners and agency founders. Your goal is to build a production-ready, highly accessible, and ultra-performant landing page and interactive onboarding flow. The final product must feel premium, load instantly, and guide the user seamlessly toward signing up. Maintain the highest engineer...",
+    "timestamp": 1784016524967
+  },
+  {
+    "id": "95479afe-30ed-4905-bfcf-931c3982bb23",
+    "chatId": "4644ce37-e327-4324-8f6c-14a5c84b4acc",
+    "role": "assistant",
+    "content": "Here's your master prompt:\n\n{\n  \"summary\": \"A highly cinematic, minimal, and motion-heavy video editing showcase portfolio designed specifically for elite Content Creators. The application serves as an immersive digital showreel, utilizing a sleek dark-mode aesthetic with fluid transitions, hover-to-play video grids, and interactive case studies. The technical direction leverages React, TypeScript, Tailwind CSS v4, and Framer Motion to deliver a buttery-smooth, high-performance visual experience.\",\n  \"analysis\": \"The proje...",
+    "timestamp": 1784019947371
+  },
+  {
+    "id": "810fd3e9-9e7e-4aa5-9f5b-7b7a6daaf2be",
+    "chatId": "4e2e67f5-7098-4e5f-904c-4df8c8809aea",
+    "role": "user",
+    "content": "A SaaS landing page website for developers",
+    "timestamp": 1784046913002
+  },
+  {
+    "id": "cfca2c3d-cbd2-4bd7-98c5-9d45c40d0b2c",
+    "chatId": "4e2e67f5-7098-4e5f-904c-4df8c8809aea",
+    "role": "user",
+    "content": "generate",
+    "timestamp": 1784046920712
+  },
+  {
+    "id": "89f14bce-7386-409a-b6fa-527aa7e212a6",
+    "chatId": "4e2e67f5-7098-4e5f-904c-4df8c8809aea",
+    "role": "assistant",
+    "content": "Here's your master prompt:\n\n{\n  \"summary\": \"This project is a cinematic SaaS landing page targeting developers, designed to showcase a developer-focused product with a dark, immersive visual style. The site will follow a single-page scrolling architecture with sections optimized for conversion — guiding developers from curiosity to signup or demo booking. Built with React 18+, Vite, TypeScript, Tailwind CSS v4, and Framer Motion, the design will leverage dark backgrounds, glowing accents, and cinematic motion to create a p...",
+    "timestamp": 1784048064193
+  }
+]

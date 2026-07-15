@@ -1,0 +1,1097 @@
+[3D PORTFOLIO ]
+
+Build a 3D Creator portfolio landing page for "Jack" using React, TypeScript, Tailwind CSS, Framer Motion, and Lucide React. The page has a dark theme (#0C0C0C background) with the font Kanit (Google Fonts, weights 300-900). The page title is "Jack -- 3D Creator".
+
+GLOBAL STYLES
+Background: #0C0C0C on html, body, #root, and the main wrapper
+Font family: 'Kanit', sans-serif
+Global reset: box-sizing border-box, margin 0, padding 0
+CSS class .hero-heading: gradient text using background: linear-gradient(180deg, #646973 0%, #BBCCD7 100%) with -webkit-background-clip: text and -webkit-text-fill-color: transparent
+Main wrapper has overflowX: 'clip'
+SECTION ORDER
+HeroSection
+MarqueeSection
+AboutSection
+ServicesSection
+ProjectsSection
+1. HERO SECTION
+Full viewport height (h-screen), flex column layout with overflowX: clip.
+
+Navbar: Horizontal nav bar with 4 links -- "About", "Price", "Projects", "Contact" -- evenly spaced with justify-between. Text color #D7E2EA, font-medium, uppercase, tracking-wider. Sizes: text-sm md:text-lg lg:text-[1.4rem]. Padding: px-6 md:px-10 pt-6 md:pt-8. Hover: opacity 70% with 200ms transition.
+
+Hero Heading: Massive h1 with text "Hi, i'm jack" (lowercase "i", curly apostrophe via &apos;). Uses the .hero-heading gradient text class. Font-black, uppercase, tracking-tight, leading-none, whitespace-nowrap, w-full. Font sizes: text-[14vw] sm:text-[15vw] md:text-[16vw] lg:text-[17.5vw]. Margin top: mt-6 sm:mt-4 md:-mt-5. Wrapped in overflow-hidden container.
+
+Bottom bar: Flexbox justify-between items-end with pb-7 sm:pb-8 md:pb-10:
+
+Left: paragraph text "a 3d creator driven by crafting striking and unforgettable projects", color #D7E2EA, font-light, uppercase, tracking-wide, leading-snug. Font size: clamp(0.75rem, 1.4vw, 1.5rem). Max-width: max-w-[160px] sm:max-w-[220px] md:max-w-[260px].
+Right: ContactButton component (see below)
+Hero Portrait: Centered absolutely. Uses a Magnet component (mouse-following magnetic effect) wrapping an image. Image URL: https://shrug-person-78902957.figma.site/_components/v2/d24c01ad3a56fc65e942a1f501eb73db42d7cf9a/Rectangle_40443.81459862.png. Magnet settings: padding 150, strength 3, activeTransition "transform 0.3s ease-out", inactiveTransition "transform 0.6s ease-in-out". Positioning: absolute left-1/2 -translate-x-1/2 z-10. Width: w-[280px] sm:w-[360px] md:w-[440px] lg:w-[520px]. On mobile: top-1/2 -translate-y-1/2. On sm+: sm:top-auto sm:translate-y-0 sm:bottom-0.
+
+FadeIn animations: Navbar fades in with delay 0, y -20. Heading: delay 0.15, y 40. Left text: delay 0.35, y 20. Contact button: delay 0.5, y 20. Portrait: delay 0.6, y 30.
+
+2. MARQUEE SECTION
+Two rows of images that scroll horizontally based on page scroll position. Background #0C0C0C. Padding: pt-24 sm:pt-32 md:pt-40 pb-10.
+
+21 GIF images from motionsites.ai (exact URLs):
+
+
+https://motionsites.ai/assets/hero-space-voyage-preview-eECLH3Yc.gif
+https://motionsites.ai/assets/hero-codenest-preview-Cgppc2qV.gif
+https://motionsites.ai/assets/hero-vex-ventures-preview-BczMFIiw.gif
+https://motionsites.ai/assets/hero-stellar-ai-v2-preview-DjvxjG3C.gif
+https://motionsites.ai/assets/hero-asme-preview-B_nGDnTP.gif
+https://motionsites.ai/assets/hero-transform-data-preview-Cx5OU29N.gif
+https://motionsites.ai/assets/hero-vitara-preview-Cjz2QYyU.gif
+https://motionsites.ai/assets/hero-terra-preview-BFjrCr7T.gif
+https://motionsites.ai/assets/hero-skyelite-preview-DHaZIgUv.gif
+https://motionsites.ai/assets/hero-aethera-preview-DknSlcTa.gif
+https://motionsites.ai/assets/hero-designpro-preview-D8c5_een.gif
+https://motionsites.ai/assets/hero-stellar-ai-preview-D3HL6bw1.gif
+https://motionsites.ai/assets/hero-xportfolio-preview-D4A8maiC.gif
+https://motionsites.ai/assets/hero-orbit-web3-preview-BXt4OttD.gif
+https://motionsites.ai/assets/hero-nexora-preview-cx5HmUgo.gif
+https://motionsites.ai/assets/hero-evr-ventures-preview-DZxeVFEX.gif
+https://motionsites.ai/assets/hero-planet-orbit-preview-DWAP8Z1P.gif
+https://motionsites.ai/assets/hero-new-era-preview-CocuDUm9.gif
+https://motionsites.ai/assets/hero-wealth-preview-B70idl_u.gif
+https://motionsites.ai/assets/hero-luminex-preview-CxOP7ce6.gif
+https://motionsites.ai/assets/hero-celestia-preview-0yO3jXO8.gif
+Row 1: first 11 images, tripled for seamless scrolling. Moves RIGHT on scroll (translateX(offset - 200)).
+Row 2: remaining 10 images, tripled. Moves LEFT on scroll (translateX(-(offset - 200))).
+Scroll offset calculated as: (window.scrollY - sectionTop + window.innerHeight) * 0.3
+Each image tile: 420px x 270px, rounded-2xl, object-cover, lazy loaded.
+Gap between tiles: gap-3. Gap between rows: gap-3.
+Uses willChange: 'transform' for performance. Scroll listener is passive.
+3. ABOUT SECTION
+Full-height centered section with min-h-screen, padding px-5 sm:px-8 md:px-10 py-20.
+
+Four decorative 3D images positioned absolutely in corners:
+
+Top-left: Moon icon -- https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/moon_icon.11395d36.png -- w-[120px] sm:w-[160px] md:w-[210px], positioned top-[4%] left-[1%] sm:left-[2%] md:left-[4%]. FadeIn: delay 0.1, x -80, y 0, duration 0.9.
+Bottom-left: 3D object -- https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/p59_1.4659672e.png -- w-[100px] sm:w-[140px] md:w-[180px], positioned bottom-[8%] left-[3%] sm:left-[6%] md:left-[10%]. FadeIn: delay 0.25, x -80, y 0, duration 0.9.
+Top-right: Lego icon -- https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/lego_icon-1.703bb594.png -- w-[120px] sm:w-[160px] md:w-[210px], positioned top-[4%] right-[1%] sm:right-[2%] md:right-[4%]. FadeIn: delay 0.15, x 80, y 0, duration 0.9.
+Bottom-right: 3D group -- https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/Group_134-1.2e04f3ce.png -- w-[130px] sm:w-[170px] md:w-[220px], positioned bottom-[8%] right-[3%] sm:right-[6%] md:right-[10%]. FadeIn: delay 0.3, x 80, y 0, duration 0.9.
+Heading: "About me" using .hero-heading gradient text, font-black, uppercase, leading-none, tracking-tight, centered. Font size: clamp(3rem, 12vw, 160px). FadeIn: delay 0, y 40.
+
+Animated paragraph: Uses a character-by-character scroll-driven opacity animation. Text: "With more than five years of experience in design, i focus on branding, web design, and user experience, i truly enjoy working with businesses that aim to stand out and present their best image. Let's build something incredible together!" -- color #D7E2EA, font-medium, centered, leading-relaxed, max-w-[560px], font size clamp(1rem, 2vw, 1.35rem). Each character animates from opacity 0.2 to 1 based on scroll progress, with scroll offset ['start 0.8', 'end 0.2'].
+
+Contact button below the text block. Gap between heading/text: gap-10 sm:gap-14 md:gap-16. Gap between text block and button: gap-16 sm:gap-20 md:gap-24.
+
+4. SERVICES SECTION
+White background (#FFFFFF), with rounded-t-[40px] sm:rounded-t-[50px] md:rounded-t-[60px] top corners. Padding: px-5 sm:px-8 md:px-10 py-20 sm:py-24 md:py-32.
+
+Heading: "Services" in #0C0C0C, font-black, uppercase, centered, font size clamp(3rem, 12vw, 160px). Margin bottom: mb-16 sm:mb-20 md:mb-28.
+
+5 service items in a vertical list, max-w-5xl, centered:
+
+01 - 3D Modeling: "Creation of detailed objects, characters, or environments tailored to specific client needs, ideal for games, products, and visualizations."
+02 - Rendering: "High-quality, photorealistic renders that showcase designs with custom lighting, textures, and materials to bring concepts to life."
+03 - Motion Design: "Dynamic animations and motion graphics that add energy and storytelling to brands, products, and digital experiences."
+04 - Branding: "Crafting cohesive visual identities -- from logos to full brand systems -- that communicate a clear and memorable presence."
+05 - Web Design: "Designing clean, modern, and conversion-focused websites with attention to layout, typography, and user experience."
+Each item: horizontal layout with number (font-black, font size clamp(3rem, 10vw, 140px), color #0C0C0C) on the left and name + description stacked vertically on the right. Name: font-medium, uppercase, font size clamp(1rem, 2.2vw, 2.1rem). Description: font-light, leading-relaxed, max-w-2xl, font size clamp(0.85rem, 1.6vw, 1.25rem), opacity 0.6. Items separated by 1px borders (rgba(12, 12, 12, 0.15)). Padding: py-8 sm:py-10 md:py-12. Staggered FadeIn: each item delays by i * 0.1.
+
+5. PROJECTS SECTION
+Dark background (#0C0C0C), rounded top corners rounded-t-[40px] sm:rounded-t-[50px] md:rounded-t-[60px], pulled up with -mt-10 sm:-mt-12 md:-mt-14, z-10.
+
+Heading: "Project" (singular) using .hero-heading gradient, same styling as other headings.
+
+3 sticky-stacking project cards that scale down as you scroll past them (card stacking effect using Framer Motion useScroll and useTransform). Each card is sticky top-24 md:top-32 inside an h-[85vh] container.
+
+Scale calculation: targetScale = 1 - (totalCards - 1 - index) * 0.03. Each card offset by top: ${index * 28}px.
+
+Each card has: rounded-[40px] sm:rounded-[50px] md:rounded-[60px], border-2 border-[#D7E2EA], background #0C0C0C, padding p-4 sm:p-6 md:p-8.
+
+Card layout:
+
+Top row: Number (huge, same style as services), category label, project name, and a "Live Project" ghost button (rounded-full, border-2 #D7E2EA, uppercase, tracking-widest).
+Bottom row: Two-column image grid -- left column (40% width) has 2 stacked images, right column (60%) has 1 tall image. All images have heavy border radius rounded-[40px] sm:rounded-[50px] md:rounded-[60px]. Left top image height: clamp(130px, 16vw, 230px). Left bottom image height: clamp(160px, 22vw, 340px).
+Project data with CloudFront image URLs:
+
+Project 01 - "Nextlevel Studio" (Client):
+
+Col1 image 1: https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055344_5eff02e0-87a5-41ce-b64f-eb08da8f33db.png&w=1280&q=85
+Col1 image 2: https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055431_11d841fd-8b41-46a5-82e4-b04f2407a7d8.png&w=1280&q=85
+Col2 image: https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055451_e317bf2d-28d4-48cc-86b0-6f72f25b6327.png&w=1280&q=85
+Project 02 - "Aura Brand Identity" (Personal):
+
+Col1 image 1: https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055654_911201c5-36d9-4bc6-bac7-331adfce159f.png&w=1280&q=85
+Col1 image 2: https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055723_5ceda0b8-d9c2-4665-b2e3-83ba19ba76d1.png&w=1280&q=85
+Col2 image: https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055753_adc5dcbd-a8e6-49c0-b43a-9b030d835cea.png&w=1280&q=85
+Project 03 - "Solaris Digital" (Client):
+
+Col1 image 1: https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055759_963cfb0b-4bd1-4b0f-9d0a-09bd6cf95b2f.png&w=1280&q=85
+Col1 image 2: https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_060108_438f781a-9846-4dcc-89ab-c4e6cb830f5b.png&w=1280&q=85
+Col2 image: https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055818_9d062121-ad7e-46b9-999a-1a6a692ef1ee.png&w=1280&q=85
+REUSABLE COMPONENTS
+ContactButton: Rounded-full pill button with gradient background linear-gradient(123deg, #18011F 7%, #B600A8 37%, #7621B0 72%, #BE4C00 100%), inner box-shadow 0px 4px 4px rgba(181, 1, 167, 0.25), 4px 4px 12px #7721B1 inset, white 2px outline with -3px offset. Text: white, font-medium, uppercase, tracking-widest. Sizes: px-8 py-3 sm:px-10 sm:py-3.5 md:px-12 md:py-4, text text-xs sm:text-sm md:text-base. Label: "Contact Me".
+
+LiveProjectButton: Ghost/outline pill button. Rounded-full, border-2 border-[#D7E2EA], text color #D7E2EA, font-medium, uppercase, tracking-widest. Sizes: px-8 py-3 sm:px-10 sm:py-3.5, text text-sm sm:text-base. Hover: bg-[#D7E2EA]/10. Label: "Live Project".
+
+FadeIn: Framer Motion wrapper using whileInView with viewport={{ once: true, margin: "50px", amount: 0 }}. Accepts delay, duration (default 0.7), x (default 0), y (default 30). Easing: [0.25, 0.1, 0.25, 1]. Uses motion.create() for dynamic element types.
+
+Magnet: Mouse-following magnetic hover effect. Tracks mouse position relative to element center, applies translate3d transform divided by strength factor. Activates when cursor is within padding distance of element edge. Smooth transition in (0.3s ease-out) and out (0.6s ease-in-out). Uses willChange: 'transform'.
+
+AnimatedText: Character-by-character scroll-reveal text animation. Each character goes from opacity 0.2 to 1 based on its position in the text relative to scroll progress. Uses Framer Motion useScroll targeting the paragraph element with offset ['start 0.8', 'end 0.2']. Each character uses invisible placeholder + absolute positioned animated span.
+
+KEY DEPENDENCIES
+react, react-dom (^18.3.1)
+framer-motion (^12.38.0)
+lucide-react (^0.344.0)
+tailwindcss (^3.4.1)
+vite, typescript
+RESPONSIVE BREAKPOINTS
+All sections use Tailwind's default breakpoints (sm: 640px, md: 768px, lg: 1024px) with mobile-first approach. Heavy use of clamp() for fluid typography. The entire design scales gracefully from mobile to ultra-wide screens.
+
+
+
+
+[ Velorah, agency ]
+
+Create a single-page hero section with a fullscreen looping background video, glassmorphic navigation, and cinematic typography. Use React + Vite + Tailwind CSS + TypeScript with shadcn/ui.
+
+Video Background:
+
+Fullscreen <video> element with autoPlay, loop, muted, playsInline
+Source URL: https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4
+Positioned absolute inset-0 w-full h-full object-cover z-0
+
+Fonts:
+
+Import from Google Fonts: Instrumental Serif (display) and Inter weights 400/500 (body)
+CSS variables: --font-display: 'Instrument Serif', serif and --font-body: 'Inter', sans-serif
+Body uses var(--font-body), headings use inline fontFamily: "'Instrument Serif', serif"
+
+Color Theme (dark, HSL values for CSS variables):
+
+--background: 201 100% 13% (deep navy blue)
+--foreground: 0 0% 100% (white)
+--muted-foreground: 240 4% 66% (muted gray)
+--primary: 0 0% 100%, --primary-foreground: 0 0% 4%
+--secondary: 0 0% 10%, --muted: 0 0% 10%, --accent: 0 0% 10%
+--border: 0 0% 18%, --input: 0 0% 18%
+
+Navigation Bar:
+
+relative z-10, flex row, justify-between, px-8 py-6, max-w-7xl mx-auto
+Logo: "Velorah®" (® as <sup className="text-xs">), text-3xl tracking-tight, Instrument Serif font, text-foreground
+Nav links (hidden on mobile, md:flex): Home (active, text-foreground), Studio, About, Journal, Reach Us — all text-sm text-muted-foreground with hover:text-foreground transition-colors
+CTA button: "Begin Journey", liquid-glass rounded-full px-6 py-2.5 text-sm text-foreground, hover:scale-[1.03]
+
+Hero Section:
+
+relative z-10, flex column, centered, text-center, px-6 pt-32 pb-40 py-[90px]
+H1: "Where dreams rise through the silence." — text-5xl sm:text-7xl md:text-8xl, leading-[0.95], tracking-[-2.46px], max-w-7xl, font-normal, Instrument Serif. The words "dreams" and "through the silence." wrapped in <em className="not-italic text-muted-foreground"> for color contrast
+Subtext: text-muted-foreground text-base sm:text-lg max-w-2xl mt-8 leading-relaxed — "We're designing tools for deep thinkers, bold creators, and quiet rebels. Amid the chaos, we build digital spaces for sharp focus and inspired work."
+CTA button: "Begin Journey", liquid-glass rounded-full px-14 py-5 text-base text-foreground mt-12, hover:scale-[1.03] cursor-pointer
+
+Liquid Glass Effect (CSS class .liquid-glass):
+
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.01);
+  background-blend-mode: luminosity;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: none;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.4px;
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 20%,
+    rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
+    rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.45) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+Animations (CSS keyframes + classes):
+
+@keyframes fade-rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-rise { animation: fade-rise 0.8s ease-out both; }
+.animate-fade-rise-delay { animation: fade-rise 0.8s ease-out 0.2s both; }
+.animate-fade-rise-delay-2 { animation: fade-rise 0.8s ease-out 0.4s both; }
+
+H1 gets animate-fade-rise
+Subtext gets animate-fade-rise-delay
+Hero CTA button gets animate-fade-rise-delay-2
+
+Layout: No decorative blobs, radial gradients, or overlays. Minimalist, cinematic, vertically centered hero. The video provides all visual depth.
+
+
+
+
+[ Vision Reveal ] 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Creative Studio Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+* { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: #E4E4E4;
+  color: #F4F1E8;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* ===== SPLASH ===== */
+.splash {
+  position: fixed; inset: 0;
+  width: 100vw; height: 100vh;
+  z-index: 9999;
+  pointer-events: none;
+  overflow: hidden;
+  animation: splashHide 0.3s ease forwards;
+  animation-delay: 1.35s;
+}
+.splash-row { display: flex; width: 100%; height: 50%; }
+.splash-box { width: 20%; height: 100%; background: #75C5DE; }
+.splash-row-top .splash-box { animation: splashTop 1s cubic-bezier(0.96,-0.02,0.38,1.01) forwards; }
+.splash-row-bottom .splash-box { animation: splashBottom 1s cubic-bezier(0.96,-0.02,0.38,1.01) forwards; }
+.splash-box:nth-child(1) { animation-delay: 0s; }
+.splash-box:nth-child(2) { animation-delay: 0.05s; }
+.splash-box:nth-child(3) { animation-delay: 0.1s; }
+.splash-box:nth-child(4) { animation-delay: 0.15s; }
+.splash-box:nth-child(5) { animation-delay: 0.2s; }
+
+@keyframes splashTop { from { transform: translateY(0%); } to { transform: translateY(-100%); } }
+@keyframes splashBottom { from { transform: translateY(0%); } to { transform: translateY(100%); } }
+@keyframes splashHide { to { opacity: 0; visibility: hidden; } }
+
+/* ===== HERO IMAGE ENTRANCE ===== */
+@keyframes heroImageIn {
+  from { opacity: 0; transform: scale(1.5) rotate(3deg); }
+  to { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+.hero-image-animate {
+  animation: heroImageIn 1.2s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+  animation-delay: 1s;
+  opacity: 0;
+}
+
+/* ===== WORD REVEAL ===== */
+@keyframes wordReveal {
+  from { opacity: 0; transform: translateY(10px); filter: blur(10px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+.word-reveal {
+  opacity: 0;
+  display: inline-block;
+  margin-right: 0.3em;
+  animation: wordReveal 0.4s ease forwards;
+}
+
+/* ===== CTA ENTRANCE ===== */
+@keyframes slideUpScale {
+  from { opacity: 0; transform: translateY(60px) scale(0.4); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.cta-animate {
+  opacity: 0;
+  animation: slideUpScale 0.8s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+  animation-delay: 1s;
+}
+
+/* ===== CTA BUTTON ===== */
+.cta-btn { position: relative; overflow: hidden; display: flex; align-items: center; border: none; background: none; cursor: pointer; border-radius: 9999px; padding: 8px; gap: 12px; }
+.cta-btn-bg {
+  position: absolute; top: 5px; bottom: 5px; left: 8px;
+  width: calc(100% - 8px - 8px - 48px - 12px);
+  border-radius: 9999px; background: white; z-index: 0;
+  transition: width 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+@media (min-width: 768px) { .cta-btn-bg { width: calc(100% - 8px - 8px - 54px - 12px); } }
+.cta-btn:hover .cta-btn-bg { width: calc(100% - 16px); }
+.cta-btn-text { position: relative; z-index: 1; color: #111111; font-weight: 500; font-size: 16px; padding: 12px 32px; white-space: nowrap; }
+@media (min-width: 768px) { .cta-btn-text { font-size: 18px; padding: 16px 40px; } }
+.cta-btn-circle {
+  position: relative; z-index: 1; display: flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; border-radius: 50%; background: #75C5DE; flex-shrink: 0;
+  transition: transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+@media (min-width: 768px) { .cta-btn-circle { width: 54px; height: 54px; } }
+.cta-btn:hover .cta-btn-circle { transform: translateX(-7px); }
+
+/* ===== MENU CTA (smaller) ===== */
+.menu-cta-btn { position: relative; overflow: hidden; display: flex; align-items: center; border: none; background: none; cursor: pointer; border-radius: 9999px; padding: 6px; gap: 8px; }
+.menu-cta-bg {
+  position: absolute; top: 5px; bottom: 5px; left: 8px;
+  width: calc(100% - 8px - 8px - 38px - 8px);
+  border-radius: 9999px; background: white; z-index: 0;
+  transition: width 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.menu-cta-btn:hover .menu-cta-bg { width: calc(100% - 12px); }
+.menu-cta-text { position: relative; z-index: 1; color: #111111; font-weight: 500; font-size: 14px; padding: 8px 40px; white-space: nowrap; }
+.menu-cta-circle {
+  position: relative; z-index: 1; display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 50%; background: #75C5DE; flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+.menu-cta-btn:hover .menu-cta-circle { transform: translateX(-4px); }
+
+/* ===== CREATOR TEXT ===== */
+@keyframes creatorSlideUp { from { transform: translateY(330px); } to { transform: translateY(0); } }
+.creator-text-animate {
+  transform: translateY(330px);
+  animation: creatorSlideUp 1s cubic-bezier(0.16,1,0.3,1) forwards;
+  animation-delay: 1.5s;
+}
+
+/* ===== NAVIGATION ===== */
+.logo-wrapper {
+  position: fixed; top: 30px; left: 0; width: 50%; z-index: 10;
+  display: flex; justify-content: flex-start; align-items: center; mix-blend-mode: difference;
+}
+@media (min-width: 768px) { .logo-wrapper { top: 40px; } }
+.logo-wrapper .inner { padding-left: 20px; }
+@media (min-width: 768px) { .logo-wrapper .inner { padding-left: 40px; } }
+.logo-wrapper img { width: 32px; height: 32px; }
+
+.burger-wrapper {
+  position: fixed; top: 16px; right: 0; width: 50%; z-index: 10;
+  display: flex; justify-content: flex-end; align-items: center;
+}
+@media (min-width: 768px) { .burger-wrapper { top: 27px; } }
+.burger-wrapper .inner { padding-right: 20px; }
+@media (min-width: 768px) { .burger-wrapper .inner { padding-right: 40px; } }
+
+.burger-btn {
+  width: 59px; height: 59px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center;
+  background: #F4F1E8; transition: background 0.4s ease;
+}
+.burger-btn:hover { background: #0B0B0B; }
+.burger-btn .bar {
+  display: block; width: 24px; height: 2px; background: #111111;
+  transition: all 0.3s ease;
+}
+.burger-btn:hover .bar { background: #F4F1E8; }
+.burger-btn.open { background: #0B0B0B; }
+.burger-btn.open .bar { background: #F4F1E8; }
+.burger-btn.open .bar:first-child { transform: rotate(45deg) translate(2px, 2px); }
+.burger-btn.open .bar:last-child { transform: rotate(-45deg) translate(2px, -2px); }
+
+/* ===== MENU PANEL ===== */
+.menu-panel {
+  position: fixed; z-index: 9;
+  left: 8px; right: 8px;
+  border-radius: 20px;
+  background: rgba(17,17,17,0.95);
+  backdrop-filter: blur(26px); -webkit-backdrop-filter: blur(26px);
+  padding: 90px 32px 32px 32px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  transition: top 0.5s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.4s ease;
+  top: -600px; opacity: 0; pointer-events: none;
+}
+@media (min-width: 768px) {
+  .menu-panel { left: auto; right: 7px; width: 420px; padding: 60px; }
+}
+.menu-panel.open { top: 0; opacity: 1; pointer-events: auto; }
+@media (min-width: 768px) { .menu-panel.open { top: 7px; } }
+
+.menu-panel nav { display: flex; flex-direction: column; gap: 8px; }
+.menu-panel nav a {
+  color: #F4F1E8; font-size: 36px; font-weight: 500; text-decoration: none;
+  line-height: 130%; transition: opacity 0.3s ease;
+}
+@media (min-width: 768px) { .menu-panel nav a { font-size: 42px; } }
+.menu-panel nav a:hover { opacity: 0.7; }
+
+.menu-contact { display: flex; flex-direction: column; gap: 20px; margin-top: 32px; }
+.menu-email { color: #9A9590; font-size: 18px; text-decoration: none; transition: color 0.3s ease; }
+@media (min-width: 768px) { .menu-email { font-size: 20px; } }
+.menu-email:hover { color: #F4F1E8; }
+.menu-socials { display: flex; gap: 24px; }
+.menu-socials a {
+  color: #9A9590; font-size: 14px; text-decoration: underline;
+  text-underline-offset: 2px; transition: color 0.3s ease;
+}
+.menu-socials a:hover { color: #F4F1E8; }
+
+/* ===== HERO ===== */
+.hero {
+  position: relative; width: 100%; overflow: hidden;
+  background: #E4E4E4; min-height: 100vh;
+}
+@media (min-width: 768px) { .hero { height: 100vh; min-height: 800px; } }
+
+.hero-big-text {
+  position: absolute; bottom: -30px; left: 0; right: 0; z-index: 2;
+  pointer-events: none; width: 100%; text-align: center;
+}
+@media (min-width: 768px) { .hero-big-text { bottom: -40px; } }
+.hero-big-text h2 {
+  font-weight: 500; color: #F4F1E8; line-height: 80%;
+  letter-spacing: -0.04em; white-space: nowrap;
+  font-size: clamp(180px, 28vw, 560px);
+}
+
+.hero-base-img {
+  position: absolute; top: 30vh; left: 0; right: 0; bottom: 0;
+  background-size: cover; background-repeat: no-repeat;
+  background-position: 60% center; z-index: 5;
+}
+@media (min-width: 768px) { .hero-base-img { top: 0; background-position: center; } }
+
+.hero-reveal-img {
+  position: absolute; top: 30vh; left: 0; right: 0; bottom: 0;
+  background-size: cover; background-repeat: no-repeat;
+  background-position: 60% center; z-index: 7; pointer-events: none;
+}
+@media (min-width: 768px) { .hero-reveal-img { top: 0; background-position: center; } }
+
+.hero-content {
+  position: relative; z-index: 8;
+  display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start;
+  width: 100%; max-width: 1600px; margin: 0 auto;
+  padding: 110px 16px 24px 16px; pointer-events: none;
+}
+@media (min-width: 768px) {
+  .hero-content {
+    position: absolute; inset: 0;
+    justify-content: space-between;
+    padding: 160px 40px 100px 40px;
+  }
+}
+.hero-content-inner { display: flex; flex-direction: column; align-items: flex-start; gap: 30px; width: 100%; pointer-events: auto; }
+
+.hero-headline {
+  font-size: 22px; font-weight: 500; line-height: 120%;
+  letter-spacing: -0.02em; color: #111111; max-width: 447px;
+}
+@media (min-width: 768px) { .hero-headline { font-size: 28px; } }
+
+/* ===== CANVAS (hidden) ===== */
+#reveal-canvas { display: none; position: absolute; inset: 0; pointer-events: none; }
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  .splash { animation: splashHide 0.01s linear forwards; }
+  .splash-box { animation: none !important; }
+  .hero-image-animate, .word-reveal, .cta-animate, .creator-text-animate {
+    animation: none !important; opacity: 1 !important;
+    transform: none !important; filter: none !important; visibility: visible !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="splash" id="splash">
+  <div class="splash-row splash-row-top">
+    <div class="splash-box"></div><div class="splash-box"></div><div class="splash-box"></div><div class="splash-box"></div><div class="splash-box"></div>
+  </div>
+  <div class="splash-row splash-row-bottom">
+    <div class="splash-box"></div><div class="splash-box"></div><div class="splash-box"></div><div class="splash-box"></div><div class="splash-box"></div>
+  </div>
+</div>
+
+<!-- LOGO -->
+<div class="logo-wrapper">
+  <div class="inner">
+    <a href="/" aria-label="Home">
+      <img src="https://framerusercontent.com/images/VMcS7YYTM5PXfXvlHc9u3hSCMM.svg" alt=""/>
+    </a>
+  </div>
+</div>
+
+<!-- BURGER -->
+<div class="burger-wrapper">
+  <div class="inner">
+    <button class="burger-btn" id="burger-btn" aria-label="Open menu">
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+  </div>
+</div>
+
+<!-- MENU PANEL -->
+<div class="menu-panel" id="menu-panel">
+  <nav>
+    <a href="#work">Work</a>
+    <a href="#about">About</a>
+    <a href="#blog">Blog</a>
+  </nav>
+  <div class="menu-contact">
+    <a href="mailto:studio@norakessler.com" class="menu-email">studio@norakessler.com</a>
+    <div class="menu-socials">
+      <a href="#">Pinterest</a>
+      <a href="#">Behance</a>
+      <a href="#">Letterboxd</a>
+    </div>
+  </div>
+  <div style="margin-top:32px;">
+    <button class="menu-cta-btn">
+      <span class="menu-cta-bg"></span>
+      <span class="menu-cta-text">Let's talk</span>
+      <span class="menu-cta-circle">
+        <svg width="14" height="14" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 13L13 5M13 5H6M13 5V12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+    </button>
+  </div>
+</div>
+
+<!-- HERO -->
+<main class="hero">
+  <!-- Big text behind image -->
+  <div class="hero-big-text creator-text-animate">
+    <h2>Visuals</h2>
+  </div>
+
+  <!-- Base image -->
+  <div class="hero-base-img hero-image-animate"
+       style="background-image:url('https://soft-zoom-63098134.figma.site/_assets/v11/5c9f982199fde1d9b85a20e5396f0fa7bacaf9a3.png?w=2560');">
+  </div>
+
+  <!-- Reveal layer -->
+  <canvas id="reveal-canvas"></canvas>
+  <div class="hero-reveal-img" id="reveal-img"
+       style="background-image:url('https://soft-zoom-63098134.figma.site/_assets/v11/6be2165e31648955b4e071f4cf2a50bc572b9bfd.png?w=1536');">
+  </div>
+
+  <!-- Content -->
+  <div class="hero-content">
+    <div class="hero-content-inner">
+      <h1 class="hero-headline" id="headline"></h1>
+      <button class="cta-btn cta-animate">
+        <span class="cta-btn-bg"></span>
+        <span class="cta-btn-text">Start a project now</span>
+        <span class="cta-btn-circle">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 13L13 5M13 5H6M13 5V12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </button>
+    </div>
+  </div>
+</main>
+
+<script>
+(function() {
+  // Word reveal
+  const headline = document.getElementById('headline');
+  const text = "I build compelling visual stories & motion that make ideas shine.";
+  const words = text.split(' ');
+  words.forEach(function(word, i) {
+    const span = document.createElement('span');
+    span.className = 'word-reveal';
+    span.textContent = word;
+    span.style.animationDelay = (1 + i * 0.05) + 's';
+    headline.appendChild(span);
+  });
+
+  // Burger menu toggle
+  const burgerBtn = document.getElementById('burger-btn');
+  const menuPanel = document.getElementById('menu-panel');
+  let menuOpen = false;
+  burgerBtn.addEventListener('click', function() {
+    menuOpen = !menuOpen;
+    if (menuOpen) {
+      burgerBtn.classList.add('open');
+      menuPanel.classList.add('open');
+      burgerBtn.setAttribute('aria-label', 'Close menu');
+    } else {
+      burgerBtn.classList.remove('open');
+      menuPanel.classList.remove('open');
+      burgerBtn.setAttribute('aria-label', 'Open menu');
+    }
+  });
+  // Close menu on nav link click
+  menuPanel.querySelectorAll('nav a').forEach(function(a) {
+    a.addEventListener('click', function() {
+      menuOpen = false;
+      burgerBtn.classList.remove('open');
+      menuPanel.classList.remove('open');
+    });
+  });
+
+  // Spotlight reveal
+  const SPOTLIGHT_R = 260;
+  const canvas = document.getElementById('reveal-canvas');
+  const imgLayer = document.getElementById('reveal-img');
+  const ctx = canvas.getContext('2d');
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  const mouse = { x: -999, y: -999 };
+  const smooth = { x: -999, y: -999 };
+
+  window.addEventListener('mousemove', function(e) {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  });
+
+  function loop() {
+    smooth.x += (mouse.x - smooth.x) * 0.1;
+    smooth.y += (mouse.y - smooth.y) * 0.1;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    var grad = ctx.createRadialGradient(smooth.x, smooth.y, 0, smooth.x, smooth.y, SPOTLIGHT_R);
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.4, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.6, 'rgba(255,255,255,0.75)');
+    grad.addColorStop(0.75, 'rgba(255,255,255,0.4)');
+    grad.addColorStop(0.88, 'rgba(255,255,255,0.12)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+
+    ctx.beginPath();
+    ctx.arc(smooth.x, smooth.y, SPOTLIGHT_R, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    var dataUrl = canvas.toDataURL();
+    imgLayer.style.webkitMaskImage = 'url(' + dataUrl + ')';
+    imgLayer.style.maskImage = 'url(' + dataUrl + ')';
+    imgLayer.style.webkitMaskSize = '100% 100%';
+    imgLayer.style.maskSize = '100% 100%';
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
+
+
+[Landing Page]
+
+### Overview
+
+Build a full-screen, scroll-driven fashion/archive landing page for a brand called "prmpt". The page has two main phases:
+
+1. **Hero phase** (first 100vh of scroll): Full-viewport video background with overlaid UI (logo, nav, product info, custom cursor). A black panel slides up from below covering the video.
+2. **Gallery phase** (continues scrolling): The black panel contains a scattered grid of product images that scale in/out as they enter/exit the viewport. At the end, a white overlay fades in with a "view" CTA button.
+
+---
+
+### Tech Stack
+
+- **React 19** + **TypeScript**
+- **Vite 6** with `@vitejs/plugin-react`
+- **Tailwind CSS v4** via `@tailwindcss/vite` plugin
+- **GSAP 3.15** + `@gsap/react` (ScrollTrigger)
+- **Motion (Framer Motion) 12** (`motion/react`)
+- **Font**: "Inter Tight" (Google Fonts, weight 500) -- loaded via `<link>` or import
+
+---
+
+### Asset URLs
+
+**Videos (CloudFront):**
+- LEFT video: `https://d8j0ntlcm91z4.cloudfront.net/user_39ca84eAE1ODL9hbR5VhoEj8tBf/hf_20260625_154433_532a85d3-dabf-4265-b8bd-19ac6af31842.mp4`
+- RIGHT video: `https://d8j0ntlcm91z4.cloudfront.net/user_39ca84eAE1ODL9hbR5VhoEj8tBf/hf_20260625_154401_a664f076-b971-4557-8728-40ef9ea4c49b.mp4`
+
+**Gallery Images (10 total, in order):**
+1. `https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260629_104530_521b2f85-c0f3-4d0e-9704-b578315b4cb9.png&w=1920&q=85`
+2. `https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260629_103711_76ccdb8b-5043-4f47-9c54-4379713393ea.png&w=1920&q=85`
+3. `https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260629_103728_394f6a1b-85e2-4386-a4f6-408472a0a5b7.png&w=1920&q=85`
+4. `https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260629_103739_86743e0e-16a7-4bee-bf38-dd67985344dc.png&w=1920&q=85`
+5. `https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260629_103748_b2215dc8-a3a7-470d-b19a-5b87fa7d0c37.png&w=1920&q=85`
+6. `https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260629_103758_e919ce72-5c9d-4b87-9be6-d7647b34825c.png&w=1920&q=85`
+7. `https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260629_103808_013583d0-3386-4547-9832-37c7d8edb3ac.png&w=1920&q=85`
+8. `https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260629_103937_a0c49d0a-33eb-4ead-aea6-c1baf241acbc.png&w=1920&q=85`
+9. `https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260629_103956_d18ed8fd-7b6f-4b86-91f9-20010fe38670.png&w=1920&q=85`
+10. `https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260629_104034_ba5a9963-87ff-4008-a545-6bd686c088b5.png&w=1920&q=85`
+
+---
+
+### SECTION 1: Hero (Video Background + Overlaid UI)
+
+#### Root Container
+- `id="scroll-spacer"`, `position: relative`, `user-select: none`, `background: white`
+- Height is dynamically calculated (initially `500vh`, then overridden by GSAP to `vh + maxScroll + 2*vh`)
+- Custom cursor hidden on desktop (`cursor: none`), default on touch devices
+
+#### 1A. Custom Cursor (Desktop Only)
+- Hidden on mobile/tablet (< 1024px)
+- A `fixed`, `pointer-events-none`, `z-index: 50` div that follows `mousemove`
+- Positioned via direct DOM manipulation (`style.left/top = clientX/clientY`)
+- `transform: translate(-50%, -50%)` to center on pointer
+- `mix-blend-mode: exclusion`
+- Contains a 48x48 SVG: a circle with stroke (r=22.75, strokeWidth=2.5) containing a custom Japanese/decorative glyph path, all filled white
+
+#### 1B. Logo (Top Left)
+- `position: fixed`, `pointer-events-none`, `z-index: 20`
+- `mix-blend-mode: exclusion`
+- Responsive width: 124px (mobile < 640), 266px (tablet 640-1024), 355px (desktop)
+- Position: `top: 16px, left: 16px` (mobile), `top: 32px, left: 32px` (desktop)
+- Motion animation: fade in + slide up (`opacity: 0->1, y: 12->0`), duration 0.6s, ease `[0.25, 0.1, 0.25, 1]`, delay 0s
+- SVG viewBox `0 0 355 110`, contains the "prmpt" wordmark + circled "R" mark, all paths filled white
+
+#### 1C. Caption (Below Logo, Left Side)
+- `position: fixed`, `pointer-events-none`, `z-index: 20`
+- `mix-blend-mode: exclusion`
+- Position: `left: 32px` (desktop), `left: 16px` (mobile)
+- Top: 244px (desktop), 180px (tablet), 118px (mobile)
+- Width: 692px (desktop), `calc(50vw - 48px)` (tablet), `calc(100vw - 32px)` (mobile)
+- Font: Inter Tight, weight 500, size 12px, line-height 140%, letter-spacing -0.04em, color #FFFFFF
+- Motion animation: same as logo but delay 0.3s
+- Text content: "When switching between videos near the center, do not reset currentTime to 0 abruptly. Add a small dead zone: if cursor is within +/-50px of center, keep both videos at currentTime = 0 and show whichever was last active."
+
+#### 1D. Header Navigation (Top Right)
+- `position: fixed`, `z-index: 20`, `pointer-events-none`
+- `mix-blend-mode: exclusion`
+- Position: `top: 32px, right: 32px` (desktop), `top: 16px, right: 16px` (mobile)
+- Width: 330px (desktop), auto (mobile)
+- Height: 30px
+- Flex row, justify-content: space-between, align-items: center
+- Motion animation: same easing, delay 0.15s
+- Contains:
+  - "ABOUT" text (hidden on mobile): Inter Tight, 500, 15px, uppercase, white
+  - A flex row with gap 50px (desktop) / 20px (mobile):
+    - Hamburger SVG icon: viewBox `0 0 40 40`, two horizontal lines (`M0 14H40` and `M0 26H40`), stroke white, strokeWidth 2.5. Size: 30x30 (desktop), 24x24 (mobile)
+    - "[ CART ]" text: Inter Tight, 500, 15px (desktop) / 13px (mobile), white
+
+#### 1E. Product Info (Bottom Right)
+- `id="outro-info"`, `position: fixed`, `pointer-events-none`, `z-index: 20`
+- `mix-blend-mode: exclusion`
+- **Desktop**: right: 32px, bottom: 80px, width: 330px, flex-column, align center
+- **Mobile**: left: 0, right: 0, bottom: 48px, flex-column, align center
+- Motion animation: opacity 0->1, delay 0.45s
+- `data-outro-offset`: 166 (desktop), 132 (mobile) -- used by scroll animation
+- Contains:
+  - Top block (flex-column, align flex-start, width 100% desktop / 252px mobile, margin-bottom 32px desktop / 12px mobile):
+    - Circle icon: relative div (30x30 desktop, 20x20 mobile) containing:
+      - SVG circle (cx=20, cy=20, r=18.75, stroke white, strokeWidth 2.5 desktop / 2 mobile)
+      - `<span id="circle-symbol">` centered inside, shows "8" initially, changes to random symbol from `['8', '$', '^^', '%', '/']` on scroll (throttled 80ms)
+      - Font: Inter Tight, 500, 15px (desktop) / 10px (mobile), letter-spacing -0.04em, uppercase, white
+    - Collection label: Inter Tight, 500, 30px (desktop) / 20px (mobile), line-height 100%, text-align center, letter-spacing -0.04em, uppercase, white. Content: `ARCHIVE COLLECTION` + line break + `"PROMPT"`
+  - Price: Inter Tight, 500, 80px (desktop) / 60px (mobile), line-height 100%, text-align center, letter-spacing -0.04em, white. Content: `$97,33`
+
+#### 1F. "View" Button (Bottom Right, Initially Hidden)
+- `id="outro-buy"`, `position: fixed`, `pointer-events-none`, `z-index: 20`
+- `mix-blend-mode: exclusion`
+- **Desktop**: right: 32px, bottom: 32px, width: 330px, height: 174px
+- **Mobile**: left: 16px, right: 16px, bottom: 60px, height: 100px
+- `transform-origin: right bottom`, `transform: scale(0)` (starts hidden, scales to 1 via scroll)
+- Background: #fff, border-radius: 1335px (pill shape)
+- Flex center
+- Text "view": Inter Tight, 500, 110px (desktop) / 72px (mobile), letter-spacing -0.04em, color #fff, `mix-blend-mode: exclusion`
+
+#### 1G. Video Container
+- `id="main-canvas"`, `pointer-events-none`
+- **Desktop**: `position: fixed, inset: 0, width: 100%, height: 100%, z-index: 0`
+- **Mobile**: `position: fixed, left: 0, top: 220px, width: 100vw, height: calc(100vh - 220px), z-index: 0`
+- Opacity transition: 0 -> 1 when both videos loaded (`opacity 0.3s ease`)
+- `overflow: hidden`
+- Contains two `<video>` elements (muted, playsInline, preload="auto"), absolutely positioned to fill container, `object-fit: cover`
+- Left video starts `display: none`, right starts `display: block`
+
+
+**Desktop (non-touch):**
+- Videos are NOT auto-played. They are scrubbed based on cursor X position via `requestAnimationFrame`.
+- Dead zone: `Math.max(30, width * 0.05)` pixels from center
+- If cursor is in dead zone, keep current video at `currentTime = 0`
+- If cursor moves left of dead zone: show RIGHT video, scrub it based on distance from center-left-edge to left edge
+- If cursor moves right of dead zone: show LEFT video, scrub it based on distance from center+deadzone to right edge
+- `activeSideRef` tracks which side was last active, only changes when cursor exceeds dead zone
+- Progress calculation: `(distance from dead zone edge) / (available range)` mapped to `0...video.duration`
+CRITICAL: Only update currentTime when !video.seeking -- this prevents jittery playback by waiting for the browser to finish rendering the previous seek before requesting a new one.
+#### 1H. Video Interaction Logic
+
+**Mobile/Tablet (touch):**
+- Videos auto-play alternately: left plays first, on `ended` event switches to right, on right `ended` switches back to left
+- Respects `prefers-reduced-motion`
+
+#### 1I. White Overlay
+- `id="outro-overlay"`, `position: fixed, inset: 0`, `pointer-events-none`, `z-index: 12`
+- Background: #fff, opacity: 0 (controlled by scroll)
+
+#### 1J. Footer
+- `id="outro-footer"`, `position: fixed`, `pointer-events-none`
+- Left: 16px, bottom: 32px (desktop) / 24px (mobile)
+- `mix-blend-mode: exclusion`, opacity: 0 (controlled by scroll)
+- Flex row, gap: 80px (desktop) / space-between (mobile)
+- Two spans: "PRMPT (R) 2026" and "PRIVACY POLICY"
+- Font: Inter Tight, 500, 13px (desktop) / 11px (mobile), letter-spacing -0.02em, uppercase, white
+
+---
+
+### SECTION 2: Black Panel (Gallery)
+
+#### Container
+- `position: fixed, inset: 0`, background: black, `z-index: 10`
+- Initially translated `translateY(100vh)` (off-screen below)
+- Slides up to `translateY(0)` during first 100vh of scroll via GSAP ScrollTrigger (scrub: true, ease: none)
+
+#### Inner Wrapper
+- `width: 100%`, `padding-top: min(400px, 40vh)`
+
+#### Grid Layout Algorithm
+- Responsive columns: 2 (< 640px), 3 (640-1024px), 4 (>= 1024px)
+- Each cell has `aspect-ratio: 2/3`
+- Layout function `buildLayout(count, cols)` creates rows:
+  - For each row `r`, compute primary column: `a = (r * 2 + (r % 2)) % cols`
+  - Place one image at column `a`
+  - Every 3rd row (`r % 3 === 0`), place a second image at `b = (a + 2) % cols` (or `(a+1)%cols` if same as a)
+  - Empty cells get `-1` (rendered as empty spacer divs)
+
+#### Card Behavior
+- Each card has class `bp-card`, `will-change: transform`
+- `transform: scale(0)` initially
+- `transform-origin`: cards in left half of grid get `right bottom`, right half get `left bottom`
+- Scale is computed per-frame in RAF based on card's vertical position:
+  - **Enter**: `Math.min(1, (vh - top) / (vh * 0.6))` -- scales from 0 to 1 as it enters viewport
+  - **Exit**: `Math.min(1, bottom / (vh * 0.4))` -- scales from 1 to 0 as it exits top
+  - Final scale: `Math.min(enter, exit)`
+  - If card is fully off-screen (bottom <= 0 or top >= vh): `scale(0)`
+
+#### Scroll Phases (RAF-based, NOT scroll events)
+- **Phase 1** (scrollY 0 to vh): Panel slides up. Cards are computed with panelOffset = `vh - scrollY`
+- **Phase 2** (scrollY > vh): Panel is fixed at top. Inner wrapper translates up: `translateY(-(scrollY - vh))`. Cards recomputed with phase2 offset.
+- **Outro** (scrollY > vh + maxScroll): White overlay fades in, product info slides up by `outroOffset` px, "view" button scales from 0 to 1, footer fades in. Progress: `(scrollY - vh - maxScroll) / (vh - 100)`
+
+#### Spacer Height Calculation
+- Set dynamically: `vh + maxScroll + 2 * vh` where `maxScroll = wrapScrollHeight - vh`
+
+---
+
+### CSS (index.css)
+
+```css
+@import "tailwindcss";
+
+.bp-card {
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bp-card {
+    will-change: auto;
+  }
+}
+```
+
+---
+
+### Responsive Breakpoints
+- **Mobile**: < 640px
+- **Tablet**: 640px - 1024px
+- **Desktop**: >= 1024px
+
+---
+
+### Key Design Principles
+- All text overlays use `mix-blend-mode: exclusion` to remain visible against both light and dark backgrounds
+- No visible scroll bar interaction -- entirely RAF-driven position tracking
+- `pointer-events-none` on all overlaid UI elements
+- `user-select: none` on root container
+- Videos hidden (`visibility: hidden`) once scroll passes first viewport height
+- Circle symbol randomizes on scroll (throttled to 80ms)
+- Entry animations staggered: logo (0s), nav (0.15s), caption (0.3s), product info (0.45s)
+
+
+[ Cosmic Portfolio ]
+
+Prompt to recreate this landing page:
+
+Build a single-page dark portfolio landing page using React + Vite + Tailwind CSS + TypeScript + GSAP + Framer Motion + hls.js.
+
+---
+
+## Global Design System
+
+### Fonts
+Google Fonts import: Inter (300–700) and Instrument Serif (italic, 400).
+- --font-body: 'Inter', sans-serif → Tailwind font-body
+- --font-display: 'Instrument Serif', serif → Tailwind font-display
+
+### CSS Custom Properties (HSL, no hsl() wrapper — Tailwind adds it)
+--bg: 0 0% 4%;
+--surface: 0 0% 8%;
+--text: 0 0% 96%;
+--muted: 0 0% 53%;
+--stroke: 0 0% 12%;
+--accent: 0 0% 96%;
+
+### Tailwind Custom Colors
+bg: "hsl(var(--bg))",
+surface: "hsl(var(--surface))",
+"text-primary": "hsl(var(--text))",
+muted: "hsl(var(--muted))",
+stroke: "hsl(var(--stroke))",
+
+### Accent Gradient
+linear-gradient(90deg, #89AACC 0%, #4E85BF 100%) — used on logo ring, hover borders, progress bars. CSS utility class .accent-gradient.
+
+### Custom Animations (in index.css)
+- @keyframes scroll-down — translateY(-100%) → translateY(200%), 1.5s ease-in-out infinite
+- @keyframes role-fade-in — opacity 0 + translateY(8px) → opacity 1 + translateY(0), 0.4s ease-out
+- @keyframes gradient-shift — background-position 0% 50% → 100% 50% → 0% 50%, 6s ease infinite (for animated gradient borders)
+
+### Forced dark theme — no light mode toggle. body gets bg-bg text-text-primary.
+
+---
+
+## Page Structure (Index.tsx)
+
+{isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}
+
+---
+
+## Section 1: Loading Screen
+
+Full-screen overlay (fixed inset-0 z-[9999] bg-bg). Uses requestAnimationFrame counter from 000→100 over 2700ms.
+
+- Top-left: "Portfolio" label — text-xs text-muted uppercase tracking-[0.3em]. Animates y:-20→0, opacity 0→1.
+- Center: Rotating words ["Design", "Create", "Inspire"] cycling every 900ms. AnimatePresence mode="wait" with y:20→0→-20 transitions. text-4xl md:text-6xl lg:text-7xl font-display italic text-text-primary/80.
+- Bottom-right: Counter display — text-6xl md:text-8xl lg:text-9xl font-display text-text-primary tabular-nums. Shows String(count).padStart(3, "0").
+- Bottom progress bar: h-[3px] bg-stroke/50, inner div with .accent-gradient, scaleX(count/100) transform, box-shadow: 0 0 8px rgba(137, 170, 204, 0.35).
+- On complete (count reaches 100): 400ms delay then calls onComplete.
+
+---
+
+## Section 2: Hero
+
+Full-viewport section with background HLS video and centered content.
+
+### Background Video
+- HLS source: https://stream.mux.com/Aa02T7oM1wH5Mk5EEVDYhbZ1ChcdhRsS2m1NYyx4Ua1g.m3u8
+- Uses hls.js — if Hls.isSupported(), create HLS instance; else if native HLS support, set video.src directly.
+- Video: autoPlay muted loop playsInline, absolutely positioned and centered with min-w-full min-h-full object-cover -translate-x-1/2 -translate-y-1/2.
+- Dark overlay: bg-black/20
+- Bottom fade: h-48 bg-gradient-to-t from-bg to-transparent
+
+### Navbar (fixed, floats at top center)
+fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 md:pt-6 px-4.
+
+Inner pill: inline-flex items-center rounded-full backdrop-blur-md border border-white/10 bg-surface px-2 py-2. Gets shadow-md shadow-black/10 when scrollY > 100.
+
+Contents (left to right):
+1. Logo: 9×9 circle with accent gradient border (reverses direction on hover). Inner bg-bg circle with "JA" in font-display italic text-[13px]. Scales 110% on hover.
+2. Divider: w-px h-5 bg-stroke mx-1 (hidden on mobile)
+3. Nav links: ["Home", "Work", "Resume"] — text-xs sm:text-sm rounded-full px-3 sm:px-4 py-1.5 sm:py-2. Active: text-text-primary bg-stroke/50. Inactive: text-muted hover:text-text-primary hover:bg-stroke/50.
+4. Divider
+5. "Say hi" button: Same size as nav links. On hover, shows accent gradient border behind (using absolute span with inset: -2px). Inner content wrapped in bg-surface rounded-full backdrop-blur-md. Includes "↗" arrow.
+
+### Hero Content (centered, z-10)
+- Eyebrow: text-xs text-muted uppercase tracking-[0.3em] mb-8 — "COLLECTION '26". Class blur-in.
+- Name: text-6xl md:text-8xl lg:text-9xl font-display italic leading-[0.9] tracking-tight text-text-primary mb-6 — "Michael Smith". Class name-reveal.
+- Role line: "A {role} lives in Chicago." — roles cycle every 2s through ["Creative", "Fullstack", "Founder", "Scholar"]. Role word uses font-display italic text-text-primary animate-role-fade-in inline-block with key={roleIndex} for re-triggering animation.
+- Description: text-sm md:text-base text-muted max-w-md mb-12 — "Designing seamless digital interactions by focusing on the unique nuances which bring systems to life."
+- CTA Buttons (inline-flex gap-4):
+  - "See Works": Solid button. Default: bg-text-primary text-bg. Hover: bg-bg text-text-primary with accent gradient border ring.
+  - "Reach out...": Outlined button. Default: border-2 border-stroke bg-bg text-text-primary. Hover: border-transparent with accent gradient border ring.
+  - Both: rounded-full text-sm px-7 py-3.5 hover:scale-105.
+
+### GSAP Entrance
+Timeline with ease: "power3.out":
+- .name-reveal: opacity 0→1, y 50→0, duration 1.2s, delay 0.1s
+- .blur-in: opacity 0→1, filter blur(10px)→blur(0px), y 20→0, duration 1s, stagger 0.1, delay 0.3s
+
+### Scroll Indicator
+Bottom-center, text-xs text-muted uppercase tracking-[0.2em] "SCROLL" label above a w-px h-10 bg-stroke line with animated highlight using .animate-scroll-down.
+
+---
+
+## Section 3: Selected Works
+
+bg-bg py-12 md:py-16. Inner: max-w-[1200px] mx-auto px-6 md:px-10 lg:px-16.
+
+### Header
+Framer Motion whileInView — opacity 0→1, y 30→0, duration 1s, ease [0.25,0.1,0.25,1], viewport once margin "-100px".
+- Eyebrow: w-8 h-px bg-stroke + "Selected Work" text-xs text-muted uppercase tracking-[0.3em]
+- Heading: "Featured *projects*" — italic word in font-display italic
+- Subtext: "A selection of projects I've worked on, from concept to launch."
+- "View all work" button (desktop only, hidden md:inline-flex) — rounded-full with gradient hover border ring + right arrow
+
+### Bento Grid
+grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6. Column spans alternate: 7/5/5/7.
+
+4 project cards with titles: Automotive Motion, Urban Architecture, Human Perspective, Brand Identity.
+
+Each card: bg-surface border border-stroke rounded-3xl with aspect ratios. Contains:
+- Background image with object-cover group-hover:scale-105
+- Halftone overlay: radial-gradient(circle, #000 1px, transparent 1px) at 4×4px, opacity-20 mix-blend-multiply
+- Hover: bg-bg/70 opacity-0→1 + backdrop-blur-lg
+- Hover label: pill with animated gradient border, white bg, "View — *Title*" (title in font-display italic)
+
+---
+
+## Section 4: Journal
+
+bg-bg py-16 md:py-24. Same header pattern (eyebrow + "Recent *thoughts*" + subtext + "View all" button).
+
+4 journal entries displayed as horizontal pills (rounded-[40px] sm:rounded-full) with titles, images, read times, and dates.
+
+Each entry: flex items-center gap-6 p-4 bg-surface/30 hover:bg-surface border border-stroke.
+
+---
+
+## Section 5: Explorations (Parallax Gallery)
+
+min-h-[300vh] section for scroll-driven parallax.
+
+### Layer 1: Pinned Center (z-10)
+h-screen div pinned with GSAP ScrollTrigger.create({ pin: contentRef, pinSpacing: false }).
+- Eyebrow: "Explorations"
+- Heading: "Visual *playground*"
+- Subtext + Dribbble button
+
+### Layer 2: Parallax Columns (z-20, absolute)
+grid grid-cols-2 gap-12 md:gap-40 inside max-w-[1400px].
+
+6 items split into 2 columns with GSAP scroll-driven parallax movement.
+Cards: aspect-square max-w-[320px], with rotation and lightbox on click.
+
+---
+
+## Section 6: Stats
+
+bg-bg py-16 md:py-24. 3-column grid with stats: 20+ Years Experience, 95+ Projects Done, 200% Satisfied Clients.
+
+---
+
+## Section 7: Contact / Footer
+
+bg-bg pt-16 md:pt-20 pb-8 md:pb-12 overflow-hidden.
+
+### Background Video
+Same HLS source as hero, but flipped vertically (scale-y-[-1]). Heavier overlay: bg-black/60.
+
+### GSAP Marquee
+"BUILDING THE FUTURE • " repeated 10×. GSAP xPercent: -50, duration 40, ease "none", repeat -1.
+
+### CTA
+Email button: mailto:hello@michaelsmith.com with gradient hover border ring.
+
+### Footer Bar
+Social links [Twitter, LinkedIn, Dribbble, GitHub] + Green pulsing dot + "Available for projects"
+
+---
+
+## Dependencies
+gsap, framer-motion, hls.js, react-router-dom, tailwindcss-animate
+
+Add smooth scroll nav and page transitions.

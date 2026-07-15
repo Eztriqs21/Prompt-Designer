@@ -1,0 +1,85 @@
+[
+  {
+    "id": "1f04155a-8323-414b-bc8d-0dad533be058",
+    "title": "g (Clone)",
+    "presetKey": "saas",
+    "metadata": {
+      "websiteType": "SaaS",
+      "audience": "Developers",
+      "goal": "SaaS product showcase",
+      "preferredStack": "",
+      "style": "Cinematic"
+    },
+    "createdAt": 1784048429539,
+    "updatedAt": 1784048429539
+  },
+  {
+    "id": "4e2e67f5-7098-4e5f-904c-4df8c8809aea",
+    "title": "SaaS Test",
+    "presetKey": "saas",
+    "metadata": {
+      "websiteType": "SaaS",
+      "audience": "Developers",
+      "goal": "SaaS product showcase",
+      "preferredStack": "",
+      "style": "Cinematic"
+    },
+    "createdAt": 1784045801629,
+    "updatedAt": 1784045801629
+  },
+  {
+    "id": "c25a130e-924b-45db-91b6-e5a6c9b101dd",
+    "title": "generate (Clone)",
+    "presetKey": "portfolio",
+    "metadata": {
+      "websiteType": "Portfolio",
+      "audience": "Content Creators",
+      "goal": "Portfolio Showcase",
+      "preferredStack": "",
+      "style": "Minimal"
+    },
+    "createdAt": 1784019959984,
+    "updatedAt": 1784019959984
+  },
+  {
+    "id": "4644ce37-e327-4324-8f6c-14a5c84b4acc",
+    "title": "Video Editing Portfolio",
+    "presetKey": "portfolio",
+    "metadata": {
+      "websiteType": "Portfolio",
+      "audience": "Content Creators",
+      "goal": "Portfolio Showcase",
+      "preferredStack": "",
+      "style": "Minimal"
+    },
+    "createdAt": 1784019833655,
+    "updatedAt": 1784019833655
+  },
+  {
+    "id": "f684af8d-eb6a-4b05-9739-3c46b2f1fda7",
+    "title": "saas",
+    "presetKey": "saas",
+    "metadata": {
+      "websiteType": "SaaS",
+      "audience": "business owners",
+      "goal": "signups",
+      "preferredStack": "",
+      "style": "Minimal"
+    },
+    "createdAt": 1784016439599,
+    "updatedAt": 1784016439599
+  },
+  {
+    "id": "13f2f0d2-1d35-4884-8084-caa377bcf024",
+    "title": "Test Chat",
+    "presetKey": "saas",
+    "metadata": {
+      "websiteType": "SaaS",
+      "audience": "developers",
+      "goal": "signups",
+      "style": "Dark"
+    },
+    "createdAt": 1784014077906,
+    "updatedAt": 1784014077906
+  }
+]

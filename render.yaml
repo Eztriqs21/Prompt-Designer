@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: prompt-designer-api
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: OPENCODE_API_KEY
+        sync: false
+      - key: OPENCODE_BASE_URL
+        value: https://opencode.ai/zen/v1/chat/completions
+      - key: PORT
+        value: 3001
+      - key: CORS_ORIGINS
+        sync: false
