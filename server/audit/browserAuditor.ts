@@ -33,7 +33,10 @@ function getPlaywrightCachePath(): string {
   // Fallback: known Render project path
   const renderPath = '/opt/render/project/.playwright-cache';
   try {
-    if (fs.existsSync(renderPath)) return renderPath;
+    if (fs.existsSync(renderPath)) {
+      process.env.PLAYWRIGHT_BROWSERS_PATH = renderPath;
+      return renderPath;
+    }
   } catch {
     // Not on Render or path doesn't exist
   }
@@ -68,16 +71,18 @@ async function tryInstallBrowsersAtRuntime(): Promise<boolean> {
   if (runtimeInstallAttempted) return false;
   runtimeInstallAttempted = true;
 
-  const cachePath = getPlaywrightCachePath();
-  console.log(`[Playwright] Attempting runtime browser install... (cachePath=${cachePath || 'default'})`);
+  const cachePath = getPlaywrightCachePath() || '/opt/render/project/.playwright-cache';
+  console.log(`[Playwright] Attempting runtime browser install... (cachePath=${cachePath})`);
   try {
-    const env = { ...process.env, PLAYWRIGHT_BROWSERS_PATH: cachePath || '/opt/render/project/.playwright-cache' };
+    const env = { ...process.env, PLAYWRIGHT_BROWSERS_PATH: cachePath };
     execSync('npx playwright install chromium', {
       env,
       stdio: 'pipe',
       timeout: 120_000,
     });
-    console.log('[Playwright] Runtime browser install completed successfully.');
+    // Update parent process env so pw.chromium.launch() finds the browsers
+    process.env.PLAYWRIGHT_BROWSERS_PATH = cachePath;
+    console.log(`[Playwright] Runtime browser install completed. PLAYWRIGHT_BROWSERS_PATH=${cachePath}`);
     return true;
   } catch (err: any) {
     console.error(`[Playwright] Runtime browser install failed: ${err.message}`);
