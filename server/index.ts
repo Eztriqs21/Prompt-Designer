@@ -18,6 +18,7 @@ const allowedOrigins = process.env.CORS_ORIGINS
   : [
       'http://localhost:5173',
       'http://localhost:3001',
+      'https://eztriqs21.github.io',
       'https://eztriqs21.github.io/Prompt-Designer',
     ];
 
