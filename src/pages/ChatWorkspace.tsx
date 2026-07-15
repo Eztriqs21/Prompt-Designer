@@ -44,7 +44,7 @@ export default function ChatWorkspace() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="h-full flex items-center p-6"
+              className="h-full w-full p-6"
             >
               <NewChatForm
                 onSubmit={handleNewChat}
