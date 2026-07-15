@@ -136,7 +136,7 @@ export default function AuditPage() {
         {/* Comparison Table */}
         {!hasReport && (
           <div className="mt-12">
-            <AuditComparisonTable findings={[]} />
+            <AuditComparisonTable />
           </div>
         )}
       </div>
