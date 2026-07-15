@@ -6,8 +6,6 @@ import {
   fadeInUp,
   staggerContainer,
   expandCollapse,
-  hoverLiftSubtle,
-  transitionEnter,
   transitionFast,
 } from '../../motion/presets';
 import type { PromptVersion } from '../../types';

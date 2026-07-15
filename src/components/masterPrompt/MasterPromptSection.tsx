@@ -56,10 +56,8 @@ export default function MasterPromptSection() {
     generatedPrompt,
     generatedSummary,
     generatedAnalysis,
-    error,
     addUserMessage,
     generate,
-    clearError,
     resetForChat,
   } = useMasterPrompt(masterPromptConfig);
 
@@ -155,7 +153,7 @@ export default function MasterPromptSection() {
         <div className="text-center space-y-1.5">
           <motion.h2
             variants={fadeInUp}
-            transition={reducedMotion ? { duration: 0 } : transitionEnter}
+            transition={reducedMotion ? { duration: 0 } : { duration: 0.4, ease: 'easeOut' }}
             className="text-2xl md:text-3xl text-white tracking-tight"
             style={{ fontFamily: "'Instrument Serif', serif" }}
           >
@@ -163,7 +161,7 @@ export default function MasterPromptSection() {
           </motion.h2>
           <motion.p
             variants={fadeInUp}
-            transition={reducedMotion ? { duration: 0 } : transitionEnter}
+            transition={reducedMotion ? { duration: 0 } : { duration: 0.4, ease: 'easeOut' }}
             className="text-[13px] text-white/40 max-w-sm mx-auto leading-relaxed"
           >
             Describe your idea. Get a structured prompt for your coding agent.

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
-import { fadeInUp, transitionEnter } from '../../motion/presets';
+import { transitionEnter } from '../../motion/presets';
 import { formatPromptContent } from '../../lib/formatPrompt';
 
 interface FormattedPromptProps {
@@ -15,8 +15,8 @@ export default function FormattedPrompt({ content, delay = 0 }: FormattedPromptP
 
   return (
     <motion.div
-      initial={reducedMotion ? false : fadeInUp.hidden}
-      animate={fadeInUp.visible}
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={reducedMotion ? { duration: 0 } : { ...transitionEnter, delay }}
       className="rounded-xl bg-black/20 border border-white/[0.05] px-5 py-4 overflow-hidden"
     >

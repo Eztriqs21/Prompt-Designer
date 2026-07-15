@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Check } from 'lucide-react';
 import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
-import { staggerContainer, fadeInUp, hoverScaleSmall, transitionFast } from '../../motion/presets';
+import { staggerContainer, fadeInUp, transitionFast } from '../../motion/presets';
 import CustomSelect from '../ui/CustomSelect';
 
 const WEBSITE_TYPES = ['SaaS', 'Portfolio', 'Agency', 'Landing Page', 'E-commerce', 'Custom'];

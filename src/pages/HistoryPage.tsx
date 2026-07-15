@@ -7,9 +7,7 @@ import {
   fadeInUp,
   staggerContainer,
   expandCollapse,
-  hoverScaleSmall,
   transitionEnter,
-  transitionFast,
 } from '../motion/presets';
 import type { SavedPrompt } from '../types';
 

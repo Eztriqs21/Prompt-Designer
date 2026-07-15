@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, Check, Bot } from 'lucide-react';
 import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
-import { fadeInUp, slideFromLeft, transitionFast, transitionEnter } from '../../motion/presets';
+import { transitionEnter } from '../../motion/presets';
 import FormattedPrompt from './FormattedPrompt';
 import SectionSelector from './SectionSelector';
 import SectionOutputPane from './SectionOutputPane';
@@ -50,10 +50,9 @@ export default function MasterPromptOutput({
 
   return (
     <motion.div
-      initial={reducedMotion ? false : 'hidden'}
-      animate="visible"
-      variants={slideFromLeft}
-      transition={reducedMotion ? { duration: 0 } : transitionFast}
+      initial={{ opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={reducedMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }}
       className="flex items-start gap-3"
     >
       {/* Bot avatar */}
@@ -66,8 +65,8 @@ export default function MasterPromptOutput({
         {/* Summary card */}
         {summary && (
           <motion.div
-            initial={reducedMotion ? false : fadeInUp.hidden}
-            animate={fadeInUp.visible}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={reducedMotion ? { duration: 0 } : transitionEnter}
             className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]"
           >
@@ -79,8 +78,8 @@ export default function MasterPromptOutput({
         {/* Analysis card */}
         {analysis && (
           <motion.div
-            initial={reducedMotion ? false : fadeInUp.hidden}
-            animate={fadeInUp.visible}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={reducedMotion ? { duration: 0 } : { ...transitionEnter, delay: 0.06 }}
             className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]"
           >
@@ -94,8 +93,8 @@ export default function MasterPromptOutput({
 
         {/* Copy button */}
         <motion.div
-          initial={reducedMotion ? false : fadeInUp.hidden}
-          animate={fadeInUp.visible}
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={reducedMotion ? { duration: 0 } : { ...transitionEnter, delay: 0.15 }}
           className="flex justify-end"
         >
@@ -123,8 +122,8 @@ export default function MasterPromptOutput({
 
         {/* Section buttons + output */}
         <motion.div
-          initial={reducedMotion ? false : fadeInUp.hidden}
-          animate={fadeInUp.visible}
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={reducedMotion ? { duration: 0 } : { ...transitionEnter, delay: 0.18 }}
           className="space-y-3"
         >

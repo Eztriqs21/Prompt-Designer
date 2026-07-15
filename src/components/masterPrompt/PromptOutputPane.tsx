@@ -3,10 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Copy, Check, ChevronRight, Loader2 } from 'lucide-react';
 import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
 import {
-  fadeInUp,
   expandCollapse,
-  hoverScaleSmall,
-  transitionFast,
   transitionEnter,
 } from '../../motion/presets';
 import examplePrompt from '../../assets/example-prompt.txt?raw';

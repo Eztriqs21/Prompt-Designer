@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, Check, Code, Palette, ShieldCheck, Loader2 } from 'lucide-react';
 import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
-import { fadeInUp, transitionEnter, transitionFast } from '../../motion/presets';
+import { transitionEnter } from '../../motion/presets';
 import type { SectionType, SectionState } from '../../types';
 
 interface SectionOutputPaneProps {
@@ -110,7 +110,7 @@ export default function SectionOutputPane({ sections, activeSection }: SectionOu
         <AnimatePresence>
           {state.isGenerating && (
             <motion.div
-              initial={reducedMotion ? false : { opacity: 0 }}
+              initial={reducedMotion ? { opacity: 0 } : { opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={reducedMotion ? { opacity: 0 } : { opacity: 0 }}
               transition={{ duration: 0.2 }}
@@ -125,8 +125,8 @@ export default function SectionOutputPane({ sections, activeSection }: SectionOu
         <AnimatePresence>
           {!state.isGenerating && state.data?.summary && (
             <motion.div
-              initial={reducedMotion ? false : fadeInUp.hidden}
-              animate={fadeInUp.visible}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={reducedMotion ? { duration: 0 } : transitionEnter}
               className="mb-4 p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]"
             >
@@ -139,8 +139,8 @@ export default function SectionOutputPane({ sections, activeSection }: SectionOu
         <AnimatePresence>
           {!state.isGenerating && state.data?.analysis && (
             <motion.div
-              initial={reducedMotion ? false : fadeInUp.hidden}
-              animate={fadeInUp.visible}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={reducedMotion ? { duration: 0 } : { ...transitionEnter, delay: 0.08 }}
               className="mb-4 p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]"
             >
@@ -153,8 +153,8 @@ export default function SectionOutputPane({ sections, activeSection }: SectionOu
         <AnimatePresence>
           {!state.isGenerating && state.data?.masterPrompt && (
             <motion.pre
-              initial={reducedMotion ? false : fadeInUp.hidden}
-              animate={fadeInUp.visible}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={reducedMotion ? { duration: 0 } : { ...transitionEnter, delay: 0.12 }}
               className="text-[12px] font-mono whitespace-pre-wrap leading-relaxed text-white/80 bg-black/30 border border-white/[0.05] rounded-xl px-4 py-3"
             >
@@ -174,7 +174,7 @@ export default function SectionOutputPane({ sections, activeSection }: SectionOu
         <AnimatePresence>
           {state.error && (
             <motion.div
-              initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+              initial={reducedMotion ? { opacity: 0, y: 8 } : { opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={reducedMotion ? { opacity: 0 } : { opacity: 0 }}
               transition={{ duration: 0.2 }}
