@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AuditFinding, AuditEvidence } from '../db/auditStore.js';
 import { sealFinding } from './codeAnalyzer.js';
 import { storeEvidence, type EvidenceCollector } from './evidenceCollector.js';
+import { execSync } from 'child_process';
 
 const fs = await import('fs');
 const path = await import('path');
@@ -22,6 +23,55 @@ interface PlaywrightModules {
 
 let cachedPlaywright: PlaywrightModules | null = null;
 let playwrightLoadFailed = false;
+let runtimeInstallAttempted = false;
+
+function getPlaywrightCachePath(): string {
+  return process.env.PLAYWRIGHT_BROWSERS_PATH || '';
+}
+
+function logPlaywrightDiagnostics(): void {
+  const cachePath = getPlaywrightCachePath();
+  console.log(`[Playwright Diagnostics] PLAYWRIGHT_BROWSERS_PATH=${cachePath || '(not set)'}`);
+
+  if (cachePath) {
+    try {
+      const entries = fs.readdirSync(cachePath);
+      console.log(`[Playwright Diagnostics] Cache dir contents: ${entries.join(', ') || '(empty)'}`);
+    } catch (err: any) {
+      console.log(`[Playwright Diagnostics] Cache dir does not exist or is not readable: ${err.message}`);
+    }
+  }
+
+  // Check expected headless shell path for Linux
+  const expectedShellPath = cachePath
+    ? path.join(cachePath, 'chromium_headless_shell-1228', 'chrome-headless-shell-linux64', 'chrome-headless-shell')
+    : null;
+  if (expectedShellPath) {
+    const exists = fs.existsSync(expectedShellPath);
+    console.log(`[Playwright Diagnostics] Expected headless shell exists: ${exists} — ${expectedShellPath}`);
+  }
+}
+
+async function tryInstallBrowsersAtRuntime(): Promise<boolean> {
+  if (runtimeInstallAttempted) return false;
+  runtimeInstallAttempted = true;
+
+  console.log('[Playwright] Attempting runtime browser install...');
+  try {
+    const cachePath = getPlaywrightCachePath();
+    const env = cachePath ? { ...process.env, PLAYWRIGHT_BROWSERS_PATH: cachePath } : { ...process.env };
+    execSync('npx playwright install chromium', {
+      env,
+      stdio: 'pipe',
+      timeout: 120_000,
+    });
+    console.log('[Playwright] Runtime browser install completed successfully.');
+    return true;
+  } catch (err: any) {
+    console.error(`[Playwright] Runtime browser install failed: ${err.message}`);
+    return false;
+  }
+}
 
 async function loadPlaywright(): Promise<PlaywrightModules | null> {
   if (playwrightLoadFailed) return null;
@@ -32,10 +82,51 @@ async function loadPlaywright(): Promise<PlaywrightModules | null> {
     cachedPlaywright = { chromium: pw.chromium };
     return cachedPlaywright;
   } catch (err: any) {
-    console.error('Playwright not available:', err.message);
+    console.error('[Playwright] Module not available:', err.message);
     playwrightLoadFailed = true;
     return null;
   }
+}
+
+async function launchBrowser(pw: PlaywrightModules): Promise<ReturnType<typeof pw.chromium.launch> | null> {
+  // Attempt 1: Launch directly
+  try {
+    return await pw.chromium.launch({ headless: true });
+  } catch (err: any) {
+    console.error(`[Playwright] Initial launch failed: ${err.message}`);
+    logPlaywrightDiagnostics();
+  }
+
+  // Attempt 2: Install browsers at runtime if missing, then retry
+  const installed = await tryInstallBrowsersAtRuntime();
+  if (installed) {
+    try {
+      return await pw.chromium.launch({ headless: true });
+    } catch (err: any) {
+      console.error(`[Playwright] Launch after runtime install still failed: ${err.message}`);
+      logPlaywrightDiagnostics();
+    }
+  }
+
+  return null;
+}
+
+function buildPlaywrightLaunchFailureFinding(err?: string): AuditFinding {
+  const cachePath = getPlaywrightCachePath();
+  const details = [
+    err || 'Unknown error',
+    `PLAYWRIGHT_BROWSERS_PATH=${cachePath || '(not set)'}`,
+    'Falling back to HTTP-based analysis only.',
+  ].join('. ');
+
+  return sealFinding({
+    severity: 'info',
+    category: 'code-quality',
+    title: 'Playwright browser launch failed',
+    description: details,
+    fix: 'Ensure Chromium is installed during build: npx playwright install --with-deps chromium',
+    confidence: 1.0,
+  });
 }
 
 // ─── Viewport Presets ──────────────────────────────────────
@@ -61,25 +152,16 @@ async function testUrlWithPlaywright(
       severity: 'info',
       category: 'code-quality',
       title: 'Playwright not available',
-      description: 'Playwright browser is not installed. Falling back to HTTP-based analysis only.',
+      description: 'Playwright module could not be imported. Falling back to HTTP-based analysis only.',
       fix: 'Install Playwright: npm install playwright && npx playwright install chromium',
       confidence: 1.0,
     }));
     return { findings, evidence };
   }
 
-  let browser;
-  try {
-    browser = await pw.chromium.launch({ headless: true });
-  } catch (err: any) {
-    findings.push(sealFinding({
-      severity: 'info',
-      category: 'code-quality',
-      title: 'Playwright browser launch failed',
-      description: `Could not launch headless browser: ${err.message}. Falling back to HTTP-based analysis.`,
-      fix: 'Install Chromium: npx playwright install chromium',
-      confidence: 1.0,
-    }));
+  const browser = await launchBrowser(pw);
+  if (!browser) {
+    findings.push(buildPlaywrightLaunchFailureFinding());
     return { findings, evidence };
   }
 
@@ -739,7 +821,7 @@ async function testLocalFilesWithPlaywright(
       severity: 'info',
       category: 'code-quality',
       title: 'Playwright not available',
-      description: 'Playwright browser is not installed. Falling back to static file analysis only.',
+      description: 'Playwright module could not be imported. Falling back to static file analysis only.',
       fix: 'Install Playwright: npm install playwright && npx playwright install chromium',
       confidence: 1.0,
     }));
@@ -772,7 +854,12 @@ async function testLocalFilesWithPlaywright(
     serverInfo = await createLocalServer(filesDir);
     const localUrl = `http://127.0.0.1:${serverInfo.port}`;
 
-    browser = await pw.chromium.launch({ headless: true });
+    browser = await launchBrowser(pw);
+    if (!browser) {
+      findings.push(buildPlaywrightLaunchFailureFinding());
+      serverInfo.server.close();
+      return { findings, evidence };
+    }
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
 
     const consoleLogs: Array<{ type: string; text: string; url: string; timestamp: number }> = [];

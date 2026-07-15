@@ -31,3 +31,4 @@ src/assets/gemini-key.txt
 
 # Playwright
 ms-playwright/
+.playwright-cache/

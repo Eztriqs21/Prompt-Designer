@@ -9,8 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "start": "tsx server/index.ts",
-    "postinstall": "npx playwright install chromium"
+    "start": "tsx server/index.ts"
   },
   "dependencies": {
     "adm-zip": "^0.6.0",
