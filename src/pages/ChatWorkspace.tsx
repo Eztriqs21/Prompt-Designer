@@ -35,7 +35,7 @@ export default function ChatWorkspace() {
       </header>
 
       {/* Content */}
-      <div className="flex-1 min-h-0 w-full">
+      <div className="flex-1 min-h-0 w-full overflow-y-auto">
         <AnimatePresence mode="wait">
           {showNewChatForm ? (
             <motion.div
@@ -44,12 +44,13 @@ export default function ChatWorkspace() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="h-full w-full p-6"
             >
-              <NewChatForm
-                onSubmit={handleNewChat}
-                onCancel={() => setShowNewChatForm(false)}
-              />
+              <div className="max-w-2xl mx-auto p-6">
+                <NewChatForm
+                  onSubmit={handleNewChat}
+                  onCancel={() => setShowNewChatForm(false)}
+                />
+              </div>
             </motion.div>
           ) : (
             <motion.div
