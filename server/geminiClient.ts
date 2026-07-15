@@ -57,7 +57,7 @@ async function callOpenCode(
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(60000),
+    signal: AbortSignal.timeout(45000),
   });
 
   if (!response.ok) {
@@ -89,41 +89,47 @@ export async function generateWithFallback(
     process.env.OPENCODE_MODEL || FALLBACK_MODELS[0],
     ...FALLBACK_MODELS,
   ];
-  // Deduplicate while preserving order
-  const uniqueModels = [...new Set(modelsToTry)];
+  // Deduplicate while preserving order, but cap the list so we fail fast instead of hanging.
+  const uniqueModels = [...new Set(modelsToTry)].slice(0, 3);
 
   let lastError: any = null;
 
   for (const modelName of uniqueModels) {
-    // Retry same model once
-    for (let attempt = 0; attempt <= 1; attempt++) {
-      try {
-        const result = await callOpenCode(messages, modelName, config);
-        console.log(`OpenCode: success with ${result.model}`);
-        return result;
-      } catch (err: any) {
-        lastError = err;
-        const status = err?.status || 0;
-        const msg = err?.message || '';
+    try {
+      const result = await callOpenCode(messages, modelName, config);
+      console.log(`OpenCode: success with ${result.model}`);
+      return result;
+    } catch (err: any) {
+      lastError = err;
+      const status = err?.status || 0;
+      const msg = err?.message || '';
 
-        // Don't retry on auth errors or bad requests
-        if (status === 400 || status === 401 || status === 403) {
-          console.error(`OpenCode: fatal error with ${modelName} (${status}), not retrying`);
-          throw err;
-        }
-
-        // Rate limit / overloaded — retry with delay
-        if (status === 429 || status === 503 || msg.includes('overloaded') || msg.includes('busy') || msg.includes('rate')) {
-          const delay = attempt === 0 ? 1500 : 3000;
-          console.warn(`OpenCode: ${modelName} busy/rate-limited (attempt ${attempt + 1}), retrying in ${delay}ms...`);
-          await new Promise((r) => setTimeout(r, delay));
-          continue;
-        }
-
-        // Other errors — break to next model
-        console.warn(`OpenCode: ${modelName} failed: ${msg}, trying next model...`);
-        break;
+      // Input / auth errors are fatal — do not retry (e.g. model does not support image input).
+      if (
+        status === 400 ||
+        status === 401 ||
+        status === 403 ||
+        /image|does not support|unsupported|invalid.*content|content.*policy/i.test(msg)
+      ) {
+        const friendly = /image|does not support|unsupported/i.test(msg)
+          ? 'The AI model does not support image inputs. Please describe your idea in text and try again.'
+          : msg;
+        const wrapped: any = new Error(friendly);
+        wrapped.status = status || 400;
+        wrapped.code = 'INVALID_REQUEST';
+        console.error(`OpenCode: fatal error with ${modelName}: ${friendly}`);
+        throw wrapped;
       }
+
+      // Rate limit / overloaded — brief pause, then try the next model.
+      if (status === 429 || status === 503 || /overloaded|busy|rate|too many/i.test(msg)) {
+        console.warn(`OpenCode: ${modelName} busy/rate-limited, trying next model...`);
+        await new Promise((r) => setTimeout(r, 1200));
+        continue;
+      }
+
+      // Any other error — move to the next model instead of hanging.
+      console.warn(`OpenCode: ${modelName} failed: ${msg}, trying next model...`);
     }
   }
 
