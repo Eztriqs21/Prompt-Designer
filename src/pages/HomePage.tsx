@@ -1,88 +1,148 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Sidebar from '../components/layout/Sidebar';
-import MasterPromptSection from '../components/masterPrompt/MasterPromptSection';
-import NewChatForm from '../components/masterPrompt/NewChatForm';
-import { useChats } from '../hooks/useChats';
-import { useReducedMotionSafe } from '../hooks/useReducedMotionSafe';
-import { fadeIn, transitionEnter } from '../motion/presets';
+import { Link } from 'react-router-dom';
+import { Copy, Check, MessageSquare, ShieldCheck, GitBranch } from 'lucide-react';
+import PageShell from '../components/layout/PageShell';
+
+const FEATURES = [
+  {
+    title: 'Chat Workspace',
+    description: 'Generate structured master prompts through guided conversation. Refine requirements iteratively before producing output.',
+    link: '/chat',
+    icon: MessageSquare,
+  },
+  {
+    title: 'Website AUDIT',
+    description: 'Analyze websites for bugs, UX issues, security concerns, and performance problems using code analysis and browser testing.',
+    link: '/audit',
+    icon: ShieldCheck,
+  },
+  {
+    title: 'Section Conversations',
+    description: 'Branch master prompts into specialized sections: Coding, UI/UX, and Audit. Each section gets its own focused thread.',
+    link: '/chat',
+    icon: GitBranch,
+  },
+];
+
+const CAPABILITIES = [
+  { feature: 'Prompt generation', basic: true, recommended: true, full: true },
+  { feature: 'Website AUDIT modes', basic: true, recommended: true, full: true },
+  { feature: 'Section branches', basic: false, recommended: true, full: true },
+  { feature: 'Browser testing', basic: false, recommended: true, full: true },
+  { feature: 'Accessibility checks', basic: false, recommended: false, full: true },
+  { feature: 'Performance metrics', basic: false, recommended: false, full: true },
+];
 
 export default function HomePage() {
-  const reducedMotion = useReducedMotionSafe();
-  const [showLibrary, setShowLibrary] = useState(false);
-  const [showNewChatForm, setShowNewChatForm] = useState(false);
-  const [promptCount, setPromptCount] = useState(0);
+  const [copied, setCopied] = useState(false);
 
-  const chatsState = useChats();
-
-  const handleNewChat = async (formValues: Parameters<typeof chatsState.createNewChat>[0]) => {
-    try {
-      await chatsState.createNewChat(formValues);
-      setShowNewChatForm(false);
-    } catch (err) {
-      console.error('Failed to create chat:', err);
-    }
+  const handleCopy = () => {
+    navigator.clipboard.writeText('/chat');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <motion.div
-      initial={reducedMotion ? false : 'hidden'}
-      animate="visible"
-      variants={fadeIn}
-      transition={reducedMotion ? { duration: 0 } : transitionEnter}
-      className="h-screen bg-black text-white overflow-hidden"
-    >
-      {/* Content */}
-      <div className="relative z-10 flex h-full">
-        {/* Sidebar */}
-        <Sidebar
-          chats={chatsState.chats}
-          activeChatId={chatsState.activeChatId}
-          loading={chatsState.loading}
-          promptCount={promptCount}
-          onSelectChat={chatsState.setActiveChat}
-          onDeleteChat={chatsState.deleteChat}
-          onRenameChat={chatsState.renameChat}
-          onNewChat={() => setShowNewChatForm(true)}
-          onToggleLibrary={() => setShowLibrary((v) => !v)}
-          showLibrary={showLibrary}
-        />
+    <PageShell>
+      {/* Hero */}
+      <section className="py-16 md:py-24">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-ink-primary mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', lineHeight: 1.1 }}>
+          Prompt Workspace + Website AUDIT for developers
+        </h1>
+        <p className="text-ink-muted text-base max-w-2xl mb-8">
+          Generate structured prompts with specialized branches. Audit websites for bugs, UX, and performance.
+        </p>
 
-        {/* Main area */}
-        <main className="flex-1 flex flex-col min-w-0 h-full">
-          {/* New chat form modal */}
-          <AnimatePresence>
-            {showNewChatForm && (
-              <motion.div
-                initial={reducedMotion ? false : { opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={reducedMotion ? { opacity: 0 } : { opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm"
+        {/* Command strip */}
+        <div className="inline-flex items-center gap-3 bg-surface-alt border border-border-soft rounded-md px-4 py-3 max-w-md">
+          <span className="text-ink-muted text-sm">$</span>
+          <code className="text-sm text-ink-primary flex-1">Start a new chat at /chat</code>
+          <button
+            onClick={handleCopy}
+            className="p-1 rounded-sm text-ink-muted hover:text-ink-primary hover:bg-surface-base transition-colors duration-150"
+            aria-label="Copy command"
+          >
+            {copied ? <Check className="w-4 h-4 text-accent-success" /> : <Copy className="w-4 h-4" />}
+          </button>
+        </div>
+      </section>
+
+      {/* Feature cards */}
+      <section className="mb-16">
+        <h2 className="text-xl font-bold text-ink-primary mb-6">Features</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {FEATURES.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <Link
+                key={feature.title}
+                to={feature.link}
+                className="block bg-surface-alt border border-border-soft rounded-md p-5 hover:border-ink-muted/30 transition-colors duration-150"
               >
-                <motion.div
-                  initial={reducedMotion ? false : { scale: 0.96, y: 8 }}
-                  animate={{ scale: 1, y: 0 }}
-                  exit={reducedMotion ? { opacity: 0 } : { scale: 0.96, y: 8 }}
-                  transition={reducedMotion ? { duration: 0 } : { duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-                  className="w-full max-w-lg"
-                >
-                  <NewChatForm
-                    onSubmit={handleNewChat}
-                    onCancel={() => setShowNewChatForm(false)}
-                  />
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-md bg-surface-base border border-border-soft flex items-center justify-center">
+                    <Icon className="w-4 h-4 text-ink-muted" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-ink-primary">{feature.title}</h3>
+                </div>
+                <p className="text-sm text-ink-muted leading-relaxed">{feature.description}</p>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
-          <MasterPromptSection
-            chatsState={chatsState}
-            onToggleLibrary={() => setShowLibrary((v) => !v)}
-            showLibrary={showLibrary}
-            onPromptCountChange={setPromptCount}
-          />
-        </main>
-      </div>
-    </motion.div>
+      {/* Technical overview table */}
+      <section className="mb-16">
+        <h2 className="text-xl font-bold text-ink-primary mb-6">Capabilities</h2>
+        <div className="bg-surface-alt border border-border-soft rounded-md overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border-soft">
+                <th className="text-left px-4 py-3 font-semibold text-ink-primary">Feature</th>
+                <th className="text-center px-4 py-3 font-semibold text-ink-primary">Basic</th>
+                <th className="text-center px-4 py-3 font-semibold text-ink-primary">Recommended</th>
+                <th className="text-center px-4 py-3 font-semibold text-ink-primary">Full</th>
+              </tr>
+            </thead>
+            <tbody>
+              {CAPABILITIES.map((row, i) => (
+                <tr key={row.feature} className={i < CAPABILITIES.length - 1 ? 'border-b border-border-soft' : ''}>
+                  <td className="px-4 py-3 text-ink-primary">{row.feature}</td>
+                  <td className="px-4 py-3 text-center">
+                    {row.basic ? (
+                      <Check className="w-4 h-4 text-accent-success mx-auto" />
+                    ) : (
+                      <span className="text-ink-muted/40">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {row.recommended ? (
+                      <Check className="w-4 h-4 text-accent-success mx-auto" />
+                    ) : (
+                      <span className="text-ink-muted/40">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {row.full ? (
+                      <Check className="w-4 h-4 text-accent-success mx-auto" />
+                    ) : (
+                      <span className="text-ink-muted/40">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 border-t border-border-soft">
+        <p className="text-xs text-ink-muted">
+          Prompt Designer — built for developers who write code, not marketing copy.
+        </p>
+      </footer>
+    </PageShell>
   );
 }

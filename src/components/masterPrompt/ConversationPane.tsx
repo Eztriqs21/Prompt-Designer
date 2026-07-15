@@ -24,7 +24,6 @@ export default function ConversationPane({
   const scrollRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
 
-  // Track whether user is near the bottom of the scroll container
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -36,7 +35,6 @@ export default function ConversationPane({
     return () => el.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Auto-scroll only if user is near bottom
   useEffect(() => {
     if (scrollRef.current && isNearBottomRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -51,19 +49,18 @@ export default function ConversationPane({
           <QuestionBubble key={msg.id} message={msg} />
         ))}
 
-        {/* Extra content: master prompt output + sections */}
         {children}
 
         {isGenerating && (
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0 mt-0.5">
-              <Loader2 className="w-4 h-4 text-white/50 animate-spin" />
+            <div className="w-7 h-7 rounded-md bg-surface-alt border border-border-soft flex items-center justify-center shrink-0 mt-0.5">
+              <Loader2 className="w-3.5 h-3.5 text-ink-muted animate-spin" />
             </div>
-            <div className="liquid-glass rounded-xl rounded-tl-md px-4 py-3">
+            <div className="bg-surface-alt border border-border-soft rounded-md rounded-tl-sm px-4 py-3">
               <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-white/30 animate-pulse-subtle" />
-                <div className="w-1.5 h-1.5 rounded-full bg-white/30 animate-pulse-subtle" style={{ animationDelay: '300ms' }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-white/30 animate-pulse-subtle" style={{ animationDelay: '600ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-ink-muted/40 animate-pulse-subtle" />
+                <div className="w-1.5 h-1.5 rounded-full bg-ink-muted/40 animate-pulse-subtle" style={{ animationDelay: '300ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-ink-muted/40 animate-pulse-subtle" style={{ animationDelay: '600ms' }} />
               </div>
             </div>
           </div>
@@ -71,7 +68,7 @@ export default function ConversationPane({
       </div>
 
       {/* Input — fixed at bottom */}
-      <div className="shrink-0 px-4 sm:px-6 pb-4 pt-3 border-t border-white/[0.06]">
+      <div className="shrink-0 px-4 sm:px-6 pb-4 pt-3 border-t border-border-soft">
         <UserInputBar
           onSend={onSend}
           onGenerate={onGenerate}

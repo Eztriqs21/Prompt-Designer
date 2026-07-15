@@ -1,8 +1,5 @@
 import { memo } from 'react';
-import { motion } from 'framer-motion';
 import { Check, Loader2, AlertCircle, Clock } from 'lucide-react';
-import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
-import { fadeInUp, transitionEnter } from '../../motion/presets';
 import type { AuditStatus, AuditJobStages } from '../../types';
 
 interface AuditProgressProps {
@@ -35,46 +32,36 @@ const STATUS_TEXT: Record<string, string> = {
 
 function StageIcon({ stageStatus }: { stageStatus: string }) {
   if (stageStatus === 'completed') {
-    return <Check className="w-3.5 h-3.5 text-emerald-400" />;
+    return <Check className="w-3.5 h-3.5 text-accent-success" />;
   }
   if (stageStatus === 'running') {
-    return <Loader2 className="w-3.5 h-3.5 text-indigo-400 animate-spin" />;
+    return <Loader2 className="w-3.5 h-3.5 text-accent-info animate-spin" />;
   }
   if (stageStatus === 'failed') {
-    return <AlertCircle className="w-3.5 h-3.5 text-red-400" />;
+    return <AlertCircle className="w-3.5 h-3.5 text-accent-error" />;
   }
-  return <Clock className="w-3.5 h-3.5 text-white/20" />;
+  return <Clock className="w-3.5 h-3.5 text-ink-muted/30" />;
 }
 
 export default memo(function AuditProgress({ status, progress, stages, error }: AuditProgressProps) {
-  const reducedMotion = useReducedMotionSafe();
-
   return (
-    <motion.div
-      initial={reducedMotion ? false : 'hidden'}
-      animate="visible"
-      variants={fadeInUp}
-      transition={reducedMotion ? { duration: 0 } : transitionEnter}
-      className="liquid-glass rounded-2xl p-6 space-y-5"
-    >
+    <div className="bg-surface-alt border border-border-soft rounded-md p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-white/80">Audit Progress</h3>
-        <span className="text-[12px] text-white/40">{Math.round(progress)}%</span>
+        <h3 className="text-sm font-medium text-ink-primary">Audit Progress</h3>
+        <span className="text-xs text-ink-muted">{Math.round(progress)}%</span>
       </div>
 
       {/* Progress Bar */}
-      <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-        <motion.div
-          className="h-full rounded-full bg-indigo-500"
-          initial={{ width: 0 }}
-          animate={{ width: `${progress}%` }}
-          transition={reducedMotion ? { duration: 0 } : { duration: 0.5, ease: 'easeOut' }}
+      <div className="h-1.5 rounded-full bg-surface-base overflow-hidden">
+        <div
+          className="h-full rounded-full bg-ink-primary transition-all duration-500 ease-out"
+          style={{ width: `${progress}%` }}
         />
       </div>
 
       {/* Status Text */}
-      <p className="text-[13px] text-white/50">
+      <p className="text-sm text-ink-muted">
         {error || STATUS_TEXT[status] || 'Processing...'}
       </p>
 
@@ -88,28 +75,28 @@ export default memo(function AuditProgress({ status, progress, stages, error }: 
             return (
               <div
                 key={key}
-                className={`flex items-center gap-3 py-1.5 px-3 rounded-lg transition-colors duration-200 ${
+                className={`flex items-center gap-3 py-1.5 px-3 rounded-md transition-colors duration-150 ${
                   stageData.status === 'running'
-                    ? 'bg-white/[0.04]'
+                    ? 'bg-surface-base'
                     : stageData.status === 'completed'
                     ? 'opacity-60'
                     : ''
                 }`}
               >
                 <StageIcon stageStatus={stageData.status} />
-                <span className={`text-[12px] ${
+                <span className={`text-xs ${
                   stageData.status === 'running'
-                    ? 'text-white/70'
+                    ? 'text-ink-primary'
                     : stageData.status === 'completed'
-                    ? 'text-white/40'
+                    ? 'text-ink-muted'
                     : stageData.status === 'failed'
-                    ? 'text-red-400/60'
-                    : 'text-white/25'
+                    ? 'text-accent-error'
+                    : 'text-ink-muted/40'
                 }`}>
                   {label}
                 </span>
                 {stageData.status === 'completed' && stageData.completedAt && stageData.startedAt && (
-                  <span className="ml-auto text-[10px] text-white/20">
+                  <span className="ml-auto text-xs text-ink-muted/40">
                     {((stageData.completedAt - stageData.startedAt) / 1000).toFixed(1)}s
                   </span>
                 )}
@@ -118,6 +105,6 @@ export default memo(function AuditProgress({ status, progress, stages, error }: 
           })}
         </div>
       )}
-    </motion.div>
+    </div>
   );
 });

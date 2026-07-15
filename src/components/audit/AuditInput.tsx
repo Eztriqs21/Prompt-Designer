@@ -1,8 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, GitBranch, Upload, X, FileText } from 'lucide-react';
-import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
-import { transitionFast } from '../../motion/presets';
 import type { AuditInputType } from '../../types';
 
 type InputTab = 'url' | 'github' | 'files';
@@ -49,7 +46,6 @@ export default function AuditInput({
   onFilesChange,
   disabled,
 }: AuditInputProps) {
-  const reducedMotion = useReducedMotionSafe();
   const [activeTab, setActiveTab] = useState<InputTab>(
     inputType === 'github' ? 'github' : inputType === 'files' || inputType === 'bundle' ? 'files' : 'url'
   );
@@ -108,7 +104,7 @@ export default function AuditInput({
   return (
     <div className="space-y-4">
       {/* Tab Selector */}
-      <div className="flex gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+      <div className="flex gap-1 p-1 rounded-md bg-surface-alt border border-border-soft">
         {(Object.keys(TAB_CONFIG) as InputTab[]).map((tab) => {
           const TabIcon = TAB_CONFIG[tab].icon;
           const isActive = activeTab === tab;
@@ -117,10 +113,10 @@ export default function AuditInput({
               key={tab}
               onClick={() => handleTabChange(tab)}
               disabled={disabled}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-[13px] font-medium transition-all duration-200 ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-md text-sm font-medium transition-colors duration-150 ${
                 isActive
-                  ? 'bg-white/[0.08] text-white border border-white/[0.1]'
-                  : 'text-white/40 hover:text-white/60 hover:bg-white/[0.04]'
+                  ? 'bg-surface-base text-ink-primary border border-border-soft'
+                  : 'text-ink-muted hover:text-ink-primary hover:bg-surface-base'
               } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <TabIcon className="w-4 h-4" />
@@ -131,82 +127,70 @@ export default function AuditInput({
       </div>
 
       {/* Input Area */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={reducedMotion ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -8 }}
-          transition={reducedMotion ? { duration: 0 } : transitionFast}
+      {activeTab === 'files' ? (
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className={`relative cursor-pointer rounded-md border-2 border-dashed p-8 text-center transition-colors duration-150 ${
+            isDragOver
+              ? 'border-accent-info/60 bg-accent-info/5'
+              : 'border-border-soft bg-surface-alt hover:border-ink-muted/30 hover:bg-surface-alt'
+          } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {activeTab === 'files' ? (
-            /* File Upload Zone */
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`relative cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-all duration-200 ${
-                isDragOver
-                  ? 'border-indigo-400/60 bg-indigo-500/[0.06]'
-                  : 'border-white/[0.1] bg-white/[0.02] hover:border-white/[0.2] hover:bg-white/[0.04]'
-              } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept={ALLOWED_EXTENSIONS}
-                onChange={handleFileSelect}
-                className="hidden"
-                disabled={disabled}
-              />
-              <Upload className={`w-8 h-8 mx-auto mb-3 ${isDragOver ? 'text-indigo-400' : 'text-white/30'}`} />
-              <p className="text-sm text-white/50 mb-1">
-                {isDragOver ? 'Drop files here' : 'Drag & drop files or click to browse'}
-              </p>
-              <p className="text-[11px] text-white/25">
-                HTML, CSS, JS, TS, JSON, images, fonts, or zip bundles
-              </p>
-            </div>
-          ) : (
-            /* URL / GitHub Input */
-            <div className="space-y-2">
-              <p className="text-[12px] text-white/40">{config.description}</p>
-              <input
-                type="url"
-                value={source}
-                onChange={(e) => onSourceChange(e.target.value)}
-                placeholder={config.placeholder}
-                disabled={disabled}
-                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 focus:ring-2 focus:ring-indigo-500/40 transition-all duration-200 disabled:opacity-50"
-              />
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={ALLOWED_EXTENSIONS}
+            onChange={handleFileSelect}
+            className="hidden"
+            disabled={disabled}
+          />
+          <Upload className={`w-8 h-8 mx-auto mb-3 ${isDragOver ? 'text-accent-info' : 'text-ink-muted/40'}`} />
+          <p className="text-sm text-ink-muted mb-1">
+            {isDragOver ? 'Drop files here' : 'Drag & drop files or click to browse'}
+          </p>
+          <p className="text-xs text-ink-muted/60">
+            HTML, CSS, JS, TS, JSON, images, fonts, or zip bundles
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-xs text-ink-muted">{config.description}</p>
+          <input
+            type="url"
+            value={source}
+            onChange={(e) => onSourceChange(e.target.value)}
+            placeholder={config.placeholder}
+            disabled={disabled}
+            className="w-full bg-surface-base border border-border-soft rounded-md px-4 py-3 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-ink-muted/40 transition-colors disabled:opacity-50"
+          />
+        </div>
+      )}
 
       {/* File List */}
       {activeTab === 'files' && files.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[12px] text-white/40">
+          <p className="text-xs text-ink-muted">
             {files.length} file{files.length !== 1 ? 's' : ''} selected
           </p>
           <div className="space-y-1.5 max-h-40 overflow-y-auto">
             {files.map((file, index) => (
               <div
                 key={`${file.name}-${index}`}
-                className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-white/[0.03] border border-white/[0.06]"
+                className="flex items-center gap-2 py-1.5 px-3 rounded-md bg-surface-alt border border-border-soft"
               >
-                <FileText className="w-3.5 h-3.5 text-white/30 shrink-0" />
-                <span className="text-[12px] text-white/60 truncate flex-1">{file.name}</span>
-                <span className="text-[10px] text-white/25 shrink-0">
+                <FileText className="w-3.5 h-3.5 text-ink-muted/40 shrink-0" />
+                <span className="text-xs text-ink-primary truncate flex-1">{file.name}</span>
+                <span className="text-xs text-ink-muted shrink-0">
                   {(file.size / 1024).toFixed(1)}KB
                 </span>
                 <button
                   onClick={(e) => { e.stopPropagation(); removeFile(index); }}
                   disabled={disabled}
-                  className="p-0.5 text-white/30 hover:text-red-400 transition-colors disabled:opacity-50"
+                  className="p-0.5 text-ink-muted hover:text-accent-error transition-colors disabled:opacity-50"
                 >
                   <X className="w-3 h-3" />
                 </button>

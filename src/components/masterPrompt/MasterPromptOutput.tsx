@@ -1,8 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, Check, Bot, ArrowLeft } from 'lucide-react';
-import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
-import { transitionEnter } from '../../motion/presets';
 import FormattedPrompt from './FormattedPrompt';
 import SectionCard from './SectionCard';
 import SectionConversation from './SectionConversation';
@@ -35,7 +32,6 @@ export default function MasterPromptOutput({
   onLoadSectionMessages,
 }: MasterPromptOutputProps) {
   const [copied, setCopied] = useState(false);
-  const reducedMotion = useReducedMotionSafe();
 
   const handleCopy = async () => {
     if (!masterPrompt) return;
@@ -55,32 +51,22 @@ export default function MasterPromptOutput({
 
   if (!masterPrompt) return null;
 
-  // If a section is active, show the section conversation
   if (activeSection) {
     return (
-      <motion.div
-        initial={{ opacity: 0, x: 12 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={reducedMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }}
-        className="flex items-start gap-3"
-      >
-        {/* Bot avatar */}
-        <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0 mt-0.5">
-          <Bot className="w-4 h-4 text-white/50" />
+      <div className="flex items-start gap-3">
+        <div className="w-7 h-7 rounded-md bg-surface-alt border border-border-soft flex items-center justify-center shrink-0 mt-0.5">
+          <Bot className="w-3.5 h-3.5 text-ink-muted" />
         </div>
 
-        {/* Content */}
         <div className="flex-1 min-w-0 space-y-3">
-          {/* Back button */}
           <button
             onClick={() => onSelectSection(null)}
-            className="flex items-center gap-1.5 text-[12px] text-white/40 hover:text-white/70 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-ink-muted hover:text-ink-primary transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to sections
           </button>
 
-          {/* Section conversation */}
           <SectionConversation
             sectionType={activeSection}
             state={sections[activeSection]}
@@ -89,112 +75,70 @@ export default function MasterPromptOutput({
             onLoadMessages={() => chatId ? onLoadSectionMessages(chatId, activeSection) : Promise.resolve()}
           />
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -12 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={reducedMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }}
-      className="flex items-start gap-3"
-    >
-      {/* Bot avatar */}
-      <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0 mt-0.5">
-        <Bot className="w-4 h-4 text-white/50" />
+    <div className="flex items-start gap-3">
+      <div className="w-7 h-7 rounded-md bg-surface-alt border border-border-soft flex items-center justify-center shrink-0 mt-0.5">
+        <Bot className="w-3.5 h-3.5 text-ink-muted" />
       </div>
 
-      {/* Content */}
       <div className="flex-1 min-w-0 space-y-4">
-        {/* Summary card */}
         {summary && (
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={reducedMotion ? { duration: 0 } : transitionEnter}
-            className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]"
-          >
-            <p className="text-[11px] font-semibold tracking-wider uppercase text-white/35 mb-1.5">Summary</p>
-            <p className="text-[13px] text-white/60 leading-relaxed">{summary}</p>
-          </motion.div>
+          <div className="p-4 rounded-md bg-surface-alt border border-border-soft">
+            <p className="text-xs font-semibold tracking-wider uppercase text-ink-muted mb-1.5">Summary</p>
+            <p className="text-sm text-ink-primary leading-relaxed">{summary}</p>
+          </div>
         )}
 
-        {/* Analysis card */}
         {analysis && (
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={reducedMotion ? { duration: 0 } : { ...transitionEnter, delay: 0.06 }}
-            className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]"
-          >
-            <p className="text-[11px] font-semibold tracking-wider uppercase text-white/35 mb-1.5">Analysis</p>
-            <p className="text-[13px] text-white/60 leading-relaxed">{analysis}</p>
-          </motion.div>
+          <div className="p-4 rounded-md bg-surface-alt border border-border-soft">
+            <p className="text-xs font-semibold tracking-wider uppercase text-ink-muted mb-1.5">Analysis</p>
+            <p className="text-sm text-ink-primary leading-relaxed">{analysis}</p>
+          </div>
         )}
 
-        {/* Formatted master prompt */}
-        <FormattedPrompt content={masterPrompt} delay={0.1} />
+        <FormattedPrompt content={masterPrompt} />
 
-        {/* Copy button */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={reducedMotion ? { duration: 0 } : { ...transitionEnter, delay: 0.15 }}
-          className="flex justify-end"
-        >
-          <motion.button
-            whileHover={reducedMotion ? {} : { scale: 1.03 }}
-            whileTap={reducedMotion ? {} : { scale: 0.97 }}
+        <div className="flex justify-end">
+          <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-full bg-white/[0.06] text-white/45 hover:text-white hover:bg-white/[0.1] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-surface-alt border border-border-soft text-ink-muted hover:text-ink-primary transition-colors"
           >
-            <AnimatePresence mode="wait">
-              {copied ? (
-                <motion.span key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="flex items-center gap-1.5">
-                  <Check className="w-3 h-3" />
-                  Copied
-                </motion.span>
-              ) : (
-                <motion.span key="copy" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="flex items-center gap-1.5">
-                  <Copy className="w-3 h-3" />
-                  Copy Prompt
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
-        </motion.div>
+            {copied ? (
+              <>
+                <Check className="w-3 h-3" />
+                Copied
+              </>
+            ) : (
+              <>
+                <Copy className="w-3 h-3" />
+                Copy Prompt
+              </>
+            )}
+          </button>
+        </div>
 
-        {/* Branching point */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={reducedMotion ? { duration: 0 } : { ...transitionEnter, delay: 0.18 }}
-          className="space-y-4"
-        >
-          {/* Branch heading */}
+        <div className="space-y-4">
           <div className="text-center py-3">
-            <h3
-              className="text-lg text-white/80 tracking-tight mb-1"
-              style={{ fontFamily: "'Instrument Serif', serif" }}
-            >
+            <h3 className="text-lg font-semibold text-ink-primary mb-1">
               Your master prompt is ready
             </h3>
-            <p className="text-[12px] text-white/30">
+            <p className="text-xs text-ink-muted">
               Choose a section to dive deeper
             </p>
           </div>
 
-          {/* Divider */}
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-white/[0.06]" />
-            <span className="text-[10px] font-medium text-white/20 tracking-widest uppercase">
+            <div className="flex-1 h-px bg-border-soft" />
+            <span className="text-xs font-medium text-ink-muted tracking-wider uppercase">
               Sections
             </span>
-            <div className="flex-1 h-px bg-white/[0.06]" />
+            <div className="flex-1 h-px bg-border-soft" />
           </div>
 
-          {/* Section cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {(['coding', 'ui-ux', 'audit'] as SectionType[]).map((type) => (
               <SectionCard
@@ -206,8 +150,8 @@ export default function MasterPromptOutput({
               />
             ))}
           </div>
-        </motion.div>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

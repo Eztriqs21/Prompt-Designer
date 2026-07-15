@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Copy, Check, Code, Palette, ShieldCheck, Loader2, User } from 'lucide-react';
 import type { SectionType, SectionState } from '../../types';
 import type { SectionMessage } from '../../lib/apiClient';
@@ -13,9 +12,9 @@ interface SectionConversationProps {
 }
 
 const SECTION_META: Record<SectionType, { label: string; icon: typeof Code; color: string }> = {
-  coding: { label: 'Coding', icon: Code, color: 'text-emerald-400' },
-  'ui-ux': { label: 'UI/UX', icon: Palette, color: 'text-violet-400' },
-  audit: { label: 'Audit', icon: ShieldCheck, color: 'text-amber-400' },
+  coding: { label: 'Coding', icon: Code, color: 'text-accent-success' },
+  'ui-ux': { label: 'UI/UX', icon: Palette, color: 'text-accent-info' },
+  audit: { label: 'Audit', icon: ShieldCheck, color: 'text-accent-warning' },
 };
 
 export default function SectionConversation({ sectionType, state, messages, onGenerate, onLoadMessages }: SectionConversationProps) {
@@ -26,7 +25,6 @@ export default function SectionConversation({ sectionType, state, messages, onGe
   const meta = SECTION_META[sectionType];
   const loadedRef = useRef(false);
 
-  // Load messages from backend on mount
   useEffect(() => {
     if (!loadedRef.current) {
       loadedRef.current = true;
@@ -34,7 +32,6 @@ export default function SectionConversation({ sectionType, state, messages, onGe
     }
   }, [onLoadMessages]);
 
-  // Reset loaded ref when section changes
   useEffect(() => {
     loadedRef.current = false;
   }, [sectionType]);
@@ -83,16 +80,16 @@ export default function SectionConversation({ sectionType, state, messages, onGe
 
   if (!state.data && !state.isGenerating) {
     return (
-      <div className="liquid-glass rounded-xl p-6 text-center">
-        <div className={`inline-flex p-3 rounded-xl bg-white/[0.04] mb-3`}>
+      <div className="bg-surface-alt border border-border-soft rounded-md p-6 text-center">
+        <div className="inline-flex p-3 rounded-md bg-surface-base border border-border-soft mb-3">
           <meta.icon className={`w-5 h-5 ${meta.color}`} />
         </div>
-        <p className="text-[13px] text-white/40 mb-3">
+        <p className="text-sm text-ink-muted mb-3">
           Generate a {meta.label.toLowerCase()} section prompt to get started.
         </p>
         <button
           onClick={() => onGenerate()}
-          className="px-4 py-2 text-[12px] font-medium rounded-lg bg-white/[0.06] text-white/60 hover:text-white hover:bg-white/[0.1] transition-colors"
+          className="px-4 py-2 text-xs font-medium rounded-md bg-surface-base border border-border-soft text-ink-muted hover:text-ink-primary hover:bg-surface-alt transition-colors"
         >
           Generate {meta.label} Section
         </button>
@@ -101,19 +98,19 @@ export default function SectionConversation({ sectionType, state, messages, onGe
   }
 
   return (
-    <div className="liquid-glass rounded-xl flex flex-col" style={{ height: 'min(500px, 60vh)' }}>
+    <div className="bg-surface-alt border border-border-soft rounded-md flex flex-col" style={{ height: 'min(500px, 60vh)' }}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-white/[0.06] shrink-0 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-border-soft shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <meta.icon className={`w-4 h-4 ${meta.color}`} />
-          <h3 className="text-[12px] font-semibold tracking-wide uppercase text-white/60">
+          <h3 className="text-xs font-semibold tracking-wide uppercase text-ink-muted">
             {meta.label} Section
           </h3>
         </div>
         {state.data && (
           <button
             onClick={() => handleCopy(state.data!.masterPrompt)}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-md bg-white/[0.04] text-white/40 hover:text-white/70 hover:bg-white/[0.06] transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md bg-surface-base border border-border-soft text-ink-muted hover:text-ink-primary transition-colors"
           >
             {copied ? (
               <>
@@ -132,57 +129,49 @@ export default function SectionConversation({ sectionType, state, messages, onGe
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 min-h-0" ref={scrollRef}>
-        <AnimatePresence>
-          {messages.map((msg) => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-start gap-2.5"
-            >
-              {msg.role === 'assistant' ? (
-                <div className={`p-1.5 rounded-lg bg-white/[0.04]`}>
-                  <meta.icon className={`w-3.5 h-3.5 ${meta.color}`} />
-                </div>
-              ) : (
-                <div className="p-1.5 rounded-lg bg-white/[0.06]">
-                  <User className="w-3.5 h-3.5 text-white/50" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-medium text-white/30 mb-1">
-                  {msg.role === 'assistant' ? meta.label : 'You'}
-                </p>
-                <div className="text-[13px] text-white/60 leading-relaxed whitespace-pre-wrap">
-                  {msg.content}
-                </div>
+        {messages.map((msg) => (
+          <div key={msg.id} className="flex items-start gap-2.5">
+            {msg.role === 'assistant' ? (
+              <div className="p-1.5 rounded-md bg-surface-base border border-border-soft">
+                <meta.icon className={`w-3.5 h-3.5 ${meta.color}`} />
               </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+            ) : (
+              <div className="p-1.5 rounded-md bg-surface-alt border border-border-soft">
+                <User className="w-3.5 h-3.5 text-ink-muted" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-ink-muted mb-1">
+                {msg.role === 'assistant' ? meta.label : 'You'}
+              </p>
+              <div className="text-sm text-ink-primary leading-relaxed whitespace-pre-wrap">
+                {msg.content}
+              </div>
+            </div>
+          </div>
+        ))}
 
         {state.isGenerating && (
           <div className="flex items-start gap-2.5">
-            <div className={`p-1.5 rounded-lg bg-white/[0.04]`}>
+            <div className="p-1.5 rounded-md bg-surface-base border border-border-soft">
               <Loader2 className={`w-3.5 h-3.5 animate-spin ${meta.color}`} />
             </div>
             <div>
-              <p className="text-[11px] font-medium text-white/30 mb-1">{meta.label}</p>
-              <p className="text-[13px] text-white/40">Generating...</p>
+              <p className="text-xs font-medium text-ink-muted mb-1">{meta.label}</p>
+              <p className="text-sm text-ink-muted">Generating...</p>
             </div>
           </div>
         )}
 
         {state.error && (
-          <div className="p-3 rounded-lg bg-red-500/[0.06] border border-red-500/10">
-            <p className="text-[12px] text-red-400">{state.error}</p>
+          <div className="p-3 rounded-md bg-accent-error/10 border border-accent-error/20">
+            <p className="text-xs text-accent-error">{state.error}</p>
           </div>
         )}
       </div>
 
       {/* Input */}
-      <div className="shrink-0 px-4 py-3 border-t border-white/[0.06]">
+      <div className="shrink-0 px-4 py-3 border-t border-border-soft">
         <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
@@ -191,12 +180,12 @@ export default function SectionConversation({ sectionType, state, messages, onGe
             onKeyDown={handleKeyDown}
             placeholder={`Ask about the ${meta.label.toLowerCase()} section...`}
             rows={1}
-            className="flex-1 min-w-0 bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-[13px] text-white placeholder:text-white/20 resize-none outline-none focus:border-white/[0.15] transition-colors"
+            className="flex-1 min-w-0 bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted resize-none outline-none focus:border-ink-muted/40 transition-colors"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || state.isGenerating}
-            className="p-2 rounded-lg bg-white text-black hover:bg-white/90 transition-colors disabled:opacity-30 shrink-0"
+            className="p-2 rounded-md bg-ink-primary text-surface-base hover:opacity-90 transition-opacity disabled:opacity-30 shrink-0"
           >
             <Send className="w-4 h-4" />
           </button>

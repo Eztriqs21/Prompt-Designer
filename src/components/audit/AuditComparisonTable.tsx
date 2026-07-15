@@ -17,35 +17,35 @@ const FEATURES = [
 
 function Indicator({ value }: { value: boolean }) {
   return value ? (
-    <Check className="w-4 h-4 text-emerald-400 mx-auto" />
+    <Check className="w-4 h-4 text-accent-success mx-auto" />
   ) : (
-    <Minus className="w-4 h-4 text-white/15 mx-auto" />
+    <Minus className="w-4 h-4 text-ink-muted/20 mx-auto" />
   );
 }
 
 export default function AuditComparisonTable() {
   return (
-    <div className="liquid-glass rounded-xl overflow-hidden">
-      <div className="px-5 py-3 border-b border-white/[0.06]">
-        <h3 className="text-[13px] font-medium text-white/70">Compare Audit Modes</h3>
+    <div className="bg-surface-alt border border-border-soft rounded-md overflow-hidden">
+      <div className="px-5 py-3 border-b border-border-soft">
+        <h3 className="text-sm font-medium text-ink-primary">Compare Audit Modes</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-white/[0.06]">
-              <th className="px-5 py-2.5 text-[11px] font-medium text-white/40 uppercase tracking-wider">Feature</th>
-              <th className="px-3 py-2.5 text-[11px] font-medium text-emerald-400/70 uppercase tracking-wider text-center">Basic</th>
-              <th className="px-3 py-2.5 text-[11px] font-medium text-indigo-400/70 uppercase tracking-wider text-center">Recommended</th>
-              <th className="px-3 py-2.5 text-[11px] font-medium text-amber-400/70 uppercase tracking-wider text-center">Full</th>
+            <tr className="border-b border-border-soft">
+              <th className="px-5 py-2.5 text-xs font-medium text-ink-muted uppercase tracking-wider">Feature</th>
+              <th className="px-3 py-2.5 text-xs font-medium text-accent-success uppercase tracking-wider text-center">Basic</th>
+              <th className="px-3 py-2.5 text-xs font-medium text-accent-info uppercase tracking-wider text-center">Recommended</th>
+              <th className="px-3 py-2.5 text-xs font-medium text-accent-warning uppercase tracking-wider text-center">Full</th>
             </tr>
           </thead>
           <tbody>
             {FEATURES.map((feature, index) => (
               <tr
                 key={feature.name}
-                className={`border-b border-white/[0.03] ${index % 2 === 0 ? 'bg-white/[0.01]' : ''}`}
+                className={`border-b border-border-soft ${index % 2 === 0 ? 'bg-surface-base/50' : ''}`}
               >
-                <td className="px-5 py-2 text-[12px] text-white/50">{feature.name}</td>
+                <td className="px-5 py-2 text-xs text-ink-muted">{feature.name}</td>
                 <td className="px-3 py-2 text-center"><Indicator value={feature.basic} /></td>
                 <td className="px-3 py-2 text-center"><Indicator value={feature.recommended} /></td>
                 <td className="px-3 py-2 text-center"><Indicator value={feature.full} /></td>

@@ -1,10 +1,6 @@
 import { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, ShieldCheck, Loader2, AlertTriangle } from 'lucide-react';
-import { useReducedMotionSafe } from '../hooks/useReducedMotionSafe';
+import { ShieldCheck, Loader2, AlertTriangle } from 'lucide-react';
 import { useAudit } from '../hooks/useAudit';
-import { fadeInUp, staggerContainer, transitionEnter } from '../motion/presets';
 import AuditInput from '../components/audit/AuditInput';
 import AuditModeSelector from '../components/audit/AuditModeSelector';
 import AuditComparisonTable from '../components/audit/AuditComparisonTable';
@@ -13,7 +9,6 @@ import AuditReport from '../components/audit/AuditReport';
 import type { AuditInputType, AuditMode } from '../types';
 
 export default function AuditPage() {
-  const reducedMotion = useReducedMotionSafe();
   const audit = useAudit();
 
   const [inputType, setInputType] = useState<AuditInputType>('url');
@@ -25,8 +20,6 @@ export default function AuditPage() {
 
   const handleStart = useCallback(() => {
     if (!canStart) return;
-
-    // Validate input
     if ((inputType === 'url' || inputType === 'github') && !source.trim()) return;
 
     audit.startAudit({
@@ -49,59 +42,24 @@ export default function AuditPage() {
   const hasReport = audit.report !== null;
 
   return (
-    <motion.div
-      initial={reducedMotion ? false : 'hidden'}
-      animate="visible"
-      variants={fadeInUp}
-      transition={reducedMotion ? { duration: 0 } : transitionEnter}
-      className="min-h-screen bg-black text-white relative overflow-hidden"
-    >
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] via-transparent to-transparent pointer-events-none" />
-
-      <div className="relative z-10 max-w-3xl mx-auto px-6 py-20">
-        {/* Back link */}
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/60 transition-colors mb-8"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Back to Prompt Designer
-        </Link>
-
+    <div className="h-screen overflow-y-auto">
+      <div className="max-w-3xl mx-auto px-6 py-12">
         {/* Header */}
-        <motion.div
-          variants={staggerContainer}
-          {...(reducedMotion ? {} : { initial: 'hidden', animate: 'visible' })}
-          className="text-center mb-10"
-        >
-          <motion.div
-            variants={fadeInUp}
-            transition={reducedMotion ? { duration: 0 } : transitionEnter}
-            className="inline-flex items-center gap-2 mb-3"
-          >
-            <ShieldCheck className="w-5 h-5 text-indigo-400/60" />
-            <span className="text-[11px] font-medium uppercase tracking-widest text-white/30">Website AUDIT</span>
-          </motion.div>
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 mb-3">
+            <ShieldCheck className="w-5 h-5 text-ink-muted" />
+            <span className="text-xs font-medium uppercase tracking-widest text-ink-muted">Website AUDIT</span>
+          </div>
 
-          <motion.h1
-            variants={fadeInUp}
-            transition={reducedMotion ? { duration: 0 } : transitionEnter}
-            className="text-3xl md:text-4xl text-white tracking-tight mb-2"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
+          <h1 className="text-3xl md:text-4xl font-bold text-ink-primary tracking-tight mb-2">
             Website Audit
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            variants={fadeInUp}
-            transition={reducedMotion ? { duration: 0 } : transitionEnter}
-            className="text-sm text-white/50 max-w-md mx-auto"
-          >
+          <p className="text-sm text-ink-muted max-w-md mx-auto">
             Analyze websites for code issues, bugs, UX problems, and performance concerns.
             Get a professional QA-style report.
-          </motion.p>
-        </motion.div>
+          </p>
+        </div>
 
         {/* Main Content */}
         {hasReport && audit.report ? (
@@ -114,46 +72,36 @@ export default function AuditPage() {
             error={audit.error}
           />
         ) : (
-          <motion.div
-            variants={staggerContainer}
-            {...(reducedMotion ? {} : { initial: 'hidden', animate: 'visible' })}
-            className="space-y-8"
-          >
+          <div className="space-y-8">
             {/* Input Section */}
-            <motion.div variants={fadeInUp} transition={reducedMotion ? { duration: 0 } : transitionEnter}>
-              <AuditInput
-                inputType={inputType}
-                source={source}
-                files={files}
-                onInputTypeChange={setInputType}
-                onSourceChange={setSource}
-                onFilesChange={setFiles}
-                disabled={isRunning}
-              />
-            </motion.div>
+            <AuditInput
+              inputType={inputType}
+              source={source}
+              files={files}
+              onInputTypeChange={setInputType}
+              onSourceChange={setSource}
+              onFilesChange={setFiles}
+              disabled={isRunning}
+            />
 
             {/* Mode Selector */}
-            <motion.div variants={fadeInUp} transition={reducedMotion ? { duration: 0 } : transitionEnter}>
-              <label className="block text-[12px] text-white/40 mb-3 uppercase tracking-wider font-medium">
+            <div>
+              <label className="block text-xs text-ink-muted mb-3 uppercase tracking-wider font-medium">
                 Audit Depth
               </label>
               <AuditModeSelector value={mode} onChange={setMode} disabled={isRunning} />
-            </motion.div>
+            </div>
 
             {/* Error Display */}
             {audit.error && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-3 p-4 rounded-xl bg-red-500/[0.06] border border-red-500/20"
-              >
-                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
-                <p className="text-[13px] text-red-400/80">{audit.error}</p>
-              </motion.div>
+              <div className="flex items-center gap-3 p-4 rounded-md bg-accent-error/10 border border-accent-error/20">
+                <AlertTriangle className="w-4 h-4 text-accent-error shrink-0" />
+                <p className="text-sm text-accent-error">{audit.error}</p>
+              </div>
             )}
 
             {/* Start Button */}
-            <motion.div variants={fadeInUp} transition={reducedMotion ? { duration: 0 } : transitionEnter}>
+            <div>
               <button
                 onClick={handleStart}
                 disabled={
@@ -162,7 +110,7 @@ export default function AuditPage() {
                   ((inputType === 'url' || inputType === 'github') && !source.trim()) ||
                   (inputType === 'files' && files.length === 0)
                 }
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-white text-black font-medium text-[14px] hover:bg-white/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-md bg-ink-primary text-surface-base font-medium text-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
               >
                 {audit.isSubmitting ? (
                   <>
@@ -176,28 +124,22 @@ export default function AuditPage() {
                   </>
                 )}
               </button>
-              <p className="mt-2 text-[10px] text-white/20 text-center">
+              <p className="mt-2 text-xs text-ink-muted text-center">
                 {mode === 'basic' && 'Basic: Code-only analysis, fastest option'}
                 {mode === 'recommended' && 'Recommended: Code + light browser testing, best balance'}
                 {mode === 'full' && 'Full: Complete testing with accessibility & performance checks'}
               </p>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
 
-        {/* Comparison Table — always visible at bottom */}
+        {/* Comparison Table */}
         {!hasReport && (
-          <motion.div
-            variants={fadeInUp}
-            transition={reducedMotion ? { duration: 0 } : transitionEnter}
-            initial={reducedMotion ? false : 'hidden'}
-            animate="visible"
-            className="mt-12"
-          >
+          <div className="mt-12">
             <AuditComparisonTable />
-          </motion.div>
+          </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

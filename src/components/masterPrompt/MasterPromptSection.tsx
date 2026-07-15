@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import ConversationPane from './ConversationPane';
 import MasterPromptOutput from './MasterPromptOutput';
 import PromptLibraryPane from './PromptLibraryPane';
@@ -108,7 +108,6 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     }
   }, [activeChatId, loadPromptVersions]);
 
-  // Report prompt count to parent
   useEffect(() => {
     onPromptCountChange?.(promptVersions.length);
   }, [promptVersions.length, onPromptCountChange]);
@@ -149,7 +148,6 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
 
   return (
     <div className="flex flex-col h-full min-h-0 relative overflow-hidden">
-      {/* Chat area — always rendered, takes full space */}
       <div className="flex-1 min-h-0">
         {activeChatId ? (
           <ConversationPane
@@ -177,19 +175,16 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
         ) : (
           <div className="flex-1 flex items-center justify-center h-full">
             <div className="text-center space-y-4 px-6">
-              <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto">
-                <svg className="w-7 h-7 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-16 h-16 rounded-md bg-surface-alt border border-border-soft flex items-center justify-center mx-auto">
+                <svg className="w-7 h-7 text-ink-muted/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
               <div>
-                <h2
-                  className="text-xl text-white/70 tracking-tight mb-1"
-                  style={{ fontFamily: "'Instrument Serif', serif" }}
-                >
+                <h2 className="text-xl font-semibold text-ink-primary tracking-tight mb-1">
                   Start a conversation
                 </h2>
-                <p className="text-[13px] text-white/30 max-w-[280px] mx-auto leading-relaxed">
+                <p className="text-sm text-ink-muted max-w-[280px] mx-auto leading-relaxed">
                   Create a new chat or select an existing one to continue where you left off.
                 </p>
               </div>
@@ -198,16 +193,9 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
         )}
       </div>
 
-      {/* Prompt Library — slides in from right, overlays chat */}
       <AnimatePresence>
         {showLibrary && (
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-            className="absolute inset-y-0 right-0 z-30 w-full max-w-md bg-[#07070D]/95 backdrop-blur-xl border-l border-white/[0.06] shadow-2xl overflow-hidden"
-          >
+          <div className="absolute inset-y-0 right-0 z-30 w-full max-w-md bg-surface-base border-l border-border-soft shadow-md overflow-hidden">
             <PromptLibraryPane
               promptVersions={promptVersions}
               isLoading={versionsLoading}
@@ -217,11 +205,10 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
               onViewPrompt={setViewingPrompt}
               onClose={onToggleLibrary}
             />
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
-      {/* Full prompt view modal */}
       <AnimatePresence>
         {viewingPrompt && (
           <PromptViewModal prompt={viewingPrompt} onClose={() => setViewingPrompt(null)} />
@@ -233,20 +220,20 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
 
 function PromptViewModal({ prompt, onClose }: { prompt: PromptVersion; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
-      <div className="liquid-glass rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
-        <div className="px-5 py-4 border-b border-white/[0.06] shrink-0 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-ink-primary/20">
+      <div className="bg-surface-base border border-border-soft rounded-md shadow-md w-full max-w-3xl max-h-[85vh] flex flex-col">
+        <div className="px-5 py-4 border-b border-border-soft shrink-0 flex items-center justify-between">
           <div>
-            <h3 className="text-[14px] font-semibold text-white">
+            <h3 className="text-sm font-semibold text-ink-primary">
               v{prompt.version} — {prompt.title}
             </h3>
-            <p className="text-[11px] text-white/35 mt-0.5">
+            <p className="text-xs text-ink-muted mt-0.5">
               {prompt.isPinned ? 'Pinned' : 'Not pinned'}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-[12px] text-white/40 hover:text-white/70 transition-colors px-3 py-1.5"
+            className="text-xs text-ink-muted hover:text-ink-primary transition-colors px-3 py-1.5"
           >
             Close
           </button>
@@ -254,19 +241,19 @@ function PromptViewModal({ prompt, onClose }: { prompt: PromptVersion; onClose: 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 min-h-0">
           {prompt.summary && (
             <div>
-              <p className="text-[10px] font-semibold tracking-wider uppercase text-white/30 mb-1.5">Summary</p>
-              <p className="text-[13px] text-white/60 leading-relaxed">{prompt.summary}</p>
+              <p className="text-xs font-semibold tracking-wider uppercase text-ink-muted mb-1.5">Summary</p>
+              <p className="text-sm text-ink-primary leading-relaxed">{prompt.summary}</p>
             </div>
           )}
           {prompt.analysis && (
             <div>
-              <p className="text-[10px] font-semibold tracking-wider uppercase text-white/30 mb-1.5">Analysis</p>
-              <p className="text-[13px] text-white/60 leading-relaxed">{prompt.analysis}</p>
+              <p className="text-xs font-semibold tracking-wider uppercase text-ink-muted mb-1.5">Analysis</p>
+              <p className="text-sm text-ink-primary leading-relaxed">{prompt.analysis}</p>
             </div>
           )}
           <div>
-            <p className="text-[10px] font-semibold tracking-wider uppercase text-white/30 mb-1.5">Master Prompt</p>
-            <pre className="text-[12px] font-mono whitespace-pre-wrap leading-relaxed text-white/75 bg-black/30 border border-white/[0.05] rounded-xl px-4 py-3">
+            <p className="text-xs font-semibold tracking-wider uppercase text-ink-muted mb-1.5">Master Prompt</p>
+            <pre className="text-xs font-mono whitespace-pre-wrap leading-relaxed text-ink-primary bg-surface-alt border border-border-soft rounded-md px-4 py-3">
               {prompt.masterPrompt}
             </pre>
           </div>

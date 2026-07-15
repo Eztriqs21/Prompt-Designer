@@ -1,24 +1,15 @@
 import type { ReactNode } from 'react';
-import { motion } from 'framer-motion';
-import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
-import { fadeIn } from '../../motion/presets';
-import { transitionEnter } from '../../motion/presets';
 
 interface PageShellProps {
   children: ReactNode;
+  /** Optional max-width override (default: 1280px) */
+  maxWidth?: string;
 }
 
-export default function PageShell({ children }: PageShellProps) {
-  const reducedMotion = useReducedMotionSafe();
-
+export default function PageShell({ children, maxWidth = 'max-w-6xl' }: PageShellProps) {
   return (
-    <motion.div
-      initial={reducedMotion ? false : 'hidden'}
-      animate="visible"
-      variants={fadeIn}
-      transition={reducedMotion ? { duration: 0 } : transitionEnter}
-    >
+    <div className={`w-full ${maxWidth} mx-auto px-6 py-8`}>
       {children}
-    </motion.div>
+    </div>
   );
 }

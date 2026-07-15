@@ -1,8 +1,5 @@
 import { memo } from 'react';
-import { motion } from 'framer-motion';
 import { Code, Palette, ShieldCheck, Loader2, ChevronRight } from 'lucide-react';
-import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
-import { hoverScaleSmall } from '../../motion/presets';
 import type { SectionType, SectionState } from '../../types';
 
 interface SectionCardProps {
@@ -16,73 +13,71 @@ const SECTION_CONFIG: Record<SectionType, { label: string; icon: typeof Code; co
   coding: {
     label: 'Coding',
     icon: Code,
-    color: 'text-emerald-400',
+    color: 'text-accent-success',
     description: 'Implementation brief for your coding agent',
   },
   'ui-ux': {
     label: 'UI/UX',
     icon: Palette,
-    color: 'text-violet-400',
+    color: 'text-accent-info',
     description: 'Design specification for your coding agent',
   },
   audit: {
     label: 'Audit',
     icon: ShieldCheck,
-    color: 'text-amber-400',
+    color: 'text-accent-warning',
     description: 'Structured review brief for your coding agent',
   },
 };
 
 export default memo(function SectionCard({ type, state, isActive, onClick }: SectionCardProps) {
-  const reducedMotion = useReducedMotionSafe();
   const config = SECTION_CONFIG[type];
   const Icon = config.icon;
   const hasData = !!state.data;
   const isGenerating = state.isGenerating;
 
   return (
-    <motion.button
-      {...(reducedMotion ? {} : hoverScaleSmall)}
+    <button
       onClick={onClick}
-      className={`w-full text-left p-4 rounded-xl border transition-all ${
+      className={`w-full text-left p-4 rounded-md border transition-colors duration-150 ${
         isActive
-          ? 'bg-white/[0.08] border-white/[0.12] ring-1 ring-white/[0.06]'
+          ? 'bg-surface-alt border-ink-muted/20'
           : hasData
-          ? 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.05] hover:border-white/[0.08]'
-          : 'bg-white/[0.02] border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.06]'
+          ? 'bg-surface-alt border-border-soft hover:border-ink-muted/30'
+          : 'bg-surface-base border-border-soft hover:border-ink-muted/20'
       }`}
     >
       <div className="flex items-start gap-3">
-        <div className={`p-2 rounded-lg ${isActive ? 'bg-white/[0.08]' : 'bg-white/[0.04]'}`}>
+        <div className={`p-2 rounded-md ${isActive ? 'bg-surface-base' : 'bg-surface-alt'}`}>
           {isGenerating ? (
             <Loader2 className={`w-4 h-4 animate-spin ${config.color}`} />
           ) : (
-            <Icon className={`w-4 h-4 ${hasData ? config.color : 'text-white/30'}`} />
+            <Icon className={`w-4 h-4 ${hasData ? config.color : 'text-ink-muted'}`} />
           )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className={`text-[13px] font-medium ${isActive ? 'text-white' : hasData ? 'text-white/70' : 'text-white/40'}`}>
+            <h4 className={`text-sm font-medium ${isActive ? 'text-ink-primary' : hasData ? 'text-ink-primary' : 'text-ink-muted'}`}>
               {config.label}
             </h4>
             {hasData && !isGenerating && (
-              <span className="text-[10px] text-emerald-400/60 font-medium">Ready</span>
+              <span className="text-xs text-accent-success font-medium">Ready</span>
             )}
             {isGenerating && (
-              <span className="text-[10px] text-white/30 font-medium">Generating...</span>
+              <span className="text-xs text-ink-muted font-medium">Generating...</span>
             )}
           </div>
-          <p className={`text-[11px] mt-0.5 ${isActive ? 'text-white/50' : 'text-white/25'}`}>
+          <p className={`text-xs mt-0.5 ${isActive ? 'text-ink-muted' : 'text-ink-muted/60'}`}>
             {config.description}
           </p>
           {state.error && (
-            <p className="text-[11px] mt-1 text-red-400/60">Failed to generate</p>
+            <p className="text-xs mt-1 text-accent-error">Failed to generate</p>
           )}
         </div>
         <ChevronRight className={`w-4 h-4 shrink-0 mt-1 transition-colors ${
-          isActive ? 'text-white/40' : 'text-white/15'
+          isActive ? 'text-ink-muted' : 'text-ink-muted/40'
         }`} />
       </div>
-    </motion.button>
+    </button>
   );
 });
