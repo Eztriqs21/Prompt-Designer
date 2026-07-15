@@ -55,11 +55,11 @@ export default function HomePage() {
 
         {/* Command strip */}
         <div className="inline-flex items-center gap-3 bg-surface-alt border border-border-soft rounded-md px-4 py-3 max-w-md">
-          <span className="text-ink-muted text-sm">$</span>
+          <span className="text-accent-primary text-sm">$</span>
           <code className="text-sm text-ink-primary flex-1">Start a new chat at /chat</code>
           <button
             onClick={handleCopy}
-            className="p-1 rounded-sm text-ink-muted hover:text-ink-primary hover:bg-surface-base transition-colors duration-150"
+            className="p-1 rounded-sm text-ink-muted hover:text-accent-primary hover:bg-surface-hover transition-colors duration-150"
             aria-label="Copy command"
           >
             {copied ? <Check className="w-4 h-4 text-accent-success" /> : <Copy className="w-4 h-4" />}
@@ -69,7 +69,7 @@ export default function HomePage() {
 
       {/* Feature cards */}
       <section className="mb-16">
-        <h2 className="text-xl font-bold text-ink-primary mb-6">Features</h2>
+        <h2 className="text-xl font-bold text-accent-purple mb-6">Features</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {FEATURES.map((feature) => {
             const Icon = feature.icon;
@@ -77,11 +77,11 @@ export default function HomePage() {
               <Link
                 key={feature.title}
                 to={feature.link}
-                className="block bg-surface-alt border border-border-soft rounded-md p-5 hover:border-ink-muted/30 transition-colors duration-150"
+                className="block bg-surface-alt border border-border-soft rounded-md p-5 hover:border-accent-primary/30 transition-colors duration-150"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-md bg-surface-base border border-border-soft flex items-center justify-center">
-                    <Icon className="w-4 h-4 text-ink-muted" />
+                  <div className="w-8 h-8 rounded-md bg-surface-hover border border-border-soft flex items-center justify-center">
+                    <Icon className="w-4 h-4 text-accent-primary" />
                   </div>
                   <h3 className="text-sm font-semibold text-ink-primary">{feature.title}</h3>
                 </div>
@@ -94,15 +94,15 @@ export default function HomePage() {
 
       {/* Technical overview table */}
       <section className="mb-16">
-        <h2 className="text-xl font-bold text-ink-primary mb-6">Capabilities</h2>
+        <h2 className="text-xl font-bold text-accent-purple mb-6">Capabilities</h2>
         <div className="bg-surface-alt border border-border-soft rounded-md overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border-soft">
                 <th className="text-left px-4 py-3 font-semibold text-ink-primary">Feature</th>
-                <th className="text-center px-4 py-3 font-semibold text-ink-primary">Basic</th>
-                <th className="text-center px-4 py-3 font-semibold text-ink-primary">Recommended</th>
-                <th className="text-center px-4 py-3 font-semibold text-ink-primary">Full</th>
+                <th className="text-center px-4 py-3 font-semibold text-accent-success">Basic</th>
+                <th className="text-center px-4 py-3 font-semibold text-accent-blue">Recommended</th>
+                <th className="text-center px-4 py-3 font-semibold text-accent-warning">Full</th>
               </tr>
             </thead>
             <tbody>
@@ -113,21 +113,21 @@ export default function HomePage() {
                     {row.basic ? (
                       <Check className="w-4 h-4 text-accent-success mx-auto" />
                     ) : (
-                      <span className="text-ink-muted/40">—</span>
+                      <span className="text-ink-muted/30">—</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {row.recommended ? (
-                      <Check className="w-4 h-4 text-accent-success mx-auto" />
+                      <Check className="w-4 h-4 text-accent-blue mx-auto" />
                     ) : (
-                      <span className="text-ink-muted/40">—</span>
+                      <span className="text-ink-muted/30">—</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {row.full ? (
-                      <Check className="w-4 h-4 text-accent-success mx-auto" />
+                      <Check className="w-4 h-4 text-accent-warning mx-auto" />
                     ) : (
-                      <span className="text-ink-muted/40">—</span>
+                      <span className="text-ink-muted/30">—</span>
                     )}
                   </td>
                 </tr>

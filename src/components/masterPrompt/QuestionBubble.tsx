@@ -1,4 +1,4 @@
-import { memo } from 'react';
+﻿import { memo } from 'react';
 import { Bot, User } from 'lucide-react';
 import type { Message } from '../../types';
 
@@ -13,9 +13,9 @@ export default memo(function QuestionBubble({ message }: QuestionBubbleProps) {
     <div className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
       <div className="w-7 h-7 rounded-md bg-surface-alt border border-border-soft flex items-center justify-center shrink-0 mt-0.5">
         {isUser ? (
-          <User className="w-3.5 h-3.5 text-ink-muted" />
+          <User className="w-3.5 h-3.5 text-accent-primary" />
         ) : (
-          <Bot className="w-3.5 h-3.5 text-ink-muted" />
+          <Bot className="w-3.5 h-3.5 text-accent-purple" />
         )}
       </div>
 

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useMemo, useEffect } from 'react';
+﻿import { useLayoutEffect, useRef, useMemo, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import ConversationPane from './ConversationPane';
 import MasterPromptOutput from './MasterPromptOutput';
@@ -225,7 +225,7 @@ function PromptViewModal({ prompt, onClose }: { prompt: PromptVersion; onClose: 
         <div className="px-5 py-4 border-b border-border-soft shrink-0 flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold text-ink-primary">
-              v{prompt.version} — {prompt.title}
+              v{prompt.version} ÔÇö {prompt.title}
             </h3>
             <p className="text-xs text-ink-muted mt-0.5">
               {prompt.isPinned ? 'Pinned' : 'Not pinned'}

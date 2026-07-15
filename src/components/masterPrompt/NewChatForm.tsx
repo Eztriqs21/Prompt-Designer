@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import CustomSelect from '../ui/CustomSelect';
 
@@ -39,7 +39,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
     try {
       await onSubmit({
         ...values,
-        title: values.title || `${values.websiteType} — ${new Date().toLocaleDateString()}`,
+        title: values.title || `${values.websiteType} ÔÇö ${new Date().toLocaleDateString()}`,
       });
     } catch (err: any) {
       setError(err?.message || 'Failed to create chat. Is the server running?');
@@ -59,7 +59,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
     >
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-ink-primary flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-ink-muted" />
+          <Sparkles className="w-4 h-4 text-accent-primary" />
           New Chat
         </h3>
         <button
@@ -92,7 +92,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
             value={values.title}
             onChange={(e) => update('title', e.target.value)}
             placeholder={`${values.websiteType} project`}
-            className="w-full bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-ink-muted/40 transition-colors"
+            className="w-full bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-accent-primary/30 transition-colors"
           />
         </div>
 
@@ -105,7 +105,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
             value={values.audience}
             onChange={(e) => update('audience', e.target.value)}
             placeholder="e.g., small business owners, developers"
-            className="w-full bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-ink-muted/40 transition-colors"
+            className="w-full bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-accent-primary/30 transition-colors"
           />
         </div>
 
@@ -118,7 +118,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
             value={values.goal}
             onChange={(e) => update('goal', e.target.value)}
             placeholder="e.g., signups, sales, portfolio showcase"
-            className="w-full bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-ink-muted/40 transition-colors"
+            className="w-full bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-accent-primary/30 transition-colors"
           />
         </div>
 
@@ -132,7 +132,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
             value={values.preferredStack}
             onChange={(e) => update('preferredStack', e.target.value)}
             placeholder="e.g., Next.js, Vue, Svelte"
-            className="w-full bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-ink-muted/40 transition-colors"
+            className="w-full bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-accent-primary/30 transition-colors"
           />
         </div>
 
@@ -165,7 +165,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
         <button
           type="submit"
           disabled={submitting}
-          className="px-5 py-2 text-xs font-medium rounded-md bg-ink-primary text-surface-base hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+          className="px-5 py-2 text-xs font-medium rounded-md bg-accent-primary text-surface-base hover:bg-accent-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
         >
           {submitting ? 'Creating...' : 'Create Chat'}
         </button>

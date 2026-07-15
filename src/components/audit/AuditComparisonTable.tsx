@@ -1,4 +1,4 @@
-import { Check, Minus } from 'lucide-react';
+﻿import { Check, Minus } from 'lucide-react';
 
 const FEATURES = [
   { name: 'Static code analysis', basic: true, recommended: true, full: true },
@@ -35,7 +35,7 @@ export default function AuditComparisonTable() {
             <tr className="border-b border-border-soft">
               <th className="px-5 py-2.5 text-xs font-medium text-ink-muted uppercase tracking-wider">Feature</th>
               <th className="px-3 py-2.5 text-xs font-medium text-accent-success uppercase tracking-wider text-center">Basic</th>
-              <th className="px-3 py-2.5 text-xs font-medium text-accent-info uppercase tracking-wider text-center">Recommended</th>
+              <th className="px-3 py-2.5 text-xs font-medium text-accent-purple uppercase tracking-wider text-center">Recommended</th>
               <th className="px-3 py-2.5 text-xs font-medium text-accent-warning uppercase tracking-wider text-center">Full</th>
             </tr>
           </thead>

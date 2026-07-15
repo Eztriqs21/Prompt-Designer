@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { Send, Copy, Check, Code, Palette, ShieldCheck, Loader2, User } from 'lucide-react';
 import type { SectionType, SectionState } from '../../types';
 import type { SectionMessage } from '../../lib/apiClient';
@@ -13,7 +13,7 @@ interface SectionConversationProps {
 
 const SECTION_META: Record<SectionType, { label: string; icon: typeof Code; color: string }> = {
   coding: { label: 'Coding', icon: Code, color: 'text-accent-success' },
-  'ui-ux': { label: 'UI/UX', icon: Palette, color: 'text-accent-info' },
+  'ui-ux': { label: 'UI/UX', icon: Palette, color: 'text-accent-purple' },
   audit: { label: 'Audit', icon: ShieldCheck, color: 'text-accent-warning' },
 };
 
@@ -89,7 +89,7 @@ export default function SectionConversation({ sectionType, state, messages, onGe
         </p>
         <button
           onClick={() => onGenerate()}
-          className="px-4 py-2 text-xs font-medium rounded-md bg-surface-base border border-border-soft text-ink-muted hover:text-ink-primary hover:bg-surface-alt transition-colors"
+          className="px-4 py-2 text-xs font-medium rounded-md bg-surface-base border border-border-soft text-ink-muted hover:text-accent-primary hover:border-accent-primary/30 transition-colors"
         >
           Generate {meta.label} Section
         </button>
@@ -137,7 +137,7 @@ export default function SectionConversation({ sectionType, state, messages, onGe
               </div>
             ) : (
               <div className="p-1.5 rounded-md bg-surface-alt border border-border-soft">
-                <User className="w-3.5 h-3.5 text-ink-muted" />
+                <User className="w-3.5 h-3.5 text-accent-primary" />
               </div>
             )}
             <div className="flex-1 min-w-0">
@@ -180,12 +180,12 @@ export default function SectionConversation({ sectionType, state, messages, onGe
             onKeyDown={handleKeyDown}
             placeholder={`Ask about the ${meta.label.toLowerCase()} section...`}
             rows={1}
-            className="flex-1 min-w-0 bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted resize-none outline-none focus:border-ink-muted/40 transition-colors"
+            className="flex-1 min-w-0 bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted resize-none outline-none focus:border-accent-primary/30 transition-colors"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || state.isGenerating}
-            className="p-2 rounded-md bg-ink-primary text-surface-base hover:opacity-90 transition-opacity disabled:opacity-30 shrink-0"
+            className="p-2 rounded-md bg-accent-primary text-surface-base hover:bg-accent-primary/90 transition-colors disabled:opacity-30 shrink-0"
           >
             <Send className="w-4 h-4" />
           </button>

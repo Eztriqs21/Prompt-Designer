@@ -6,11 +6,11 @@ Canonical design spec for all UI work. Every component, page, and interaction fo
 
 ## Overview
 
-Monochrome, developer-first design system inspired by OpenCode.
+Dark, developer-first design system inspired by warm terminal aesthetics.
 
-- **Light surfaces** with near-black ink text
+- **Dark surfaces** with high-contrast foreground text
 - **Single monospace font** (JetBrains Mono) across the entire app
-- **Minimal color** — mostly monochrome with rare, restrained accents
+- **Warm accent palette** — orange primary, purple headings, blue focus states
 - **Calm motion** — 150–200ms transitions, no flashy effects
 - **Technical voice** — headings and copy read like a README
 
@@ -22,27 +22,33 @@ Monochrome, developer-first design system inspired by OpenCode.
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `ink.primary` | `#201d1d` | Primary text, headings, labels |
-| `ink.muted` | `#9a9898` | Secondary text, inactive nav, captions |
-| `surface.base` | `#fdfcfc` | Page background, main surfaces |
-| `surface.alt` | `#f8f7f7` | Cards, elevated surfaces, active states |
-| `border.soft` | `rgba(100, 98, 98, 0.2)` | Borders, dividers, separators |
+| `ink.primary` | `#eeeeee` | Primary text, headings, labels |
+| `ink.muted` | `#666666` | Secondary text, inactive nav, captions |
+| `surface.base` | `#0a0a0a` | Page background, main canvas |
+| `surface.alt` | `#141414` | Cards, elevated surfaces, sidebars |
+| `surface.hover` | `#1a1a1a` | Hover states on interactive elements |
+| `border.soft` | `rgba(255, 255, 255, 0.08)` | Borders, dividers, separators |
+| `border.medium` | `rgba(255, 255, 255, 0.15)` | Focus rings, active borders |
 
-### Accent Colors (desaturated, subtle)
+### Accent Colors
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `accent.info` | `#6b8a9e` | Informational badges, links |
-| `accent.success` | `#6b9e7a` | Success states, positive indicators |
-| `accent.warning` | `#9e8a6b` | Warnings, caution states |
-| `accent.error` | `#9e6b6b` | Errors, destructive actions, critical findings |
+| `accent.primary` | `#fab283` | Links, cursor, primary actions |
+| `accent.purple` | `#9d7cd8` | Headings, keywords |
+| `accent.blue` | `#5c9cf5` | Lists, focused states |
+| `accent.success` | `#7fd88f` | Strings, success states |
+| `accent.warning` | `#e5c07b` | Emphasis, warnings |
+| `accent.error` | `#e06c75` | Errors, deletions |
 
 ### Usage Rules
 
-- UI is **mostly monochrome** — surfaces, borders, and text use the base palette
-- Accents appear only for **semantic meaning** (error, success, warning, info)
-- Never use accents for decorative purposes
-- Severity chips (audit findings) use the full accent range
+- UI is **dark-first** — deep black base with panel surfaces
+- Primary text is **high-contrast** `#eeeeee` for readability
+- **Orange** is the primary action color (links, buttons, cursors)
+- **Purple** highlights headings and keywords
+- **Blue** indicates focus and list states
+- **Green/Yellow/Red** are semantic (success/warning/error)
 
 ---
 
@@ -69,10 +75,10 @@ Monochrome, developer-first design system inspired by OpenCode.
 
 | Usage | Color | Token |
 |-------|-------|-------|
-| Primary text | `#201d1d` | `ink.primary` |
-| Secondary text | `#9a9898` | `ink.muted` |
-| Placeholder text | `#b8b5b5` | `ink.muted` at 70% |
-| Disabled text | `#c8c5c5` | `ink.muted` at 50% |
+| Primary text | `#eeeeee` | `ink.primary` |
+| Secondary text | `#666666` | `ink.muted` |
+| Placeholder text | `#555555` | `ink.muted` at 80% |
+| Disabled text | `#444444` | `ink.muted` at 60% |
 
 ---
 
@@ -117,9 +123,9 @@ Monochrome, developer-first design system inspired by OpenCode.
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `shadow.sm` | `0 1px 2px rgba(0,0,0,0.04)` | Subtle lift on cards |
-| `shadow.md` | `0 2px 4px rgba(0,0,0,0.06)` | Elevated elements (modals, dropdowns) |
-| `shadow.lg` | `0 4px 8px rgba(0,0,0,0.08)` | Prominent overlays |
+| `shadow.sm` | `0 1px 2px rgba(0,0,0,0.3)` | Subtle lift on cards |
+| `shadow.md` | `0 2px 4px rgba(0,0,0,0.4)` | Elevated elements (modals, dropdowns) |
+| `shadow.lg` | `0 4px 8px rgba(0,0,0,0.5)` | Prominent overlays |
 
 ### No Glassmorphism
 
@@ -155,8 +161,8 @@ Monochrome, developer-first design system inspired by OpenCode.
 
 Full-page container wrapping all route content.
 
-- Background: `surface.base`
-- Text: `ink.primary`
+- Background: `surface.base` (`#0a0a0a`)
+- Text: `ink.primary` (`#eeeeee`)
 - Content centered in `layout.containerWidth`
 - Padding: `layout.pagePadding` horizontal, `space.3xl` vertical
 
@@ -164,10 +170,10 @@ Full-page container wrapping all route content.
 
 Fixed left navigation panel.
 
-- Background: `surface.base`
+- Background: `surface.alt` (`#141414`)
 - Border right: `border.thin` `border.soft`
 - Width: `layout.sidebarWidth`
-- Nav items: `ink.muted` inactive, `ink.primary` + `surface.alt` active
+- Nav items: `ink.muted` inactive, `accent.primary` active with subtle highlight
 - Product name at top in monospace, `type.heading` size
 - Thin `border.soft` separators between nav groups
 
@@ -175,18 +181,18 @@ Fixed left navigation panel.
 
 Generic container for content blocks.
 
-- Background: `surface.alt`
+- Background: `surface.alt` (`#141414`)
 - Border: `border.thin` `border.soft`
 - Border radius: `radius.md`
 - Padding: `space.lg`
-- Hover: subtle background shift (optional)
+- Hover: `surface.hover` background shift
 
 ### Button (Primary)
 
 Main action button.
 
-- Background: `ink.primary`
-- Text: `surface.base`
+- Background: `accent.primary` (`#fab283`)
+- Text: `surface.base` (`#0a0a0a`)
 - Border radius: `radius.sm`
 - Padding: `space.sm` vertical, `space.lg` horizontal
 - Hover: darken background slightly
@@ -197,21 +203,21 @@ Ghost/outline action button.
 
 - Background: transparent
 - Border: `border.thin` `border.soft`
-- Text: `ink.primary`
+- Text: `ink.primary` (`#eeeeee`)
 - Border radius: `radius.sm`
 - Padding: `space.sm` vertical, `space.lg` horizontal
-- Hover: `surface.alt` background
+- Hover: `surface.hover` background
 
 ### TextInput
 
 Text and textarea inputs.
 
-- Background: `surface.base`
+- Background: `surface.base` (`#0a0a0a`)
 - Border: `border.thin` `border.soft`
 - Border radius: `radius.sm`
 - Padding: `space.sm` vertical, `space.md` horizontal
 - Font: JetBrains Mono, `type.body` size
-- Focus: `border.medium` `ink.primary` border, subtle ring
+- Focus: `border.medium` `accent.primary` border, subtle ring
 
 ### SimpleTable
 
@@ -221,7 +227,7 @@ Data table with monospace text.
 - Cells: `ink.primary`, `type.body`
 - Grid lines: `border.thin` `border.soft`
 - Cell padding: `space.md` vertical, `space.lg` horizontal
-- Alternating row: subtle `surface.alt` background
+- Alternating row: subtle `surface.hover` background
 
 ### Chip
 
@@ -238,8 +244,8 @@ Small badge or status indicator.
 
 Input type selector (tabs).
 
-- Container: `surface.alt` background, `radius.sm`
-- Items: `ink.muted` inactive, `ink.primary` active
+- Container: `surface.hover` background, `radius.sm`
+- Items: `ink.muted` inactive, `accent.primary` active
 - Active indicator: `surface.base` background with `shadow.sm`
 - Border radius: `radius.sm`
 
@@ -249,18 +255,19 @@ Input type selector (tabs).
 
 ### Do
 
-- Keep the interface calm, monochrome, and technical
+- Keep the interface dark, warm, and technical
 - Use consistent spacing from the 4px scale
 - Use JetBrains Mono for all text
-- Use `surface.base` for pages, `surface.alt` for elevated cards
+- Use `surface.base` for pages, `surface.alt` for panels and cards
 - Use `ink.primary` for text, `ink.muted` for secondary
-- Use accents only for semantic meaning (error, success, warning, info)
+- Use `accent.primary` (orange) for links and primary actions
+- Use `accent.purple` for headings and keywords
 - Keep transitions at 150–200ms with simple easing
 - Write copy in a technical README voice
 
 ### Don't
 
-- Use strong gradients, heavy shadows, or bright neon colors
+- Use light backgrounds or white surfaces
 - Mix fonts or use serif/sans-serif alongside monospace
 - Use `backdrop-filter: blur()` for main surfaces
 - Apply glassmorphism effects (translucent backgrounds, gradient borders)

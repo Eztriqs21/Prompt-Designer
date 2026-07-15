@@ -42,12 +42,12 @@ export default function AuditPage() {
   const hasReport = audit.report !== null;
 
   return (
-    <div className="h-screen overflow-y-auto">
+    <div className="h-full overflow-y-auto">
       <div className="max-w-3xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 mb-3">
-            <ShieldCheck className="w-5 h-5 text-ink-muted" />
+            <ShieldCheck className="w-5 h-5 text-accent-warning" />
             <span className="text-xs font-medium uppercase tracking-widest text-ink-muted">Website AUDIT</span>
           </div>
 
@@ -110,7 +110,7 @@ export default function AuditPage() {
                   ((inputType === 'url' || inputType === 'github') && !source.trim()) ||
                   (inputType === 'files' && files.length === 0)
                 }
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-md bg-ink-primary text-surface-base font-medium text-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-md bg-accent-primary text-surface-base font-medium text-sm hover:bg-accent-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {audit.isSubmitting ? (
                   <>
@@ -136,7 +136,7 @@ export default function AuditPage() {
         {/* Comparison Table */}
         {!hasReport && (
           <div className="mt-12">
-            <AuditComparisonTable />
+            <AuditComparisonTable findings={[]} />
           </div>
         )}
       </div>

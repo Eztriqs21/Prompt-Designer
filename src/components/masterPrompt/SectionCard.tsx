@@ -1,4 +1,4 @@
-import { memo } from 'react';
+﻿import { memo } from 'react';
 import { Code, Palette, ShieldCheck, Loader2, ChevronRight } from 'lucide-react';
 import type { SectionType, SectionState } from '../../types';
 
@@ -19,7 +19,7 @@ const SECTION_CONFIG: Record<SectionType, { label: string; icon: typeof Code; co
   'ui-ux': {
     label: 'UI/UX',
     icon: Palette,
-    color: 'text-accent-info',
+    color: 'text-accent-purple',
     description: 'Design specification for your coding agent',
   },
   audit: {
@@ -41,10 +41,10 @@ export default memo(function SectionCard({ type, state, isActive, onClick }: Sec
       onClick={onClick}
       className={`w-full text-left p-4 rounded-md border transition-colors duration-150 ${
         isActive
-          ? 'bg-surface-alt border-ink-muted/20'
+          ? 'bg-surface-alt border-accent-primary/30'
           : hasData
-          ? 'bg-surface-alt border-border-soft hover:border-ink-muted/30'
-          : 'bg-surface-base border-border-soft hover:border-ink-muted/20'
+          ? 'bg-surface-alt border-border-soft hover:border-accent-primary/20'
+          : 'bg-surface-base border-border-soft hover:border-border-medium'
       }`}
     >
       <div className="flex items-start gap-3">
@@ -57,7 +57,7 @@ export default memo(function SectionCard({ type, state, isActive, onClick }: Sec
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className={`text-sm font-medium ${isActive ? 'text-ink-primary' : hasData ? 'text-ink-primary' : 'text-ink-muted'}`}>
+            <h4 className={`text-sm font-medium ${isActive ? 'text-accent-primary' : hasData ? 'text-ink-primary' : 'text-ink-muted'}`}>
               {config.label}
             </h4>
             {hasData && !isGenerating && (
@@ -75,7 +75,7 @@ export default memo(function SectionCard({ type, state, isActive, onClick }: Sec
           )}
         </div>
         <ChevronRight className={`w-4 h-4 shrink-0 mt-1 transition-colors ${
-          isActive ? 'text-ink-muted' : 'text-ink-muted/40'
+          isActive ? 'text-accent-primary' : 'text-ink-muted/40'
         }`} />
       </div>
     </button>

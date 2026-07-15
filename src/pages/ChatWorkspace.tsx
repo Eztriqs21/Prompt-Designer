@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import MasterPromptSection from '../components/masterPrompt/MasterPromptSection';
@@ -27,7 +27,7 @@ export default function ChatWorkspace() {
         <h1 className="text-base font-semibold text-ink-primary">Chat Workspace</h1>
         <button
           onClick={() => setShowNewChatForm(true)}
-          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-ink-primary text-surface-base rounded-md hover:opacity-90 transition-opacity duration-150"
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-accent-primary text-surface-base rounded-md hover:bg-accent-primary/90 transition-colors duration-150"
         >
           <Plus className="w-4 h-4" />
           New Chat

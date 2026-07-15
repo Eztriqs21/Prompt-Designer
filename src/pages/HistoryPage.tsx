@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Copy, Check, Trash2, ChevronDown, FileText, Loader2 } from 'lucide-react';
 import { getPrompts, deletePrompt } from '../lib/apiClient';
 import FormattedPrompt from '../components/masterPrompt/FormattedPrompt';

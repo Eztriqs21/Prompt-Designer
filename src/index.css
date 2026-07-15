@@ -5,21 +5,25 @@
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /* Colors — ink */
-  --color-ink-primary: #201d1d;
-  --color-ink-muted: #9a9898;
+  --color-ink-primary: #eeeeee;
+  --color-ink-muted: #666666;
 
   /* Colors — surface */
-  --color-surface-base: #fdfcfc;
-  --color-surface-alt: #f8f7f7;
+  --color-surface-base: #0a0a0a;
+  --color-surface-alt: #141414;
+  --color-surface-hover: #1a1a1a;
 
   /* Colors — border */
-  --color-border-soft: rgba(100, 98, 98, 0.2);
+  --color-border-soft: rgba(255, 255, 255, 0.08);
+  --color-border-medium: rgba(255, 255, 255, 0.15);
 
   /* Colors — accents */
-  --color-accent-info: #6b8a9e;
-  --color-accent-success: #6b9e7a;
-  --color-accent-warning: #9e8a6b;
-  --color-accent-error: #9e6b6b;
+  --color-accent-primary: #fab283;
+  --color-accent-purple: #9d7cd8;
+  --color-accent-blue: #5c9cf5;
+  --color-accent-success: #7fd88f;
+  --color-accent-warning: #e5c07b;
+  --color-accent-error: #e06c75;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -39,7 +43,7 @@
 
 html {
   scroll-behavior: smooth;
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
@@ -62,11 +66,11 @@ body {
 }
 
 select {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 option {
-  background-color: var(--color-surface-base);
+  background-color: var(--color-surface-alt);
   color: var(--color-ink-primary);
 }
 

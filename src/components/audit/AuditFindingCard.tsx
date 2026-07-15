@@ -1,4 +1,4 @@
-import { memo } from 'react';
+﻿import { memo } from 'react';
 import { FileText, Wrench } from 'lucide-react';
 import type { AuditFinding, Severity, FindingCategory } from '../../types';
 
@@ -10,7 +10,7 @@ const SEVERITY_CONFIG: Record<Severity, { label: string; color: string; bg: stri
   critical: { label: 'Critical', color: 'text-accent-error', bg: 'bg-accent-error/10', border: 'border-accent-error/20' },
   high: { label: 'High', color: 'text-accent-warning', bg: 'bg-accent-warning/10', border: 'border-accent-warning/20' },
   medium: { label: 'Medium', color: 'text-accent-warning', bg: 'bg-accent-warning/10', border: 'border-accent-warning/20' },
-  low: { label: 'Low', color: 'text-accent-info', bg: 'bg-accent-info/10', border: 'border-accent-info/20' },
+  low: { label: 'Low', color: 'text-accent-blue', bg: 'bg-accent-blue/10', border: 'border-accent-blue/20' },
   info: { label: 'Info', color: 'text-ink-muted', bg: 'bg-surface-alt', border: 'border-border-soft' },
 };
 

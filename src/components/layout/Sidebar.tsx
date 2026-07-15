@@ -22,7 +22,7 @@ export default function Sidebar() {
     <nav className="flex flex-col h-full">
       {/* Product name */}
       <div className="px-5 py-6 shrink-0">
-        <h1 className="text-lg font-bold tracking-tight text-ink-primary">
+        <h1 className="text-lg font-bold tracking-tight text-accent-primary">
           Prompt Designer
         </h1>
       </div>
@@ -43,8 +43,8 @@ export default function Sidebar() {
                   onClick={() => setMobileOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
                     active
-                      ? 'bg-surface-alt text-ink-primary'
-                      : 'text-ink-muted hover:text-ink-primary hover:bg-surface-alt'
+                      ? 'bg-surface-hover text-accent-primary'
+                      : 'text-ink-muted hover:text-ink-primary hover:bg-surface-hover'
                   }`}
                 >
                   <Icon className="w-4 h-4 shrink-0" />
@@ -71,7 +71,7 @@ export default function Sidebar() {
       {/* Mobile hamburger */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-surface-alt border border-border-soft text-ink-muted hover:text-ink-primary transition-colors"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-surface-alt border border-border-soft text-ink-muted hover:text-accent-primary transition-colors"
         aria-label="Open menu"
       >
         <Menu className="w-5 h-5" />
@@ -80,17 +80,17 @@ export default function Sidebar() {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="md:hidden fixed inset-0 z-40 bg-ink-primary/20"
+          className="md:hidden fixed inset-0 z-40 bg-black/60"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Mobile sidebar */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-surface-base border-r border-border-soft">
+        <div className="md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-surface-alt border-r border-border-soft">
           <button
             onClick={() => setMobileOpen(false)}
-            className="absolute top-4 right-4 p-1 rounded-md text-ink-muted hover:text-ink-primary transition-colors"
+            className="absolute top-4 right-4 p-1 rounded-md text-ink-muted hover:text-accent-primary transition-colors"
             aria-label="Close menu"
           >
             <X className="w-4 h-4" />
@@ -100,7 +100,7 @@ export default function Sidebar() {
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col w-64 shrink-0 h-screen sticky top-0 bg-surface-base border-r border-border-soft">
+      <aside className="hidden md:flex flex-col w-64 shrink-0 h-screen sticky top-0 bg-surface-alt border-r border-border-soft">
         {navContent}
       </aside>
     </>

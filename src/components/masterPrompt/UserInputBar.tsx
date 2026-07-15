@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles } from 'lucide-react';
 
 interface UserInputBarProps {
@@ -57,7 +57,7 @@ export default function UserInputBar({ onSend, onGenerate, disabled, isGeneratin
           <button
             onClick={handleGenerate}
             disabled={!hasInput || disabled || isGenerating}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-surface-base border border-border-soft text-ink-muted hover:text-ink-primary hover:bg-surface-base transition-colors disabled:opacity-30"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-surface-base border border-border-soft text-ink-muted hover:text-accent-purple hover:border-accent-purple/30 transition-colors disabled:opacity-30"
           >
             <Sparkles className="w-3 h-3" />
             Generate
@@ -65,7 +65,7 @@ export default function UserInputBar({ onSend, onGenerate, disabled, isGeneratin
           <button
             onClick={handleSend}
             disabled={!hasInput || disabled}
-            className="p-2 rounded-md bg-ink-primary text-surface-base hover:opacity-90 transition-opacity disabled:opacity-30"
+            className="p-2 rounded-md bg-accent-primary text-surface-base hover:bg-accent-primary/90 transition-colors disabled:opacity-30"
           >
             <Send className="w-4 h-4" />
           </button>

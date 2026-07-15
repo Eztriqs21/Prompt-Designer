@@ -1,4 +1,4 @@
-import { useRef, useEffect, type ReactNode } from 'react';
+﻿import { useRef, useEffect, type ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { Message } from '../../types';
 import QuestionBubble from './QuestionBubble';
@@ -43,7 +43,7 @@ export default function ConversationPane({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Messages — scrollable */}
+      {/* Messages ÔÇö scrollable */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-5 min-h-0" ref={scrollRef}>
         {messages.map((msg) => (
           <QuestionBubble key={msg.id} message={msg} />
@@ -54,20 +54,20 @@ export default function ConversationPane({
         {isGenerating && (
           <div className="flex items-start gap-3">
             <div className="w-7 h-7 rounded-md bg-surface-alt border border-border-soft flex items-center justify-center shrink-0 mt-0.5">
-              <Loader2 className="w-3.5 h-3.5 text-ink-muted animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 text-accent-purple animate-spin" />
             </div>
             <div className="bg-surface-alt border border-border-soft rounded-md rounded-tl-sm px-4 py-3">
               <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-ink-muted/40 animate-pulse-subtle" />
-                <div className="w-1.5 h-1.5 rounded-full bg-ink-muted/40 animate-pulse-subtle" style={{ animationDelay: '300ms' }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-ink-muted/40 animate-pulse-subtle" style={{ animationDelay: '600ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-purple/40 animate-pulse-subtle" />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-purple/40 animate-pulse-subtle" style={{ animationDelay: '300ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-purple/40 animate-pulse-subtle" style={{ animationDelay: '600ms' }} />
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Input — fixed at bottom */}
+      {/* Input ÔÇö fixed at bottom */}
       <div className="shrink-0 px-4 sm:px-6 pb-4 pt-3 border-t border-border-soft">
         <UserInputBar
           onSend={onSend}

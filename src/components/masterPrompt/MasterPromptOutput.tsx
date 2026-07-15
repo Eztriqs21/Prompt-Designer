@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Copy, Check, Bot, ArrowLeft } from 'lucide-react';
 import FormattedPrompt from './FormattedPrompt';
 import SectionCard from './SectionCard';
