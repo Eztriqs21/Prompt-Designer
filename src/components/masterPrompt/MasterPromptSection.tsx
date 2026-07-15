@@ -38,8 +38,8 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     activeChatId,
     chats,
     setActiveChat,
-    addMessage,
     setPrompt,
+    renameChat,
   } = chatsState;
 
   const { addPromptVersion } = useChatContext();
@@ -103,11 +103,14 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     if (!activeChatId) return;
     const msg = addUserMessage(content);
     if (msg) {
-      addMessage(activeChatId, msg);
       try {
         await saveChatMessage(activeChatId, 'user', content);
       } catch (err) {
         console.error('Failed to persist user message:', err);
+      }
+      const chat = chats.find((c) => c.id === activeChatId);
+      if (chat?.isDefaultTitle) {
+        renameChat(activeChatId, content.slice(0, 50).trim());
       }
     }
   };
@@ -120,6 +123,11 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
       setPrompt(activeChatId, response);
       addPromptVersion(activeChatId, response);
       loadPromptVersions(activeChatId);
+      const chat = chats.find((c) => c.id === activeChatId);
+      if (chat?.isDefaultTitle) {
+        const name = idea?.trim() || response.summary || response.masterPrompt || '';
+        renameChat(activeChatId, name.slice(0, 50).trim());
+      }
     }
   };
 

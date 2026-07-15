@@ -2,6 +2,7 @@ import { createContext, useContext, useReducer, useEffect, useCallback, type Rea
 import { v4 as uuidv4 } from 'uuid';
 import type { ChatSession, Message, MasterPromptResponse, NewChatFormValues, PromptVersion } from '../types';
 import * as api from '../lib/apiClient';
+import type { SectionMessage } from '../lib/apiClient';
 
 const STORAGE_KEY = 'prompt-workspace-chats-v2';
 const STORAGE_VERSION = 2;
@@ -13,6 +14,7 @@ interface PersistedState {
   messagesByChatId: Record<string, Message[]>;
   promptsByChatId: Record<string, MasterPromptResponse | null>;
   promptVersionsByChatId: Record<string, PromptVersion[]>;
+  sectionMessagesByChatId: Record<string, SectionMessage[]>;
   timestamp: number;
 }
 
@@ -22,6 +24,7 @@ type ChatState = {
   messagesByChatId: Record<string, Message[]>;
   promptsByChatId: Record<string, MasterPromptResponse | null>;
   promptVersionsByChatId: Record<string, PromptVersion[]>;
+  sectionMessagesByChatId: Record<string, SectionMessage[]>;
   loading: boolean;
   hydrated: boolean;
 };
@@ -39,6 +42,9 @@ type ChatAction =
   | { type: 'SET_PROMPT'; payload: { chatId: string; prompt: MasterPromptResponse | null } }
   | { type: 'ADD_PROMPT_VERSION'; payload: { chatId: string; version: PromptVersion } }
   | { type: 'PIN_VERSION'; payload: { chatId: string; promptId: string } }
+  | { type: 'ADD_SECTION_MESSAGE'; payload: { chatId: string; message: SectionMessage } }
+  | { type: 'SET_SECTION_MESSAGES'; payload: { chatId: string; messages: SectionMessage[] } }
+  | { type: 'DELETE_PROMPT_VERSION'; payload: { chatId: string; promptId: string } }
   | { type: 'RESET_ALL' };
 
 const initialState: ChatState = {
@@ -47,6 +53,7 @@ const initialState: ChatState = {
   messagesByChatId: {},
   promptsByChatId: {},
   promptVersionsByChatId: {},
+  sectionMessagesByChatId: {},
   loading: true,
   hydrated: false,
 };
@@ -54,7 +61,7 @@ const initialState: ChatState = {
 function chatReducer(state: ChatState, action: ChatAction): ChatState {
   switch (action.type) {
     case 'HYDRATE': {
-      const { chats, activeChatId, messagesByChatId, promptsByChatId, promptVersionsByChatId } = action.payload;
+      const { chats, activeChatId, messagesByChatId, promptsByChatId, promptVersionsByChatId, sectionMessagesByChatId } = action.payload;
       return {
         ...state,
         chats,
@@ -62,6 +69,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         messagesByChatId,
         promptsByChatId,
         promptVersionsByChatId: promptVersionsByChatId || {},
+        sectionMessagesByChatId: sectionMessagesByChatId || {},
         loading: false,
         hydrated: true,
       };
@@ -80,6 +88,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         messagesByChatId: { ...state.messagesByChatId, [action.payload.id]: [] },
         promptsByChatId: { ...state.promptsByChatId, [action.payload.id]: null },
         promptVersionsByChatId: { ...state.promptVersionsByChatId, [action.payload.id]: [] },
+        sectionMessagesByChatId: { ...state.sectionMessagesByChatId, [action.payload.id]: [] },
       };
     case 'UPDATE_CHAT':
       return {
@@ -91,9 +100,11 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
       const newMessages = { ...state.messagesByChatId };
       const newPrompts = { ...state.promptsByChatId };
       const newVersions = { ...state.promptVersionsByChatId };
+      const newSectionMessages = { ...state.sectionMessagesByChatId };
       delete newMessages[action.payload];
       delete newPrompts[action.payload];
       delete newVersions[action.payload];
+      delete newSectionMessages[action.payload];
       let newActiveId = state.activeChatId;
       if (state.activeChatId === action.payload) {
         newActiveId = newChats.length > 0 ? newChats[0].id : null;
@@ -104,6 +115,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         messagesByChatId: newMessages,
         promptsByChatId: newPrompts,
         promptVersionsByChatId: newVersions,
+        sectionMessagesByChatId: newSectionMessages,
         activeChatId: newActiveId,
       };
     }
@@ -145,6 +157,35 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
             v.id === action.payload.promptId
               ? { ...v, isPinned: true }
               : { ...v, isPinned: false }
+          ),
+        },
+      };
+    case 'ADD_SECTION_MESSAGE':
+      return {
+        ...state,
+        sectionMessagesByChatId: {
+          ...state.sectionMessagesByChatId,
+          [action.payload.chatId]: [
+            ...(state.sectionMessagesByChatId[action.payload.chatId] || []),
+            action.payload.message,
+          ],
+        },
+      };
+    case 'SET_SECTION_MESSAGES':
+      return {
+        ...state,
+        sectionMessagesByChatId: {
+          ...state.sectionMessagesByChatId,
+          [action.payload.chatId]: action.payload.messages,
+        },
+      };
+    case 'DELETE_PROMPT_VERSION':
+      return {
+        ...state,
+        promptVersionsByChatId: {
+          ...state.promptVersionsByChatId,
+          [action.payload.chatId]: (state.promptVersionsByChatId[action.payload.chatId] || []).filter(
+            (v) => v.id !== action.payload.promptId
           ),
         },
       };
@@ -198,6 +239,7 @@ function savePersistedState(state: ChatState): void {
       messagesByChatId: state.messagesByChatId,
       promptsByChatId: state.promptsByChatId,
       promptVersionsByChatId: state.promptVersionsByChatId,
+      sectionMessagesByChatId: state.sectionMessagesByChatId,
       timestamp: Date.now(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toPersist));
@@ -215,6 +257,9 @@ interface ChatContextValue extends ChatState {
   addPromptVersion: (chatId: string, response: MasterPromptResponse) => void;
   pinPrompt: (chatId: string, promptId: string) => void;
   clonePrompt: (sourcePromptId: string, newChatTitle?: string) => string | null;
+  addSectionMessage: (chatId: string, type: SectionMessage['sectionType'], role: 'user' | 'assistant', content: string) => void;
+  setSectionMessages: (chatId: string, messages: SectionMessage[]) => void;
+  deletePromptVersion: (chatId: string, promptId: string) => void;
   deleteChat: (chatId: string) => Promise<void>;
   loadChatData: (chatId: string) => Promise<void>;
   loadChats: () => Promise<void>;
@@ -242,6 +287,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           messagesByChatId: {},
           promptsByChatId: {},
           promptVersionsByChatId: {},
+          sectionMessagesByChatId: {},
           timestamp: Date.now(),
         },
       });
@@ -256,7 +302,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (state.hydrated && !state.loading) {
       savePersistedState(state);
     }
-  }, [state.chats, state.activeChatId, state.messagesByChatId, state.promptsByChatId, state.promptVersionsByChatId, state.hydrated, state.loading]);
+  }, [state]);
 
   // Chats/messages/prompt versions are the client's source of truth and are
   // persisted to localStorage. The backend is only used for AI generation, so
@@ -316,6 +362,29 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const addMessage = useCallback((chatId: string, message: Message) => {
     dispatch({ type: 'ADD_MESSAGE', payload: { chatId, message } });
+  }, []);
+
+  const addSectionMessage = useCallback(
+    (chatId: string, type: SectionMessage['sectionType'], role: 'user' | 'assistant', content: string) => {
+      const msg: SectionMessage = {
+        id: uuidv4(),
+        chatId,
+        sectionType: type,
+        role,
+        content,
+        timestamp: Date.now(),
+      };
+      dispatch({ type: 'ADD_SECTION_MESSAGE', payload: { chatId, message: msg } });
+    },
+    []
+  );
+
+  const setSectionMessages = useCallback((chatId: string, messages: SectionMessage[]) => {
+    dispatch({ type: 'SET_SECTION_MESSAGES', payload: { chatId, messages } });
+  }, []);
+
+  const deletePromptVersion = useCallback((chatId: string, promptId: string) => {
+    dispatch({ type: 'DELETE_PROMPT_VERSION', payload: { chatId, promptId } });
   }, []);
 
   const setPrompt = useCallback((chatId: string, prompt: MasterPromptResponse | null) => {
@@ -422,6 +491,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     addPromptVersion,
     pinPrompt,
     clonePrompt,
+    addSectionMessage,
+    setSectionMessages,
+    deletePromptVersion,
     deleteChat,
     loadChatData,
     loadChats,

@@ -1,56 +1,59 @@
-﻿import { useState, useEffect } from 'react';
-import { Copy, Check, Trash2, ChevronDown, FileText, Loader2 } from 'lucide-react';
-import { getPrompts, deletePrompt } from '../lib/apiClient';
+﻿import { useMemo, useState } from 'react';
+import { Copy, Check, Trash2, ChevronDown, FileText } from 'lucide-react';
+import { useChatContext } from '../context/ChatContext';
 import FormattedPrompt from '../components/masterPrompt/FormattedPrompt';
-import type { SavedPrompt } from '../types';
+
+interface HistoryItem {
+  id: string;
+  chatId: string;
+  title: string;
+  summary: string;
+  masterPrompt: string;
+  timestamp: number;
+  version: number;
+}
 
 export default function HistoryPage() {
-  const [prompts, setPrompts] = useState<SavedPrompt[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { promptVersionsByChatId, deletePromptVersion } = useChatContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadPrompts();
-  }, []);
-
-  const loadPrompts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getPrompts();
-      setPrompts(data);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+  const prompts: HistoryItem[] = useMemo(() => {
+    const items: HistoryItem[] = [];
+    for (const chatId of Object.keys(promptVersionsByChatId)) {
+      for (const v of promptVersionsByChatId[chatId]) {
+        items.push({
+          id: v.id,
+          chatId,
+          title: v.title,
+          summary: v.summary,
+          masterPrompt: v.masterPrompt,
+          timestamp: v.createdAt,
+          version: v.version,
+        });
+      }
     }
-  };
+    return items.sort((a, b) => b.timestamp - a.timestamp);
+  }, [promptVersionsByChatId]);
 
-  const handleCopy = async (prompt: SavedPrompt) => {
+  const handleCopy = async (text: string, id: string) => {
     try {
-      await navigator.clipboard.writeText(prompt.masterPrompt);
+      await navigator.clipboard.writeText(text);
     } catch {
       const textarea = document.createElement('textarea');
-      textarea.value = prompt.masterPrompt;
+      textarea.value = text;
       document.body.appendChild(textarea);
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
     }
-    setCopiedId(prompt.id);
+    setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deletePrompt(id);
-      setPrompts((prev) => prev.filter((p) => p.id !== id));
-      if (selectedId === id) setSelectedId(null);
-    } catch (err: any) {
-      setError(err.message);
-    }
+  const handleDelete = (item: HistoryItem) => {
+    deletePromptVersion(item.chatId, item.id);
+    if (selectedId === item.id) setSelectedId(null);
   };
 
   const formatDate = (timestamp: number) => {
@@ -72,31 +75,17 @@ export default function HistoryPage() {
             Prompt History
           </h1>
           <p className="mt-2 text-sm text-ink-muted">
-            Your previously generated master prompts.
+            Your previously generated master prompts, saved on this device.
           </p>
         </div>
 
         {/* Content */}
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 text-ink-muted animate-spin" />
-          </div>
-        ) : error ? (
-          <div className="bg-surface-alt border border-border-soft rounded-md p-8 text-center">
-            <p className="text-accent-error text-sm">{error}</p>
-            <button
-              onClick={loadPrompts}
-              className="mt-3 text-xs text-ink-muted hover:text-ink-primary transition-colors"
-            >
-              Retry
-            </button>
-          </div>
-        ) : prompts.length === 0 ? (
+        {prompts.length === 0 ? (
           <div className="bg-surface-alt border border-border-soft rounded-md p-12 text-center">
             <FileText className="w-8 h-8 text-ink-muted/30 mx-auto mb-3" />
             <p className="text-ink-primary text-sm font-medium">No prompts yet</p>
             <p className="text-ink-muted text-xs mt-1">
-              Generate your first master prompt on the home page
+              Generate your first master prompt in the Chat Workspace
             </p>
           </div>
         ) : (
@@ -116,6 +105,9 @@ export default function HistoryPage() {
                         {prompt.title}
                       </h3>
                       <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-surface-base border border-border-soft text-ink-muted shrink-0">
+                        v{prompt.version}
+                      </span>
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-surface-base border border-border-soft text-ink-muted shrink-0">
                         {formatDate(prompt.timestamp)}
                       </span>
                     </div>
@@ -125,7 +117,10 @@ export default function HistoryPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleCopy(prompt); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopy(prompt.masterPrompt, prompt.id);
+                      }}
                       className="p-1.5 text-ink-muted hover:text-ink-primary hover:bg-surface-base rounded-md transition-colors"
                     >
                       {copiedId === prompt.id ? (
@@ -135,7 +130,10 @@ export default function HistoryPage() {
                       )}
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(prompt.id); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(prompt);
+                      }}
                       className="p-1.5 text-ink-muted hover:text-accent-error hover:bg-accent-error/10 rounded-md transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

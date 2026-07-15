@@ -9,7 +9,14 @@ export interface SectionMessage {
   timestamp: number;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE || '/api';
+// Normalize the API base so a custom (production) base always ends in `/api`.
+// Dev: VITE_API_BASE is unset -> '/api' (Vite proxies to the backend).
+// Prod: VITE_API_BASE='https://x.onrender.com' -> 'https://x.onrender.com/api'.
+// Prod: VITE_API_BASE='https://x.onrender.com/api' -> unchanged.
+const rawApiBase = import.meta.env.VITE_API_BASE || '/api';
+const API_BASE = rawApiBase.endsWith('/api')
+  ? rawApiBase
+  : `${rawApiBase.replace(/\/$/, '')}/api`;
 
 // ─── Prompts ───────────────────────────────────────────────
 
