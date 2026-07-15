@@ -1,5 +1,5 @@
 ﻿import { useRef, useEffect, type ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import type { Message } from '../../types';
 import QuestionBubble from './QuestionBubble';
 import UserInputBar from './UserInputBar';
@@ -10,6 +10,7 @@ interface ConversationPaneProps {
   onGenerate: (idea: string) => void;
   disabled: boolean;
   isGenerating: boolean;
+  error?: string | null;
   children?: ReactNode;
 }
 
@@ -19,6 +20,7 @@ export default function ConversationPane({
   onGenerate,
   disabled,
   isGenerating,
+  error,
   children,
 }: ConversationPaneProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -51,7 +53,7 @@ export default function ConversationPane({
 
         {children}
 
-        {isGenerating && (
+        {isGenerating && !error && (
           <div className="flex items-start gap-3">
             <div className="w-7 h-7 rounded-md bg-surface-alt border border-border-soft flex items-center justify-center shrink-0 mt-0.5">
               <Loader2 className="w-3.5 h-3.5 text-accent-purple animate-spin" />
@@ -65,6 +67,23 @@ export default function ConversationPane({
             </div>
           </div>
         )}
+
+        {error && (
+          <div className="flex items-start gap-3">
+            <div className="w-7 h-7 rounded-md bg-accent-error/10 border border-accent-error/20 flex items-center justify-center shrink-0 mt-0.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-accent-error" />
+            </div>
+            <div className="bg-accent-error/10 border border-accent-error/20 rounded-md rounded-tl-sm px-4 py-3 max-w-[85%]">
+              <p className="text-sm text-accent-error whitespace-pre-wrap">{error}</p>
+              <button
+                onClick={onGenerate}
+                className="mt-2 text-xs text-accent-primary hover:underline"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Input ÔÇö fixed at bottom */}
@@ -74,6 +93,7 @@ export default function ConversationPane({
           onGenerate={onGenerate}
           disabled={disabled}
           isGenerating={isGenerating}
+          error={error}
         />
       </div>
     </div>

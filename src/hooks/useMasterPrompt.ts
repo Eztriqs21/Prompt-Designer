@@ -39,37 +39,29 @@ export function useMasterPrompt(config: MasterPromptConfig) {
     remaining: 5,
   });
 
-  // Use a ref for messages so generate() doesn't need state.messages in deps
   const messagesRef = useRef(state.messages);
   messagesRef.current = state.messages;
 
-  // Use a ref for config so callbacks don't need config in deps
   const configRef = useRef(config);
   configRef.current = config;
 
-  // Dedup guard: prevent concurrent generation requests
   const generatingRef = useRef(false);
 
-  // Reset state when chat changes
   const prevChatIdRef = useRef<string | null>(null);
   const loadedChatIdRef = useRef<string | null>(null);
 
   const resetForChat = useCallback((messages: Message[], prompt: MasterPromptResponse | null) => {
     const currentChatId = configRef.current.chatId;
 
-    // If the chat ID changed, always reset (this is a new chat switch)
     if (currentChatId !== prevChatIdRef.current) {
       prevChatIdRef.current = currentChatId;
-      loadedChatIdRef.current = null; // Reset loaded state
+      loadedChatIdRef.current = null;
     }
 
-    // If we have non-empty messages, mark this chat as loaded
     if (messages.length > 0) {
       loadedChatIdRef.current = currentChatId;
     }
 
-    // Skip if: same chat, already loaded, and incoming messages are empty
-    // This prevents the premature empty reset from overwriting real data
     if (
       currentChatId === loadedChatIdRef.current &&
       messages.length === 0 &&
@@ -110,25 +102,31 @@ export function useMasterPrompt(config: MasterPromptConfig) {
     async (idea: string) => {
       const chatId = configRef.current.chatId;
       if (!chatId) return;
-      if (generatingRef.current) return; // Dedup: skip if already generating
+      if (generatingRef.current) return;
 
       generatingRef.current = true;
       setState((prev) => ({ ...prev, isGenerating: true, error: null }));
 
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('GENERATION_TIMEOUT')), 60000)
+      );
+
       try {
-        // Use ref for messages to avoid stale closure
         const conversationHistory: Message[] = messagesRef.current.map((m) => ({
           ...m,
           chatId,
         }));
 
-        const response: MasterPromptResponse = await api.generateMasterPrompt({
-          chatId,
-          presetKey: configRef.current.presetKey,
-          metadata: configRef.current.metadata,
-          idea,
-          conversationHistory,
-        });
+        const response: MasterPromptResponse = await Promise.race([
+          api.generateMasterPrompt({
+            chatId,
+            presetKey: configRef.current.presetKey,
+            metadata: configRef.current.metadata,
+            idea,
+            conversationHistory,
+          }),
+          timeoutPromise,
+        ]);
 
         const assistantMsg: Message = {
           id: uuidv4(),
@@ -145,15 +143,21 @@ export function useMasterPrompt(config: MasterPromptConfig) {
           generatedSummary: response.summary,
           generatedAnalysis: response.analysis,
           isGenerating: false,
+          error: null,
           remaining: Math.max(0, response.remaining ?? prev.remaining - 1),
         }));
 
         return response;
       } catch (err: any) {
+        const isTimeout = err?.message === 'GENERATION_TIMEOUT';
+        const message = isTimeout
+          ? 'Generation timed out (60s). The server may be busy. Please try again.'
+          : err?.message || 'Failed to generate master prompt';
+
         setState((prev) => ({
           ...prev,
           isGenerating: false,
-          error: err.message || 'Failed to generate master prompt',
+          error: message,
         }));
         return null;
       } finally {

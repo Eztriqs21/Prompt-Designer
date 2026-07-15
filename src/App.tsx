@@ -14,6 +14,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/chat" element={<ChatWorkspace />} />
+            <Route path="/chat/:chatId" element={<ChatWorkspace />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/audit" element={<AuditPage />} />
           </Routes>

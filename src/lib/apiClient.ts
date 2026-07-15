@@ -22,8 +22,12 @@ export async function generateMasterPrompt(data: MasterPromptRequest): Promise<M
 
   if (!res.ok) {
     const err = await res.json().catch(() => null);
-    const message = err?.details || err?.error || `Request failed with status ${res.status}`;
-    throw new Error(message);
+    const code = err?.code || 'UNKNOWN_ERROR';
+    const message = err?.error || `Request failed with status ${res.status}`;
+    const error = new Error(message) as Error & { code?: string; remaining?: number };
+    error.code = code;
+    error.remaining = err?.remaining;
+    throw error;
   }
 
   return res.json();

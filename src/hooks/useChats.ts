@@ -20,7 +20,6 @@ interface ChatsState {
 }
 
 function sanitizeTitle(text: string): string {
-  // Remove control characters, limit length, clean punctuation
   return text
     .replace(/[\x00-\x1f\x7f]/g, '')
     .replace(/[^\w\s\-.,!?&'()]/g, '')
@@ -42,20 +41,18 @@ function generateSmartTitle(form: NewChatFormValues): string {
   return 'New Chat';
 }
 
-export function useChats() {
+export function useChats(initialChatId: string | null = null) {
   const [state, setState] = useState<ChatsState>({
-    activeChatId: null,
+    activeChatId: initialChatId,
     chats: [],
     messagesByChatId: {},
     promptsByChatId: {},
     loading: true,
   });
 
-  // Use refs to avoid stale closures in callbacks
   const messagesRef = useRef<Record<string, Message[]>>({});
   const promptsRef = useRef<Record<string, MasterPromptResponse | null>>({});
 
-  // Keep refs in sync with state
   messagesRef.current = state.messagesByChatId;
   promptsRef.current = state.promptsByChatId;
 
@@ -96,20 +93,27 @@ export function useChats() {
       const chats = await api.getChats();
       setState((prev) => ({ ...prev, chats, loading: false }));
 
-      // Auto-select first chat if none selected
-      if (chats.length > 0) {
+      // Auto-select first chat only if no initial chat was provided
+      if (chats.length > 0 && !initialChatId) {
         loadChatData(chats[0].id);
       }
     } catch (err) {
       console.error('Failed to load chats:', err);
       setState((prev) => ({ ...prev, loading: false }));
     }
-  }, [loadChatData]);
+  }, [loadChatData, initialChatId]);
 
   // Load all chats on mount
   useEffect(() => {
     loadChats();
   }, [loadChats]);
+
+  // Load initial chat data if provided
+  useEffect(() => {
+    if (initialChatId) {
+      loadChatData(initialChatId);
+    }
+  }, [initialChatId, loadChatData]);
 
   const setActiveChat = useCallback(
     (chatId: string) => {
@@ -231,7 +235,6 @@ export function useChats() {
             activeChatId: newActiveId,
           };
         });
-        // Load data for the new active chat outside setState
         if (newActiveId) {
           loadChatData(newActiveId);
         }

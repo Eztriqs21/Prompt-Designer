@@ -61,6 +61,8 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     addUserMessage,
     generate,
     resetForChat,
+    error,
+    clearError,
   } = useMasterPrompt(masterPromptConfig);
 
   const {
@@ -127,6 +129,7 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
 
   const handleGenerate = async (idea: string) => {
     if (!activeChatId) return;
+    clearError();
     const response = await generate(idea);
     if (response) {
       setPrompt(activeChatId, response);
@@ -156,6 +159,7 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
             onGenerate={handleGenerate}
             disabled={isGenerating}
             isGenerating={isGenerating}
+            error={error}
           >
             {generatedPrompt && !isGenerating && (
               <MasterPromptOutput

@@ -32,7 +32,9 @@ router.post('/', async (req, res) => {
     if (!rateCheck.allowed) {
       res.status(429).json({
         error: 'Daily limit reached. You can generate up to 5 master prompts per day.',
+        code: 'RATE_LIMIT',
         resetTime: rateCheck.resetTime,
+        remaining: rateCheck.remaining,
       });
       return;
     }
@@ -50,18 +52,17 @@ router.post('/', async (req, res) => {
     };
 
     if (!idea && (!conversationHistory || conversationHistory.length === 0)) {
-      res.status(400).json({ error: 'Missing idea or conversation history in request body.' });
+      res.status(400).json({ error: 'Missing idea or conversation history in request body.', code: 'INVALID_REQUEST' });
       return;
     }
 
     if (idea && idea.length > 10000) {
-      res.status(400).json({ error: 'Idea exceeds maximum length (10000 characters).' });
+      res.status(400).json({ error: 'Idea exceeds maximum length (10000 characters).', code: 'INVALID_REQUEST' });
       return;
     }
 
     const conversationSummary = buildConversationSummary(conversationHistory as Message[] || []);
 
-    // Build structured user content with labeled blocks
     const userContent = [
       'USER IDEA:',
       idea || '(not provided)',
@@ -75,25 +76,39 @@ router.post('/', async (req, res) => {
       conversationSummary,
     ].join('\n');
 
-    // Build meta-prompt with preset-specific instructions
     const systemPrompt = buildFullMetaPrompt(presetKey, metadata);
 
-    const result = await generateWithFallback(
-      [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userContent },
-      ],
-      {
-        temperature: 0.6,
-        topP: 0.9,
-        maxTokens: 8192,
-        responseFormat: { type: 'json_object' },
-      }
-    );
-
-    const raw = result.content;
-
+    let raw: string;
     let parsed: { summary: string; analysis: string; masterPrompt: string };
+
+    try {
+      const result = await generateWithFallback(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent },
+        ],
+        {
+          temperature: 0.6,
+          topP: 0.9,
+          maxTokens: 8192,
+          responseFormat: { type: 'json_object' },
+        }
+      );
+
+      raw = result.content;
+    } catch (genErr: any) {
+      console.error('OpenCode generation failed:', genErr);
+      const isRateLimit = genErr?.message?.includes('rate limit') || genErr?.message?.includes('429');
+      res.status(isRateLimit ? 429 : 502).json({
+        error: isRateLimit
+          ? 'Upstream rate limit exceeded. Please try again later.'
+          : 'Failed to generate response from AI service.',
+        code: isRateLimit ? 'UPSTREAM_RATE_LIMIT' : 'UPSTREAM_ERROR',
+        remaining: rateCheck.remaining,
+      });
+      return;
+    }
+
     try {
       parsed = JSON.parse(raw);
     } catch (parseErr) {
@@ -110,39 +125,48 @@ router.post('/', async (req, res) => {
       ? idea.slice(0, 80) + (idea.length > 80 ? '...' : '')
       : 'Untitled Prompt';
 
-    const saved = savePrompt(title, parsed.summary ?? '', parsed.masterPrompt ?? '', chatId);
-
-    // Save versioned prompt record
-    let versionedRecord = null;
-    if (chatId) {
-      const existingVersions = getPromptVersionsByChatId(chatId);
-      const isFirstVersion = existingVersions.length === 0;
-      versionedRecord = savePromptVersion({
-        chatId,
-        title,
-        summary: parsed.summary ?? '',
-        analysis: parsed.analysis ?? '',
-        masterPrompt: parsed.masterPrompt ?? '',
-        isPinned: isFirstVersion,
-      });
+    let saved, versionedRecord;
+    try {
+      saved = savePrompt(title, parsed.summary ?? '', parsed.masterPrompt ?? '', chatId);
+    } catch (dbErr) {
+      console.error('DB savePrompt failed:', dbErr);
     }
 
-    // Save assistant message to chat if chatId provided
-    if (chatId) {
-      saveMessage({
-        chatId,
-        role: 'assistant',
-        content: `Here's your master prompt:\n\n${(parsed.masterPrompt ?? '').slice(0, 500)}${(parsed.masterPrompt ?? '').length > 500 ? '...' : ''}`,
-      });
-      // Update chat title if it was default
-      const chat = getChatSessionById(chatId);
-      if (chat && chat.isDefaultTitle) {
-        updateChatSession(chatId, { title, isDefaultTitle: false });
+    try {
+      if (chatId) {
+        const existingVersions = getPromptVersionsByChatId(chatId);
+        const isFirstVersion = existingVersions.length === 0;
+        versionedRecord = savePromptVersion({
+          chatId,
+          title,
+          summary: parsed.summary ?? '',
+          analysis: parsed.analysis ?? '',
+          masterPrompt: parsed.masterPrompt ?? '',
+          isPinned: isFirstVersion,
+        });
       }
+    } catch (dbErr) {
+      console.error('DB savePromptVersion failed:', dbErr);
+    }
+
+    try {
+      if (chatId) {
+        saveMessage({
+          chatId,
+          role: 'assistant',
+          content: `Here's your master prompt:\n\n${(parsed.masterPrompt ?? '').slice(0, 500)}${(parsed.masterPrompt ?? '').length > 500 ? '...' : ''}`,
+        });
+        const chat = getChatSessionById(chatId);
+        if (chat && chat.isDefaultTitle) {
+          updateChatSession(chatId, { title, isDefaultTitle: false });
+        }
+      }
+    } catch (dbErr) {
+      console.error('DB saveMessage/updateChatSession failed:', dbErr);
     }
 
     res.json({
-      id: saved.id,
+      id: saved?.id ?? 'unknown',
       chatId,
       promptId: versionedRecord?.id ?? null,
       version: versionedRecord?.version ?? null,
@@ -150,13 +174,16 @@ router.post('/', async (req, res) => {
       summary: parsed.summary ?? '',
       analysis: parsed.analysis ?? '',
       masterPrompt: parsed.masterPrompt ?? '',
-      timestamp: saved.timestamp,
+      timestamp: saved?.timestamp ?? Date.now(),
       remaining: rateCheck.remaining,
     });
   } catch (error: any) {
     console.error('Error in /api/master-prompt:', error);
-    res.status(500).json({
-      error: 'Failed to generate master prompt',
+    const isRateLimit = error?.message?.includes('rate limit') || error?.message?.includes('429');
+    res.status(isRateLimit ? 429 : 500).json({
+      error: error?.message || 'Failed to generate master prompt',
+      code: isRateLimit ? 'RATE_LIMIT' : 'SERVER_ERROR',
+      remaining: rateCheck?.remaining ?? 0,
     });
   }
 });
