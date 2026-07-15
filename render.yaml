@@ -15,3 +15,5 @@ services:
         value: 3001
       - key: CORS_ORIGINS
         sync: false
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: /opt/render/.cache/ms-playwright
