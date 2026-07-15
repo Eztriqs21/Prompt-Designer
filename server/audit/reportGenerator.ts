@@ -99,7 +99,7 @@ function buildFindingsContext(
   }).join('\n\n');
 
   const evidenceSummary = evidence.slice(0, 20).map((e) => {
-    const parts = `[${e.type}] ${e.jobStage}`;
+    const parts = [`[${e.type}] ${e.jobStage}`];
     if (e.metadata) {
       const meta = Object.entries(e.metadata)
         .filter(([k]) => k !== 'base64')
@@ -258,6 +258,8 @@ export async function generateReport(
         userMessage = findingsContext;
       }
 
+      console.log(`[Report] Generating AI report: mode=${mode}, findings=${findings.length}, evidence=${evidence.length}, blueprint=${blueprintPrompt ? 'loaded' : 'fallback'}`);
+
       const result = await generateWithFallback(
         [
           { role: 'system', content: systemMessage },
@@ -270,12 +272,14 @@ export async function generateReport(
         },
       );
 
+      console.log(`[Report] AI report generated successfully: model=${result.model}`);
+
       const parsed = JSON.parse(result.content);
       summary = parsed.summary || '';
       recommendations = parsed.recommendations || [];
       fixPrompt = parsed.fixPrompt || '';
     } catch (err) {
-      console.error('Failed to generate AI report summary:', err);
+      console.error('[Report] Failed to generate AI report, using fallback:', err);
       summary = generateFallbackSummary(findings, severityCounts, score);
       recommendations = generateFallbackRecommendations(findings);
       fixPrompt = buildFallbackFixPrompt(findings, inputType, source, score);

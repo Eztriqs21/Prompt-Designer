@@ -130,6 +130,7 @@ export async function runPipeline(jobId: string): Promise<void> {
 
     // ── Stage 3: Browser Testing ────────────────────────
     if (job.mode === 'recommended' || job.mode === 'full') {
+      console.log(`[Pipeline] Testing stage: job=${job.id} mode=${job.mode} inputType=${job.inputType}`);
       const browserResult = await runStage(job, 'testing', async () => {
         if (job.inputType === 'url' || job.inputType === 'github') {
           return runBrowserTests(job, evidenceCollector);
@@ -139,12 +140,14 @@ export async function runPipeline(jobId: string): Promise<void> {
 
       allFindings.push(...browserResult.findings);
       allEvidence.push(...browserResult.evidence);
+      console.log(`[Pipeline] Testing stage done: job=${job.id} browserFindings=${browserResult.findings.length} browserEvidence=${browserResult.evidence.length}`);
       await updateAuditJob(jobId, {
         progress: calculateProgress(job, 'testing'),
         findings: allFindings,
         evidence: allEvidence,
       });
     } else {
+      console.log(`[Pipeline] Testing stage skipped: job=${job.id} mode=${job.mode}`);
       await updateAuditJob(jobId, {
         stages: {
           ...job.stages,

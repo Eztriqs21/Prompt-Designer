@@ -26,7 +26,19 @@ let playwrightLoadFailed = false;
 let runtimeInstallAttempted = false;
 
 function getPlaywrightCachePath(): string {
-  return process.env.PLAYWRIGHT_BROWSERS_PATH || '';
+  // Primary: environment variable
+  const envPath = process.env.PLAYWRIGHT_BROWSERS_PATH;
+  if (envPath) return envPath;
+
+  // Fallback: known Render project path
+  const renderPath = '/opt/render/project/.playwright-cache';
+  try {
+    if (fs.existsSync(renderPath)) return renderPath;
+  } catch {
+    // Not on Render or path doesn't exist
+  }
+
+  return '';
 }
 
 function logPlaywrightDiagnostics(): void {
@@ -56,10 +68,10 @@ async function tryInstallBrowsersAtRuntime(): Promise<boolean> {
   if (runtimeInstallAttempted) return false;
   runtimeInstallAttempted = true;
 
-  console.log('[Playwright] Attempting runtime browser install...');
+  const cachePath = getPlaywrightCachePath();
+  console.log(`[Playwright] Attempting runtime browser install... (cachePath=${cachePath || 'default'})`);
   try {
-    const cachePath = getPlaywrightCachePath();
-    const env = cachePath ? { ...process.env, PLAYWRIGHT_BROWSERS_PATH: cachePath } : { ...process.env };
+    const env = { ...process.env, PLAYWRIGHT_BROWSERS_PATH: cachePath || '/opt/render/project/.playwright-cache' };
     execSync('npx playwright install chromium', {
       env,
       stdio: 'pipe',
@@ -148,6 +160,7 @@ async function testUrlWithPlaywright(
   const pw = await loadPlaywright();
 
   if (!pw) {
+    console.log(`[Playwright] Module not loaded, skipping browser tests for ${url}`);
     findings.push(sealFinding({
       severity: 'info',
       category: 'code-quality',
@@ -161,9 +174,12 @@ async function testUrlWithPlaywright(
 
   const browser = await launchBrowser(pw);
   if (!browser) {
+    console.log(`[Playwright] Browser launch failed for ${url}, falling back to HTTP analysis`);
     findings.push(buildPlaywrightLaunchFailureFinding());
     return { findings, evidence };
   }
+
+  console.log(`[Playwright] Browser launched successfully for ${url}`);
 
   try {
     const context = await browser.newContext({
@@ -210,13 +226,16 @@ async function testUrlWithPlaywright(
 
     let navigationTimeout = false;
     try {
+      console.log(`[Playwright] Navigating to ${url} (desktop viewport)`);
       await desktopPage.goto(url, {
         waitUntil: 'networkidle',
         timeout: 30000,
       });
+      console.log(`[Playwright] Desktop navigation succeeded for ${url}`);
     } catch (err: any) {
       if (err.message?.includes('Timeout') || err.message?.includes('timeout')) {
         navigationTimeout = true;
+        console.log(`[Playwright] Desktop navigation timed out for ${url}`);
         findings.push(sealFinding({
           severity: 'high',
           category: 'performance',
@@ -226,6 +245,7 @@ async function testUrlWithPlaywright(
           confidence: 0.9,
         }));
       } else {
+        console.log(`[Playwright] Desktop navigation failed for ${url}: ${err.message}`);
         findings.push(sealFinding({
           severity: 'critical',
           category: 'bug',
@@ -412,6 +432,7 @@ async function testUrlWithPlaywright(
     for (const vp of VIEWPORTS) {
       if (vp.name === 'desktop') continue; // Already tested desktop
 
+      console.log(`[Playwright] Testing viewport: ${vp.name} (${vp.width}x${vp.height})`);
       const vpPage = await context.newPage();
       try {
         await vpPage.setViewportSize({ width: vp.width, height: vp.height });
@@ -503,8 +524,10 @@ async function testUrlWithPlaywright(
     await context.close();
   } finally {
     await browser.close();
+    console.log(`[Playwright] Browser closed for ${url}`);
   }
 
+  console.log(`[Playwright] Test completed: findings=${findings.length} evidence=${evidence.length}`);
   return { findings, evidence };
 }
 
@@ -1074,6 +1097,8 @@ export async function runBrowserTests(
   },
   evidenceCollector: EvidenceCollector,
 ): Promise<BrowserTestResult> {
+  console.log(`[Browser] Stage started: job=${job.id} mode=${job.mode} inputType=${job.inputType} source=${job.source}`);
+
   const findings: AuditFinding[] = [];
   const evidence: AuditEvidence[] = [];
 
@@ -1091,11 +1116,15 @@ export async function runBrowserTests(
 
   // Run Playwright browser tests for recommended/full modes
   if (job.mode === 'recommended' || job.mode === 'full') {
+    console.log(`[Browser] Running Playwright tests for job ${job.id}`);
     const browserResult = await testUrlWithPlaywright(targetUrl, evidenceCollector);
     findings.push(...browserResult.findings);
     evidence.push(...browserResult.evidence);
+  } else {
+    console.log(`[Browser] Skipping Playwright tests (mode=${job.mode}) for job ${job.id}`);
   }
 
+  console.log(`[Browser] Stage completed: job=${job.id} findings=${findings.length} evidence=${evidence.length}`);
   return { findings, evidence };
 }
 
@@ -1110,12 +1139,18 @@ export async function testLocalFiles(
   },
   evidenceCollector: EvidenceCollector,
 ): Promise<BrowserTestResult> {
+  console.log(`[Browser] Local file test: job=${job.id} mode=${job.mode} inputType=${job.inputType}`);
+
   // Run Playwright-based testing for recommended/full modes
   if (job.mode === 'recommended' || job.mode === 'full') {
-    return testLocalFilesWithPlaywright(job, evidenceCollector);
+    console.log(`[Browser] Running Playwright local file tests for job ${job.id}`);
+    const result = await testLocalFilesWithPlaywright(job, evidenceCollector);
+    console.log(`[Browser] Local file tests completed: job=${job.id} findings=${result.findings.length} evidence=${result.evidence.length}`);
+    return result;
   }
 
   // Basic mode: static analysis only
+  console.log(`[Browser] Running static file analysis only (basic mode) for job ${job.id}`);
   return testLocalFilesStatic(job, evidenceCollector);
 }
 
