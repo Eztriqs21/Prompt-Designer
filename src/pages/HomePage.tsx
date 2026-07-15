@@ -54,7 +54,7 @@ export default function HomePage() {
         </p>
 
         {/* Command strip */}
-        <div className="inline-flex items-center gap-3 bg-surface-alt border border-border-soft rounded-md px-4 py-3 max-w-md">
+        <div className="inline-flex items-center gap-3 bg-surface-alt border border-border-soft rounded-md px-4 py-3">
           <span className="text-accent-primary text-sm">$</span>
           <code className="text-sm text-ink-primary flex-1">Start a new chat at /chat</code>
           <button

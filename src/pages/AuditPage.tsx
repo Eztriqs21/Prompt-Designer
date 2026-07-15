@@ -55,7 +55,7 @@ export default function AuditPage() {
             Website Audit
           </h1>
 
-          <p className="text-sm text-ink-muted max-w-md mx-auto">
+          <p className="text-sm text-ink-muted max-w-xl mx-auto">
             Analyze websites for code issues, bugs, UX problems, and performance concerns.
             Get a professional QA-style report.
           </p>

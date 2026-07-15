@@ -55,7 +55,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-surface-alt border border-border-soft rounded-md p-5 space-y-4 max-w-lg w-full"
+      className="bg-surface-alt border border-border-soft rounded-md p-5 space-y-4 max-w-2xl w-full"
     >
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-ink-primary flex items-center gap-2">
