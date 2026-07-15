@@ -4,6 +4,7 @@ import { Plus, MessageSquare, Trash2, BookOpen, PanelLeftClose, Pencil, Check, X
 import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
 import { hoverScaleSmall } from '../../motion/presets';
 import type { ChatSession } from '../../types';
+import ConfirmModal from './ConfirmModal';
 
 interface SidebarProps {
   chats: ChatSession[];
@@ -32,6 +33,7 @@ export default function Sidebar({
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -184,7 +186,7 @@ export default function Sidebar({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm('Delete this chat?')) onDeleteChat(chat.id);
+                        setDeletingId(chat.id);
                       }}
                       className="p-1 rounded text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-colors"
                     >
@@ -218,8 +220,20 @@ export default function Sidebar({
     </div>
   );
 
+  const chatToDelete = chats.find(c => c.id === deletingId);
+
   return (
     <>
+      <ConfirmModal
+        open={!!deletingId}
+        title="Delete chat"
+        message={`Delete "${chatToDelete?.title ?? ''}"? This cannot be undone.`}
+        onConfirm={() => {
+          if (deletingId) onDeleteChat(deletingId);
+          setDeletingId(null);
+        }}
+        onCancel={() => setDeletingId(null)}
+      />
       {/* Mobile hamburger button */}
       <button
         onClick={() => setIsOpen(true)}

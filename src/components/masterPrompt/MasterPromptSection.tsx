@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useMemo, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import ConversationPane from './ConversationPane';
 import MasterPromptOutput from './MasterPromptOutput';
 import PromptLibraryPane from './PromptLibraryPane';
@@ -88,11 +88,15 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
   const prevChatIdRef = useRef<string | null>(null);
 
   useLayoutEffect(() => {
-    if (activeChatId && activeChatId !== prevChatIdRef.current) {
+    if (activeChatId !== prevChatIdRef.current) {
       prevChatIdRef.current = activeChatId;
-      const chatMessages = messagesByChatId[activeChatId] || [];
-      const chatPrompt = promptsByChatId[activeChatId] || null;
-      resetForChat(chatMessages, chatPrompt);
+      if (activeChatId) {
+        const chatMessages = messagesByChatId[activeChatId] || [];
+        const chatPrompt = promptsByChatId[activeChatId] || null;
+        resetForChat(chatMessages, chatPrompt);
+      } else {
+        resetForChat([], null);
+      }
     }
   }, [activeChatId, messagesByChatId, promptsByChatId, resetForChat]);
 
@@ -146,27 +150,10 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* Prompt Library overlay */}
-      <AnimatePresence>
-        {showLibrary && (
-          <div className="shrink-0">
-            <PromptLibraryPane
-              promptVersions={promptVersions}
-              isLoading={versionsLoading}
-              error={versionsError}
-              onPin={handlePin}
-              onClone={handleClone}
-              onViewPrompt={setViewingPrompt}
-              onClose={onToggleLibrary}
-            />
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Chat area */}
-      {activeChatId ? (
-        <div className="flex-1 min-h-0">
+    <div className="flex flex-col h-full min-h-0 relative overflow-hidden">
+      {/* Chat area — always rendered, takes full space */}
+      <div className="flex-1 min-h-0">
+        {activeChatId ? (
           <ConversationPane
             messages={messages}
             onSend={handleSend}
@@ -186,29 +173,52 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
               />
             )}
           </ConversationPane>
-        </div>
-      ) : (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center space-y-4 px-6">
-            <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto">
-              <svg className="w-7 h-7 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            </div>
-            <div>
-              <h2
-                className="text-xl text-white/70 tracking-tight mb-1"
-                style={{ fontFamily: "'Instrument Serif', serif" }}
-              >
-                Start a conversation
-              </h2>
-              <p className="text-[13px] text-white/30 max-w-[280px] mx-auto leading-relaxed">
-                Create a new chat or select an existing one to continue where you left off.
-              </p>
+        ) : (
+          <div className="flex-1 flex items-center justify-center h-full">
+            <div className="text-center space-y-4 px-6">
+              <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto">
+                <svg className="w-7 h-7 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <div>
+                <h2
+                  className="text-xl text-white/70 tracking-tight mb-1"
+                  style={{ fontFamily: "'Instrument Serif', serif" }}
+                >
+                  Start a conversation
+                </h2>
+                <p className="text-[13px] text-white/30 max-w-[280px] mx-auto leading-relaxed">
+                  Create a new chat or select an existing one to continue where you left off.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Prompt Library — slides in from right, overlays chat */}
+      <AnimatePresence>
+        {showLibrary && (
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+            className="absolute inset-y-0 right-0 z-30 w-full max-w-md bg-[#07070D]/95 backdrop-blur-xl border-l border-white/[0.06] shadow-2xl overflow-hidden"
+          >
+            <PromptLibraryPane
+              promptVersions={promptVersions}
+              isLoading={versionsLoading}
+              error={versionsError}
+              onPin={handlePin}
+              onClone={handleClone}
+              onViewPrompt={setViewingPrompt}
+              onClose={onToggleLibrary}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Full prompt view modal */}
       <AnimatePresence>

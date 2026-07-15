@@ -43,7 +43,7 @@ export default function PromptLibraryPane({
 
   if (isLoading) {
     return (
-      <div className="liquid-glass rounded-2xl p-8 flex items-center justify-center" style={{ height: 'min(720px, 80vh)' }}>
+      <div className="liquid-glass rounded-2xl p-8 flex items-center justify-center h-full">
         <div className="flex items-center gap-2.5 text-[13px] text-white/40">
           <Loader2 className="w-4 h-4 animate-spin" />
           <span>Loading prompt versions...</span>
@@ -54,7 +54,7 @@ export default function PromptLibraryPane({
 
   if (error) {
     return (
-      <div className="liquid-glass rounded-2xl p-8 flex items-center justify-center" style={{ height: 'min(720px, 80vh)' }}>
+      <div className="liquid-glass rounded-2xl p-8 flex items-center justify-center h-full">
         <p className="text-[13px] text-red-400">{error}</p>
       </div>
     );
@@ -62,7 +62,7 @@ export default function PromptLibraryPane({
 
   if (promptVersions.length === 0) {
     return (
-      <div className="liquid-glass rounded-2xl flex flex-col items-center justify-center" style={{ height: 'min(720px, 80vh)' }}>
+      <div className="liquid-glass rounded-2xl flex flex-col items-center justify-center h-full">
         <BookOpen className="w-8 h-8 text-white/15 mb-3" />
         <p className="text-[14px] text-white/25 text-center leading-relaxed max-w-[240px]">
           No prompt versions yet. Generate a master prompt to start building your library.
@@ -72,7 +72,7 @@ export default function PromptLibraryPane({
   }
 
   return (
-    <div className="liquid-glass rounded-2xl flex flex-col" style={{ height: 'min(720px, 80vh)' }}>
+    <div className="liquid-glass rounded-2xl flex flex-col h-full">
       {/* Header */}
       <div className="px-5 py-4 border-b border-white/[0.06] shrink-0 flex items-center justify-between">
         <div>
