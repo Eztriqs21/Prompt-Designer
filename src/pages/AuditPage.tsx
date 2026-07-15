@@ -45,7 +45,7 @@ export default function AuditPage() {
     <div className="h-full overflow-y-auto">
       <div className="px-6 py-12">
         {/* Header */}
-        <div className="text-center mb-10">
+        <div className="mb-10">
           <div className="inline-flex items-center gap-2 mb-3">
             <ShieldCheck className="w-5 h-5 text-accent-warning" />
             <span className="text-xs font-medium uppercase tracking-widest text-ink-muted">Website AUDIT</span>
@@ -55,7 +55,7 @@ export default function AuditPage() {
             Website Audit
           </h1>
 
-          <p className="text-sm text-ink-muted max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm text-ink-muted leading-relaxed">
             Analyze websites for code issues, bugs, UX problems, and performance concerns.
             Get a professional QA-style report.
           </p>

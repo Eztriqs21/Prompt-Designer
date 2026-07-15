@@ -21,7 +21,7 @@ export default function ChatWorkspace() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-surface-base">
+    <div className="h-screen w-full flex flex-col bg-surface-base">
       {/* Header */}
       <header className="shrink-0 px-6 py-4 border-b border-border-soft flex items-center justify-between">
         <h1 className="text-base font-semibold text-ink-primary">Chat Workspace</h1>
@@ -35,7 +35,7 @@ export default function ChatWorkspace() {
       </header>
 
       {/* Content */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 w-full">
         <AnimatePresence mode="wait">
           {showNewChatForm ? (
             <motion.div

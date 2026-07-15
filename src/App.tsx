@@ -8,9 +8,9 @@ import AuditPage from './pages/AuditPage';
 export default function App() {
   return (
     <BrowserRouter basename="/Prompt-Designer">
-      <div className="flex min-h-screen bg-surface-base text-ink-primary">
+      <div className="flex w-full min-h-screen bg-surface-base text-ink-primary">
         <Sidebar />
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0 w-0">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/chat" element={<ChatWorkspace />} />
