@@ -193,7 +193,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (persisted) {
       dispatch({ type: 'HYDRATE', payload: persisted });
     } else {
-      dispatch({ type: 'SET_LOADING', payload: false });
+      // Mark hydration complete even when storage is empty so the
+      // persistence effect below can start writing to localStorage.
+      dispatch({
+        type: 'HYDRATE',
+        payload: {
+          version: STORAGE_VERSION,
+          chats: [],
+          activeChatId: null,
+          messagesByChatId: {},
+          promptsByChatId: {},
+          timestamp: Date.now(),
+        },
+      });
     }
   }, []);
 
