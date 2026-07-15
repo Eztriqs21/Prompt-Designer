@@ -30,7 +30,7 @@ export default function ConversationPane({
   }, [messages, children]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-180px)] min-h-[500px] max-h-[900px]">
+    <div className="flex flex-col h-full min-h-0">
       {/* Messages — scrollable */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-5 min-h-0" ref={scrollRef}>
         {messages.map((msg) => (
@@ -63,7 +63,6 @@ export default function ConversationPane({
           onGenerate={onGenerate}
           disabled={disabled}
           isGenerating={isGenerating}
-          messageCount={messages.length}
         />
       </div>
     </div>

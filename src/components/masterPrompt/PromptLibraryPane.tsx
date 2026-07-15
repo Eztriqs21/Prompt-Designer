@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Pin, Copy, ChevronRight, Loader2, BookOpen } from 'lucide-react';
+import { Pin, Copy, ChevronRight, Loader2, BookOpen, X } from 'lucide-react';
 import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
 import {
   fadeInUp,
@@ -17,6 +17,7 @@ interface PromptLibraryPaneProps {
   onPin: (promptId: string) => void;
   onClone: (promptId: string) => void;
   onViewPrompt: (prompt: PromptVersion) => void;
+  onClose?: () => void;
 }
 
 function formatDate(ts: number): string {
@@ -35,6 +36,7 @@ export default function PromptLibraryPane({
   onPin,
   onClone,
   onViewPrompt,
+  onClose,
 }: PromptLibraryPaneProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const reducedMotion = useReducedMotionSafe();
@@ -72,13 +74,23 @@ export default function PromptLibraryPane({
   return (
     <div className="liquid-glass rounded-2xl flex flex-col" style={{ height: 'min(720px, 80vh)' }}>
       {/* Header */}
-      <div className="px-5 py-4 border-b border-white/[0.06] shrink-0">
-        <h3 className="text-[13px] font-semibold tracking-[0.1em] text-white uppercase">
-          Prompt Library
-        </h3>
-        <p className="mt-1 text-[12px] text-white/40">
-          {promptVersions.length} version{promptVersions.length !== 1 ? 's' : ''} for this chat.
-        </p>
+      <div className="px-5 py-4 border-b border-white/[0.06] shrink-0 flex items-center justify-between">
+        <div>
+          <h3 className="text-[13px] font-semibold tracking-[0.1em] text-white uppercase">
+            Prompt Library
+          </h3>
+          <p className="mt-1 text-[12px] text-white/40">
+            {promptVersions.length} version{promptVersions.length !== 1 ? 's' : ''} for this chat.
+          </p>
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/[0.06] transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Version list */}

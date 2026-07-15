@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Check, Bot } from 'lucide-react';
+import { Copy, Check, Bot, ArrowLeft } from 'lucide-react';
 import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
 import { transitionEnter } from '../../motion/presets';
 import FormattedPrompt from './FormattedPrompt';
-import SectionSelector from './SectionSelector';
-import SectionOutputPane from './SectionOutputPane';
+import SectionCard from './SectionCard';
+import SectionConversation from './SectionConversation';
 import type { SectionType, SectionState } from '../../types';
 
 interface MasterPromptOutputProps {
@@ -47,6 +47,42 @@ export default function MasterPromptOutput({
   };
 
   if (!masterPrompt) return null;
+
+  // If a section is active, show the section conversation
+  if (activeSection) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: 12 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={reducedMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }}
+        className="flex items-start gap-3"
+      >
+        {/* Bot avatar */}
+        <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0 mt-0.5">
+          <Bot className="w-4 h-4 text-white/50" />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0 space-y-3">
+          {/* Back button */}
+          <button
+            onClick={() => onSelectSection(null)}
+            className="flex items-center gap-1.5 text-[12px] text-white/40 hover:text-white/70 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to sections
+          </button>
+
+          {/* Section conversation */}
+          <SectionConversation
+            sectionType={activeSection}
+            state={sections[activeSection]}
+            onGenerate={(request) => onGenerateSection(activeSection, request)}
+          />
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -120,23 +156,34 @@ export default function MasterPromptOutput({
           </motion.button>
         </motion.div>
 
-        {/* Section buttons + output */}
+        {/* Branching point */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={reducedMotion ? { duration: 0 } : { ...transitionEnter, delay: 0.18 }}
           className="space-y-3"
         >
-          <SectionSelector
-            sections={sections}
-            activeSection={activeSection}
-            onSelect={onSelectSection}
-            onGenerate={onGenerateSection}
-          />
-          <SectionOutputPane
-            sections={sections}
-            activeSection={activeSection}
-          />
+          {/* Divider with label */}
+          <div className="flex items-center gap-3 py-2">
+            <div className="flex-1 h-px bg-white/[0.06]" />
+            <span className="text-[11px] font-medium text-white/25 tracking-wide uppercase">
+              Continue with a section
+            </span>
+            <div className="flex-1 h-px bg-white/[0.06]" />
+          </div>
+
+          {/* Section cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {(['coding', 'ui-ux', 'audit'] as SectionType[]).map((type) => (
+              <SectionCard
+                key={type}
+                type={type}
+                state={sections[type]}
+                isActive={false}
+                onClick={() => onSelectSection(type)}
+              />
+            ))}
+          </div>
         </motion.div>
       </div>
     </motion.div>

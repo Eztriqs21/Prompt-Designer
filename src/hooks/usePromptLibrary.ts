@@ -15,6 +15,7 @@ export function usePromptLibrary() {
     error: null,
   });
 
+  const [viewingPrompt, setViewingPrompt] = useState<PromptVersion | null>(null);
   const chatIdRef = useRef<string | null>(null);
 
   const loadPromptVersions = useCallback(async (chatId: string) => {
@@ -73,6 +74,8 @@ export function usePromptLibrary() {
 
   return {
     ...state,
+    viewingPrompt,
+    setViewingPrompt,
     loadPromptVersions,
     pinPrompt,
     clonePrompt,

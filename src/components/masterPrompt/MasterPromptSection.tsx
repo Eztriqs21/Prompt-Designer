@@ -1,45 +1,47 @@
-import { useState, useLayoutEffect, useRef, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, BookOpen } from 'lucide-react';
+import { useLayoutEffect, useRef, useMemo, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import ConversationPane from './ConversationPane';
 import MasterPromptOutput from './MasterPromptOutput';
 import PromptLibraryPane from './PromptLibraryPane';
-import NewChatForm from './NewChatForm';
-import ChatSelector from './ChatSelector';
-import { useChats } from '../../hooks/useChats';
 import { useMasterPrompt } from '../../hooks/useMasterPrompt';
 import { usePromptLibrary } from '../../hooks/usePromptLibrary';
 import { useSectionPrompts } from '../../hooks/useSectionPrompts';
-import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
 import { saveChatMessage } from '../../lib/apiClient';
-import {
-  fadeInUp,
-  staggerContainer,
-  hoverScaleSmall,
-  transitionEnter,
-  transitionFast,
-} from '../../motion/presets';
+import type { ChatSession, Message, MasterPromptResponse } from '../../types';
 import type { PromptVersion } from '../../types';
 
-export default function MasterPromptSection() {
-  const reducedMotion = useReducedMotionSafe();
+interface ChatsState {
+  activeChatId: string | null;
+  chats: ChatSession[];
+  messagesByChatId: Record<string, Message[]>;
+  promptsByChatId: Record<string, MasterPromptResponse | null>;
+  loading: boolean;
+  setActiveChat: (chatId: string) => void;
+  createNewChat: (form: any) => Promise<any>;
+  renameChat: (chatId: string, title: string) => Promise<void>;
+  addMessage: (chatId: string, message: Message) => void;
+  setPrompt: (chatId: string, response: MasterPromptResponse) => void;
+  deleteChat: (chatId: string) => Promise<void>;
+  loadChatData: (chatId: string) => Promise<void>;
+}
 
+interface MasterPromptSectionProps {
+  chatsState: ChatsState;
+  onToggleLibrary: () => void;
+  showLibrary: boolean;
+}
+
+export default function MasterPromptSection({ chatsState, onToggleLibrary, showLibrary }: MasterPromptSectionProps) {
   const {
     activeChatId,
     chats,
     messagesByChatId,
     promptsByChatId,
-    loading: chatsLoading,
     setActiveChat,
-    createNewChat,
     addMessage,
     setPrompt,
-    deleteChat,
-  } = useChats();
-
-  const [isNewChatOpen, setIsNewChatOpen] = useState(false);
-  const [showLibrary, setShowLibrary] = useState(false);
-  const [viewingPrompt, setViewingPrompt] = useState<PromptVersion | null>(null);
+    renameChat,
+  } = chatsState;
 
   const activeChat = chats.find((c) => c.id === activeChatId);
   const presetKey = activeChat?.presetKey;
@@ -68,6 +70,8 @@ export default function MasterPromptSection() {
     loadPromptVersions,
     pinPrompt,
     clonePrompt,
+    setViewingPrompt,
+    viewingPrompt,
   } = usePromptLibrary();
 
   const {
@@ -98,6 +102,15 @@ export default function MasterPromptSection() {
     }
   }, [activeChatId, loadPromptVersions]);
 
+  // Listen for rename events from sidebar
+  useEffect(() => {
+    const handleRename = (e: CustomEvent<{ chatId: string; title: string }>) => {
+      renameChat(e.detail.chatId, e.detail.title);
+    };
+    window.addEventListener('sidebar:rename', handleRename as EventListener);
+    return () => window.removeEventListener('sidebar:rename', handleRename as EventListener);
+  }, [renameChat]);
+
   const handleSend = async (content: string) => {
     if (!activeChatId) return;
     const msg = addUserMessage(content);
@@ -120,15 +133,6 @@ export default function MasterPromptSection() {
     }
   };
 
-  const handleNewChat = async (formValues: Parameters<typeof createNewChat>[0]) => {
-    try {
-      await createNewChat(formValues);
-      setIsNewChatOpen(false);
-    } catch (err) {
-      console.error('Failed to create chat:', err);
-    }
-  };
-
   const handlePin = async (promptId: string) => {
     if (!activeChatId) return;
     await pinPrompt(activeChatId, promptId);
@@ -142,121 +146,11 @@ export default function MasterPromptSection() {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header with chat selector, new chat, and library toggle */}
-      <motion.div
-        variants={staggerContainer}
-        {...(reducedMotion ? {} : { initial: 'hidden', animate: 'visible' })}
-        className="space-y-3"
-      >
-        {/* Title */}
-        <div className="text-center space-y-1.5">
-          <motion.h2
-            variants={fadeInUp}
-            transition={reducedMotion ? { duration: 0 } : { duration: 0.4, ease: 'easeOut' }}
-            className="text-2xl md:text-3xl text-white tracking-tight"
-            style={{ fontFamily: "'Instrument Serif', serif" }}
-          >
-            Master Prompt Designer
-          </motion.h2>
-          <motion.p
-            variants={fadeInUp}
-            transition={reducedMotion ? { duration: 0 } : { duration: 0.4, ease: 'easeOut' }}
-            className="text-[13px] text-white/40 max-w-sm mx-auto leading-relaxed"
-          >
-            Describe your idea. Get a structured prompt for your coding agent.
-          </motion.p>
-        </div>
-
-        {/* Chat controls */}
-        <motion.div
-          variants={fadeInUp}
-          transition={reducedMotion ? { duration: 0 } : transitionEnter}
-          className="flex flex-wrap items-center justify-center gap-2"
-        >
-          <ChatSelector
-            chats={chats}
-            activeChatId={activeChatId}
-            onSelect={setActiveChat}
-            onDelete={deleteChat}
-          />
-          <motion.button
-            {...(reducedMotion ? {} : hoverScaleSmall)}
-            onClick={() => setIsNewChatOpen((v) => !v)}
-            className="liquid-glass rounded-full px-3.5 py-1.5 text-[12px] font-medium text-white/60 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            New Chat
-          </motion.button>
-          {promptVersions.length > 0 && (
-            <motion.button
-              {...(reducedMotion ? {} : hoverScaleSmall)}
-              onClick={() => setShowLibrary((v) => !v)}
-              className={`liquid-glass rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors flex items-center gap-1.5 ${
-                showLibrary ? 'text-white bg-white/[0.06]' : 'text-white/40 hover:text-white/60 hover:bg-white/5'
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              Library
-              <span className="text-[10px] text-white/25">({promptVersions.length})</span>
-            </motion.button>
-          )}
-        </motion.div>
-      </motion.div>
-
-      {/* New chat form */}
-      <AnimatePresence>
-        {isNewChatOpen && (
-          <motion.div
-            initial={reducedMotion ? false : { opacity: 0, scale: 0.96, y: -8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: -8 }}
-            transition={reducedMotion ? { duration: 0 } : transitionFast}
-          >
-            <NewChatForm
-              onSubmit={handleNewChat}
-              onCancel={() => setIsNewChatOpen(false)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Loading state */}
-      {chatsLoading && (
-        <div className="text-center py-8">
-          <p className="text-[13px] text-white/30">Loading chats...</p>
-        </div>
-      )}
-
-      {/* No chats state */}
-      {!chatsLoading && chats.length === 0 && !isNewChatOpen && (
-        <motion.div
-          variants={fadeInUp}
-          {...(reducedMotion ? {} : { initial: 'hidden', animate: 'visible' })}
-          transition={reducedMotion ? { duration: 0 } : transitionEnter}
-          className="text-center py-12"
-        >
-          <p className="text-[14px] text-white/30 mb-3">No chats yet. Create one to get started.</p>
-          <motion.button
-            {...(reducedMotion ? {} : hoverScaleSmall)}
-            onClick={() => setIsNewChatOpen(true)}
-            className="liquid-glass rounded-full px-5 py-2.5 text-[13px] font-medium text-white hover:bg-white/5 transition-colors inline-flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Create Your First Chat
-          </motion.button>
-        </motion.div>
-      )}
-
+    <div className="flex flex-col h-full min-h-0">
       {/* Prompt Library overlay */}
       <AnimatePresence>
         {showLibrary && (
-          <motion.div
-            initial={reducedMotion ? false : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -8 }}
-            transition={reducedMotion ? { duration: 0 } : transitionFast}
-          >
+          <div className="shrink-0">
             <PromptLibraryPane
               promptVersions={promptVersions}
               isLoading={versionsLoading}
@@ -264,18 +158,15 @@ export default function MasterPromptSection() {
               onPin={handlePin}
               onClone={handleClone}
               onViewPrompt={setViewingPrompt}
+              onClose={onToggleLibrary}
             />
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
-      {/* Unified chat area */}
-      {!chatsLoading && activeChatId && (
-        <motion.div
-          variants={fadeInUp}
-          {...(reducedMotion ? {} : { initial: 'hidden', animate: 'visible' })}
-          transition={reducedMotion ? { duration: 0 } : transitionEnter}
-        >
+      {/* Chat area */}
+      {activeChatId ? (
+        <div className="flex-1 min-h-0">
           <ConversationPane
             messages={messages}
             onSend={handleSend}
@@ -283,7 +174,6 @@ export default function MasterPromptSection() {
             disabled={isGenerating}
             isGenerating={isGenerating}
           >
-            {/* Master prompt output rendered inline in the conversation */}
             {generatedPrompt && !isGenerating && (
               <MasterPromptOutput
                 summary={generatedSummary}
@@ -296,68 +186,81 @@ export default function MasterPromptSection() {
               />
             )}
           </ConversationPane>
-        </motion.div>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4 px-6">
+            <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto">
+              <svg className="w-7 h-7 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <div>
+              <h2
+                className="text-xl text-white/70 tracking-tight mb-1"
+                style={{ fontFamily: "'Instrument Serif', serif" }}
+              >
+                Start a conversation
+              </h2>
+              <p className="text-[13px] text-white/30 max-w-[280px] mx-auto leading-relaxed">
+                Create a new chat or select an existing one to continue where you left off.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Full prompt view modal */}
       <AnimatePresence>
         {viewingPrompt && (
-          <motion.div
-            initial={reducedMotion ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={reducedMotion ? { opacity: 0 } : { opacity: 0 }}
-            transition={reducedMotion ? { duration: 0 } : { duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={reducedMotion ? false : { opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
-              transition={reducedMotion ? { duration: 0 } : { duration: 0.25, ease: 'easeOut' }}
-              className="liquid-glass rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col"
-            >
-              <div className="px-5 py-4 border-b border-white/[0.06] shrink-0 flex items-center justify-between">
-                <div>
-                  <h3 className="text-[14px] font-semibold text-white">
-                    v{viewingPrompt.version} — {viewingPrompt.title}
-                  </h3>
-                  <p className="text-[11px] text-white/35 mt-0.5">
-                    {viewingPrompt.isPinned ? 'Pinned' : 'Not pinned'}
-                  </p>
-                </div>
-                <motion.button
-                  whileHover={reducedMotion ? {} : { scale: 1.05 }}
-                  whileTap={reducedMotion ? {} : { scale: 0.95 }}
-                  onClick={() => setViewingPrompt(null)}
-                  className="text-[12px] text-white/40 hover:text-white/70 transition-colors px-3 py-1.5"
-                >
-                  Close
-                </motion.button>
-              </div>
-              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 min-h-0">
-                {viewingPrompt.summary && (
-                  <div>
-                    <p className="text-[10px] font-semibold tracking-wider uppercase text-white/30 mb-1.5">Summary</p>
-                    <p className="text-[13px] text-white/60 leading-relaxed">{viewingPrompt.summary}</p>
-                  </div>
-                )}
-                {viewingPrompt.analysis && (
-                  <div>
-                    <p className="text-[10px] font-semibold tracking-wider uppercase text-white/30 mb-1.5">Analysis</p>
-                    <p className="text-[13px] text-white/60 leading-relaxed">{viewingPrompt.analysis}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-[10px] font-semibold tracking-wider uppercase text-white/30 mb-1.5">Master Prompt</p>
-                  <pre className="text-[12px] font-mono whitespace-pre-wrap leading-relaxed text-white/75 bg-black/30 border border-white/[0.05] rounded-xl px-4 py-3">
-                    {viewingPrompt.masterPrompt}
-                  </pre>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+          <PromptViewModal prompt={viewingPrompt} onClose={() => setViewingPrompt(null)} />
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function PromptViewModal({ prompt, onClose }: { prompt: PromptVersion; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
+      <div className="liquid-glass rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+        <div className="px-5 py-4 border-b border-white/[0.06] shrink-0 flex items-center justify-between">
+          <div>
+            <h3 className="text-[14px] font-semibold text-white">
+              v{prompt.version} — {prompt.title}
+            </h3>
+            <p className="text-[11px] text-white/35 mt-0.5">
+              {prompt.isPinned ? 'Pinned' : 'Not pinned'}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-[12px] text-white/40 hover:text-white/70 transition-colors px-3 py-1.5"
+          >
+            Close
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 min-h-0">
+          {prompt.summary && (
+            <div>
+              <p className="text-[10px] font-semibold tracking-wider uppercase text-white/30 mb-1.5">Summary</p>
+              <p className="text-[13px] text-white/60 leading-relaxed">{prompt.summary}</p>
+            </div>
+          )}
+          {prompt.analysis && (
+            <div>
+              <p className="text-[10px] font-semibold tracking-wider uppercase text-white/30 mb-1.5">Analysis</p>
+              <p className="text-[13px] text-white/60 leading-relaxed">{prompt.analysis}</p>
+            </div>
+          )}
+          <div>
+            <p className="text-[10px] font-semibold tracking-wider uppercase text-white/30 mb-1.5">Master Prompt</p>
+            <pre className="text-[12px] font-mono whitespace-pre-wrap leading-relaxed text-white/75 bg-black/30 border border-white/[0.05] rounded-xl px-4 py-3">
+              {prompt.masterPrompt}
+            </pre>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

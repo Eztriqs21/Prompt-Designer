@@ -66,4 +66,20 @@ router.delete('/:chatId', (req, res) => {
   res.json({ success: true });
 });
 
+// Rename chat session
+router.patch('/:chatId', (req, res) => {
+  const chat = getChatSessionById(req.params.chatId);
+  if (!chat) {
+    res.status(404).json({ error: 'Chat not found' });
+    return;
+  }
+  const { title } = req.body ?? {};
+  if (!title || typeof title !== 'string') {
+    res.status(400).json({ error: 'title is required' });
+    return;
+  }
+  const updated = saveChatSession({ ...chat, title });
+  res.json(updated);
+});
+
 export default router;

@@ -8,10 +8,9 @@ interface UserInputBarProps {
   onGenerate: (idea: string) => void;
   disabled: boolean;
   isGenerating: boolean;
-  messageCount: number;
 }
 
-export default function UserInputBar({ onSend, onGenerate, disabled, isGenerating, messageCount }: UserInputBarProps) {
+export default function UserInputBar({ onSend, onGenerate, disabled, isGenerating }: UserInputBarProps) {
   const [input, setInput] = useState('');
   const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -43,7 +42,7 @@ export default function UserInputBar({ onSend, onGenerate, disabled, isGeneratin
     }
   };
 
-  const canGenerate = messageCount >= 2;
+  const hasInput = input.trim().length > 0;
 
   return (
     <div className="w-full">
@@ -67,23 +66,21 @@ export default function UserInputBar({ onSend, onGenerate, disabled, isGeneratin
           className="flex-1 min-w-0 bg-transparent border-none outline-none text-[14px] text-white placeholder:text-white/25 resize-none disabled:opacity-40 leading-relaxed pt-0.5"
         />
         <div className="flex items-center gap-2 shrink-0 pb-0.5">
-          {canGenerate && (
-            <motion.button
-              whileHover={reducedMotion ? {} : { scale: 1.05 }}
-              whileTap={reducedMotion ? {} : { scale: 0.95 }}
-              onClick={handleGenerate}
-              disabled={!input.trim() || disabled || isGenerating}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg bg-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.1] transition-colors disabled:opacity-30"
-            >
-              <Sparkles className="w-3 h-3" />
-              Generate
-            </motion.button>
-          )}
+          <motion.button
+            whileHover={reducedMotion ? {} : { scale: 1.05 }}
+            whileTap={reducedMotion ? {} : { scale: 0.95 }}
+            onClick={handleGenerate}
+            disabled={!hasInput || disabled || isGenerating}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg bg-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.1] transition-colors disabled:opacity-30"
+          >
+            <Sparkles className="w-3 h-3" />
+            Generate
+          </motion.button>
           <motion.button
             whileHover={reducedMotion ? {} : { scale: 1.08 }}
             whileTap={reducedMotion ? {} : { scale: 0.92 }}
             onClick={handleSend}
-            disabled={!input.trim() || disabled}
+            disabled={!hasInput || disabled}
             className="p-2 rounded-lg bg-white text-black hover:bg-white/90 transition-colors disabled:opacity-30"
           >
             <Send className="w-4 h-4" />
@@ -91,9 +88,9 @@ export default function UserInputBar({ onSend, onGenerate, disabled, isGeneratin
         </div>
       </motion.div>
       <p className="mt-1.5 text-[10px] text-white/20 text-center">
-        {canGenerate
-          ? 'Click Generate when ready, or keep chatting.'
-          : 'Describe your idea to get started.'}
+        {isGenerating
+          ? 'Generating...'
+          : 'Describe your idea, then click Generate when ready.'}
       </p>
     </div>
   );

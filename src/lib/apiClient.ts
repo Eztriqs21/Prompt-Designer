@@ -75,6 +75,16 @@ export async function deleteChat(chatId: string): Promise<void> {
   if (!res.ok) throw new Error('Failed to delete chat');
 }
 
+export async function renameChat(chatId: string, title: string): Promise<ChatSession> {
+  const res = await fetch(`${API_BASE}/chats/${chatId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) throw new Error('Failed to rename chat');
+  return res.json();
+}
+
 export async function saveChatMessage(
   chatId: string,
   role: 'user' | 'assistant',

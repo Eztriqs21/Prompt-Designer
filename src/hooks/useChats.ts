@@ -19,6 +19,17 @@ interface ChatsState {
   loading: boolean;
 }
 
+function generateSmartTitle(form: NewChatFormValues): string {
+  const parts: string[] = [];
+  if (form.audience) parts.push(form.audience);
+  if (form.goal) parts.push(form.goal);
+  if (parts.length > 0) {
+    const title = parts.join(' — ');
+    return title.length > 40 ? title.slice(0, 37) + '...' : title;
+  }
+  return form.websiteType;
+}
+
 export function useChats() {
   const [state, setState] = useState<ChatsState>({
     activeChatId: null,
@@ -91,7 +102,6 @@ export function useChats() {
   const setActiveChat = useCallback(
     (chatId: string) => {
       setState((prev) => ({ ...prev, activeChatId: chatId }));
-      // Use ref to check if data is loaded (avoids stale closure)
       if (!messagesRef.current[chatId]) {
         loadChatData(chatId);
       }
@@ -111,8 +121,10 @@ export function useChats() {
           Custom: 'custom',
         };
 
+        const title = form.title || generateSmartTitle(form);
+
         const chat = await api.createChat({
-          title: form.title || `${form.websiteType} — ${new Date().toLocaleDateString()}`,
+          title,
           presetKey: presetKeyMap[form.websiteType] || 'custom',
           metadata: {
             websiteType: form.websiteType,
@@ -128,11 +140,9 @@ export function useChats() {
           chats: [chat, ...prev.chats],
           activeChatId: chat.id,
           messagesByChatId: {
-            ...prev.messagesByChatId,
             [chat.id]: [],
           },
           promptsByChatId: {
-            ...prev.promptsByChatId,
             [chat.id]: null,
           },
         }));
@@ -141,6 +151,21 @@ export function useChats() {
       } catch (err) {
         console.error('Failed to create chat:', err);
         throw err;
+      }
+    },
+    []
+  );
+
+  const renameChat = useCallback(
+    async (chatId: string, title: string) => {
+      try {
+        const updated = await api.renameChat(chatId, title);
+        setState((prev) => ({
+          ...prev,
+          chats: prev.chats.map((c) => (c.id === chatId ? updated : c)),
+        }));
+      } catch (err) {
+        console.error('Failed to rename chat:', err);
       }
     },
     []
@@ -205,6 +230,7 @@ export function useChats() {
     loadChats,
     setActiveChat,
     createNewChat,
+    renameChat,
     addMessage,
     setPrompt,
     deleteChat,

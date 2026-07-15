@@ -1,32 +1,86 @@
-import { motion } from 'framer-motion';
-import Navbar from '../components/layout/Navbar';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Sidebar from '../components/layout/Sidebar';
 import MasterPromptSection from '../components/masterPrompt/MasterPromptSection';
+import NewChatForm from '../components/masterPrompt/NewChatForm';
+import { useChats } from '../hooks/useChats';
 import { useReducedMotionSafe } from '../hooks/useReducedMotionSafe';
-import { fadeInUp, transitionEnter } from '../motion/presets';
+import { fadeIn, transitionEnter } from '../motion/presets';
 
 export default function HomePage() {
   const reducedMotion = useReducedMotionSafe();
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [showNewChatForm, setShowNewChatForm] = useState(false);
+
+  const chatsState = useChats();
+
+  const handleNewChat = async (formValues: Parameters<typeof chatsState.createNewChat>[0]) => {
+    try {
+      await chatsState.createNewChat(formValues);
+      setShowNewChatForm(false);
+    } catch (err) {
+      console.error('Failed to create chat:', err);
+    }
+  };
 
   return (
     <motion.div
       initial={reducedMotion ? false : 'hidden'}
       animate="visible"
-      variants={fadeInUp}
+      variants={fadeIn}
       transition={reducedMotion ? { duration: 0 } : transitionEnter}
-      className="min-h-screen bg-black text-white"
+      className="h-screen bg-black text-white overflow-hidden"
     >
       {/* Clean gradient background */}
       <div className="fixed inset-0 z-0 bg-gradient-to-br from-[#08080c] via-[#050508] to-black" />
 
       {/* Content */}
-      <div className="relative z-10">
-        <Navbar />
+      <div className="relative z-10 flex h-full">
+        {/* Sidebar */}
+        <Sidebar
+          chats={chatsState.chats}
+          activeChatId={chatsState.activeChatId}
+          loading={chatsState.loading}
+          promptCount={0}
+          onSelectChat={chatsState.setActiveChat}
+          onDeleteChat={chatsState.deleteChat}
+          onNewChat={() => setShowNewChatForm(true)}
+          onToggleLibrary={() => setShowLibrary((v) => !v)}
+          showLibrary={showLibrary}
+        />
 
-        {/* Workspace — the entire product */}
-        <main className="px-4 sm:px-6 lg:px-8 pt-6 pb-20">
-          <div className="max-w-5xl mx-auto">
-            <MasterPromptSection />
-          </div>
+        {/* Main area */}
+        <main className="flex-1 flex flex-col min-w-0 h-full">
+          {/* New chat form modal */}
+          <AnimatePresence>
+            {showNewChatForm && (
+              <motion.div
+                initial={reducedMotion ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={reducedMotion ? { opacity: 0 } : { opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm"
+              >
+                <motion.div
+                  initial={reducedMotion ? false : { scale: 0.96, y: 8 }}
+                  animate={{ scale: 1, y: 0 }}
+                  exit={reducedMotion ? { opacity: 0 } : { scale: 0.96, y: 8 }}
+                  transition={reducedMotion ? { duration: 0 } : { duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                  className="w-full max-w-lg"
+                >
+                  <NewChatForm
+                    onSubmit={handleNewChat}
+                    onCancel={() => setShowNewChatForm(false)}
+                  />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <MasterPromptSection
+            chatsState={chatsState}
+            onToggleLibrary={() => setShowLibrary((v) => !v)}
+            showLibrary={showLibrary}
+          />
         </main>
       </div>
     </motion.div>
