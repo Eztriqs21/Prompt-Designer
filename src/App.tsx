@@ -20,7 +20,7 @@ function AnimatedRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/Prompt-Designer">
       <PageShell>
         <AnimatedRoutes />
       </PageShell>
