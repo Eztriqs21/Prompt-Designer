@@ -15,7 +15,11 @@ loadSectionBlueprints();
 
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',')
-  : ['http://localhost:5173', 'http://localhost:3001'];
+  : [
+      'http://localhost:5173',
+      'http://localhost:3001',
+      'https://eztriqs21.github.io',
+    ];
 
 app.use(cors({
   origin: (origin, callback) => {
