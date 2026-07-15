@@ -49,7 +49,7 @@ export default function HomePage() {
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-ink-primary mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', lineHeight: 1.1 }}>
           Prompt Workspace + Website AUDIT for developers
         </h1>
-        <p className="text-ink-muted text-base max-w-2xl mb-8">
+        <p className="text-ink-muted text-base mb-8">
           Generate structured prompts with specialized branches. Audit websites for bugs, UX, and performance.
         </p>
 

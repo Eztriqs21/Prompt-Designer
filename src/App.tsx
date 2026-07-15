@@ -10,7 +10,7 @@ export default function App() {
     <BrowserRouter basename="/Prompt-Designer">
       <div className="flex w-full min-h-screen bg-surface-base text-ink-primary">
         <Sidebar />
-        <main className="flex-1 min-w-0 w-0">
+        <main className="flex-1 min-w-0 overflow-x-hidden">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/chat" element={<ChatWorkspace />} />
