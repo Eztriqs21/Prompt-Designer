@@ -1,4 +1,4 @@
-import type { MasterPromptRequest, MasterPromptResponse, SavedPrompt, ChatSession, PromptVersion, SectionType, SectionPromptRequest, SectionPromptResponse, Message } from '../types';
+import type { MasterPromptRequest, MasterPromptResponse, SavedPrompt, ChatSession, PromptVersion, SectionType, SectionPromptRequest, SectionPromptResponse, Message, AuditInputType, AuditMode, AuditStatus, AuditReport, AuditJobStages } from '../types';
 
 export interface SectionMessage {
   id: string;
@@ -179,4 +179,105 @@ export async function saveSectionMessage(
   });
   if (!res.ok) throw new Error('Failed to save section message');
   return res.json();
+}
+
+// ─── Website AUDIT ─────────────────────────────────────────
+
+export interface AuditJobSummary {
+  id: string;
+  inputType: AuditInputType;
+  source: string;
+  mode: AuditMode;
+  status: AuditStatus;
+  progress: number;
+  createdAt: number;
+  completedAt?: number;
+}
+
+export interface AuditJobStatus {
+  id: string;
+  inputType: AuditInputType;
+  source: string;
+  mode: AuditMode;
+  status: AuditStatus;
+  progress: number;
+  stages: AuditJobStages;
+  error?: string;
+  createdAt: number;
+  updatedAt: number;
+  completedAt?: number;
+}
+
+export interface AuditJobReport {
+  id: string;
+  inputType: AuditInputType;
+  source: string;
+  mode: AuditMode;
+  status: AuditStatus;
+  report: AuditReport;
+  completedAt?: number;
+}
+
+export async function createAuditJob(data: {
+  inputType: AuditInputType;
+  source: string;
+  mode: AuditMode;
+  files?: File[];
+}): Promise<{ id: string; inputType: string; source: string; mode: string; status: string; progress: number; createdAt: number; remaining: number }> {
+  const formData = new FormData();
+  formData.append('inputType', data.inputType);
+  formData.append('source', data.source);
+  formData.append('mode', data.mode);
+  if (data.files) {
+    for (const file of data.files) {
+      formData.append('files', file);
+    }
+  }
+
+  const res = await fetch(`${API_BASE}/audit`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    const message = err?.error || `Request failed with status ${res.status}`;
+    throw new Error(message);
+  }
+
+  return res.json();
+}
+
+export async function getAuditJob(jobId: string): Promise<AuditJobStatus> {
+  const res = await fetch(`${API_BASE}/audit/${jobId}`);
+  if (!res.ok) throw new Error('Audit job not found');
+  return res.json();
+}
+
+export async function getAuditReport(jobId: string): Promise<AuditJobReport> {
+  const res = await fetch(`${API_BASE}/audit/${jobId}/report`);
+  if (res.status === 202) {
+    // Report not ready yet
+    const data = await res.json();
+    throw new Error(data.error || 'Report not ready');
+  }
+  if (!res.ok) throw new Error('Failed to fetch audit report');
+  return res.json();
+}
+
+export async function getAuditEvidence(jobId: string, evidenceId: string): Promise<any> {
+  const res = await fetch(`${API_BASE}/audit/${jobId}/evidence/${evidenceId}`);
+  if (!res.ok) throw new Error('Evidence not found');
+  return res.json();
+}
+
+export async function listAuditJobs(): Promise<AuditJobSummary[]> {
+  const res = await fetch(`${API_BASE}/audit`);
+  if (!res.ok) throw new Error('Failed to fetch audit jobs');
+  return res.json();
+}
+
+export async function deleteAuditJob(jobId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/audit/${jobId}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete audit job');
 }

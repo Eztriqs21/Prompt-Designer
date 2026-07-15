@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import PageShell from './components/layout/PageShell';
 import HomePage from './pages/HomePage';
 import HistoryPage from './pages/HistoryPage';
+import AuditPage from './pages/AuditPage';
 import bgVideo from './assets/BG Video.mp4';
 
 function AnimatedRoutes() {
@@ -14,6 +15,7 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<HomePage />} />
         <Route path="/history" element={<HistoryPage />} />
+        <Route path="/audit" element={<AuditPage />} />
       </Routes>
     </AnimatePresence>
   );

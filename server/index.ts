@@ -7,6 +7,7 @@ import chatsRoutes from './routes/chats.js';
 import promptVersionRoutes from './routes/promptVersions.js';
 import sectionPromptsRoutes from './routes/sectionPrompts.js';
 import sectionMessagesRoutes from './routes/sectionMessages.js';
+import auditRoutes from './routes/audit.js';
 import { loadSectionBlueprints } from './prompts/sectionBlueprints.js';
 
 const app = express();
@@ -41,6 +42,7 @@ app.use('/api/chats', promptVersionRoutes);
 app.use('/api/prompt', promptVersionRoutes);
 app.use('/api/sections', sectionPromptsRoutes);
 app.use('/api/section-messages', sectionMessagesRoutes);
+app.use('/api/audit', auditRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });

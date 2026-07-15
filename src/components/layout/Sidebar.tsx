@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, MessageSquare, Trash2, BookOpen, PanelLeftClose, Pencil, Check, X } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, BookOpen, PanelLeftClose, Pencil, Check, X, ShieldCheck } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
 import { hoverScaleSmall } from '../../motion/presets';
 import type { ChatSession } from '../../types';
@@ -32,6 +33,7 @@ export default function Sidebar({
   showLibrary,
 }: SidebarProps) {
   const reducedMotion = useReducedMotionSafe();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -96,6 +98,20 @@ export default function Sidebar({
           <Plus className="w-4 h-4" />
           New Chat
         </motion.button>
+
+        {/* Website AUDIT link */}
+        <Link
+          to="/audit"
+          onClick={() => setIsOpen(false)}
+          className={`mt-2 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[13px] font-medium transition-all duration-200 ${
+            location.pathname === '/audit'
+              ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
+              : 'bg-white/[0.03] border-white/[0.06] text-white/40 hover:text-white/60 hover:bg-white/[0.05] hover:border-white/[0.08]'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4" />
+          Website AUDIT
+        </Link>
       </div>
 
       {/* Chat list */}
