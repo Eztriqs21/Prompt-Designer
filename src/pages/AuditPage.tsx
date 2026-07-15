@@ -43,7 +43,7 @@ export default function AuditPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-3xl mx-auto px-6 py-12">
+      <div className="px-6 py-12">
         {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 mb-3">
@@ -55,7 +55,7 @@ export default function AuditPage() {
             Website Audit
           </h1>
 
-          <p className="text-sm text-ink-muted max-w-xl mx-auto">
+          <p className="text-sm text-ink-muted max-w-2xl mx-auto leading-relaxed">
             Analyze websites for code issues, bugs, UX problems, and performance concerns.
             Get a professional QA-style report.
           </p>
