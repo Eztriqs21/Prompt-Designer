@@ -8,6 +8,21 @@ const fs = await import('fs');
 const path = await import('path');
 const http = await import('http');
 
+// ─── Set PLAYWRIGHT_BROWSERS_PATH before Playwright module import ───
+// Playwright reads this env var at import time, not at launch time.
+// Must be set before loadPlaywright() calls import('playwright').
+const RENDER_CACHE_PATH = '/opt/render/project/.playwright-cache';
+if (!process.env.PLAYWRIGHT_BROWSERS_PATH) {
+  try {
+    if (fs.existsSync(RENDER_CACHE_PATH)) {
+      process.env.PLAYWRIGHT_BROWSERS_PATH = RENDER_CACHE_PATH;
+      console.log(`[Playwright] Auto-detected Render cache: ${RENDER_CACHE_PATH}`);
+    }
+  } catch {
+    // Not on Render
+  }
+}
+
 // ─── Types ─────────────────────────────────────────────────
 
 export interface BrowserTestResult {
@@ -109,9 +124,19 @@ async function launchBrowser(pw: PlaywrightModules): Promise<ReturnType<typeof p
   // Ensure PLAYWRIGHT_BROWSERS_PATH is set before any launch attempt
   getPlaywrightCachePath();
 
-  // Attempt 1: Launch directly (env var now set)
+  // Resolve the exact executable path — bypasses Playwright's path resolution
+  const execPath = getExecutablePath();
+  const launchOptions: Record<string, any> = { headless: true };
+  if (execPath) {
+    launchOptions.executablePath = execPath;
+    console.log(`[Playwright] Using executable: ${execPath}`);
+  } else {
+    console.log('[Playwright] No executable found at cache path, using Playwright default resolution');
+  }
+
+  // Attempt 1: Launch with resolved executable path
   try {
-    const browser = await pw.chromium.launch({ headless: true });
+    const browser = await pw.chromium.launch(launchOptions);
     console.log('[Playwright] Browser launched successfully (attempt 1)');
     return browser;
   } catch (err: any) {
@@ -119,23 +144,17 @@ async function launchBrowser(pw: PlaywrightModules): Promise<ReturnType<typeof p
     logPlaywrightDiagnostics();
   }
 
-  // Check if browsers exist at the expected path before attempting install
-  const cachePath = getPlaywrightCachePath();
-  if (cachePath) {
-    const shellPath = path.join(cachePath, 'chromium_headless_shell-1228', 'chrome-headless-shell-linux64', 'chrome-headless-shell');
-    const chromiumPath = path.join(cachePath, 'chromium-1228', 'chrome-linux', 'chrome');
-    if (fs.existsSync(shellPath) || fs.existsSync(chromiumPath)) {
-      console.log(`[Playwright] Browsers exist at ${cachePath} but launch still failed — possible system dependency issue`);
-      logPlaywrightDiagnostics();
-      return null;
-    }
-  }
-
   // Attempt 2: Install browsers at runtime if missing, then retry
   const installed = await tryInstallBrowsersAtRuntime();
   if (installed) {
+    // Re-resolve executable path after install
+    const newExecPath = getExecutablePath();
+    if (newExecPath) {
+      launchOptions.executablePath = newExecPath;
+      console.log(`[Playwright] Using executable after install: ${newExecPath}`);
+    }
     try {
-      const browser = await pw.chromium.launch({ headless: true });
+      const browser = await pw.chromium.launch(launchOptions);
       console.log('[Playwright] Browser launched successfully (attempt 2, after runtime install)');
       return browser;
     } catch (err: any) {
@@ -143,6 +162,21 @@ async function launchBrowser(pw: PlaywrightModules): Promise<ReturnType<typeof p
       logPlaywrightDiagnostics();
     }
   }
+
+  return null;
+}
+
+function getExecutablePath(): string | null {
+  const cachePath = getPlaywrightCachePath();
+  if (!cachePath) return null;
+
+  // Prefer headless shell (used by headless: true)
+  const shellPath = path.join(cachePath, 'chromium_headless_shell-1228', 'chrome-headless-shell-linux64', 'chrome-headless-shell');
+  if (fs.existsSync(shellPath)) return shellPath;
+
+  // Fallback to full chromium
+  const chromiumPath = path.join(cachePath, 'chromium-1228', 'chrome-linux', 'chrome');
+  if (fs.existsSync(chromiumPath)) return chromiumPath;
 
   return null;
 }
