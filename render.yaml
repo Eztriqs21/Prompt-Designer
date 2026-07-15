@@ -3,7 +3,7 @@ services:
     name: prompt-designer-api
     runtime: node
     plan: free
-    buildCommand: npm install && PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/.playwright-cache npx playwright install --with-deps chromium
+    buildCommand: npm install && npm run build && PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/.playwright-cache npx playwright install --with-deps chromium
     startCommand: npm run start
     healthCheckPath: /api/health
     envVars:

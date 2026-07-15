@@ -76,7 +76,7 @@ export default function ConversationPane({
             <div className="bg-accent-error/10 border border-accent-error/20 rounded-md rounded-tl-sm px-4 py-3 max-w-[85%]">
               <p className="text-sm text-accent-error whitespace-pre-wrap">{error}</p>
               <button
-                onClick={onGenerate}
+                onClick={() => onGenerate('')}
                 className="mt-2 text-xs text-accent-primary hover:underline"
               >
                 Retry
