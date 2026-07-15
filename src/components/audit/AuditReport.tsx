@@ -1,6 +1,6 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, RotateCcw, Lightbulb, AlertTriangle, Bug, Palette, Shield, Eye, Gauge } from 'lucide-react';
+import { ShieldCheck, RotateCcw, Lightbulb, AlertTriangle, Bug, Palette, Shield, Eye, Gauge, Copy, Check, FileText } from 'lucide-react';
 import { useReducedMotionSafe } from '../../hooks/useReducedMotionSafe';
 import { fadeInUp, staggerContainer, transitionEnter } from '../../motion/presets';
 import AuditFindingCard from './AuditFindingCard';
@@ -52,9 +52,26 @@ function groupByCategory(findings: AuditFinding[]): Map<FindingCategory, AuditFi
 
 export default memo(function AuditReport({ report, onReset }: AuditReportProps) {
   const reducedMotion = useReducedMotionSafe();
+  const [fixPromptCopied, setFixPromptCopied] = useState(false);
+  const [showFixPrompt, setShowFixPrompt] = useState(false);
   const grouped = groupByCategory(report.findings);
   const circumference = 2 * Math.PI * 42;
   const dashOffset = circumference - (report.score / 100) * circumference;
+
+  const handleCopyFixPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(report.fixPrompt);
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = report.fixPrompt;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+    setFixPromptCopied(true);
+    setTimeout(() => setFixPromptCopied(false), 2000);
+  };
 
   return (
     <motion.div
@@ -165,6 +182,63 @@ export default memo(function AuditReport({ report, onReset }: AuditReportProps) 
           </motion.div>
         );
       })}
+
+      {/* Fix Prompt */}
+      {report.fixPrompt && (
+        <div className="liquid-glass rounded-2xl overflow-hidden">
+          <button
+            onClick={() => setShowFixPrompt(!showFixPrompt)}
+            className="w-full flex items-center justify-between p-5 text-left hover:bg-white/[0.02] transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-indigo-400/60" />
+              <h4 className="text-[13px] font-medium text-white/70">Detailed Fix Prompt</h4>
+              <span className="text-[10px] text-white/30">— ready to use with a coding agent</span>
+            </div>
+            <motion.span
+              animate={{ rotate: showFixPrompt ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              className="text-white/30"
+            >
+              ▼
+            </motion.span>
+          </button>
+
+          {showFixPrompt && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="px-5 pb-5 border-t border-white/[0.06]">
+                <div className="flex items-center justify-between mt-4 mb-3">
+                  <span className="text-[11px] text-white/30">Copy this prompt and paste it into your coding agent</span>
+                  <button
+                    onClick={handleCopyFixPrompt}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.1] text-[11px] font-medium transition-all duration-200"
+                  >
+                    {fixPromptCopied ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-400" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3" />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+                <pre className="font-mono text-[11px] text-white/50 whitespace-pre-wrap leading-relaxed max-h-[400px] overflow-y-auto p-4 bg-black/30 rounded-xl border border-white/[0.05]">
+                  {report.fixPrompt}
+                </pre>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      )}
 
       {/* Reset Button */}
       <div className="flex justify-center pt-4">

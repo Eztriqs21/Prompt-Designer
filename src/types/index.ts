@@ -145,6 +145,7 @@ export interface AuditReport {
   performanceIssues: AuditFinding[];
   recommendations: string[];
   evidence: AuditEvidence[];
+  fixPrompt: string;
 }
 
 export interface AuditJobStages {
