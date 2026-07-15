@@ -5,6 +5,7 @@ import { storeEvidence, type EvidenceCollector } from './evidenceCollector.js';
 
 const fs = await import('fs');
 const path = await import('path');
+const http = await import('http');
 
 // ─── Types ─────────────────────────────────────────────────
 
@@ -13,9 +14,421 @@ export interface BrowserTestResult {
   evidence: AuditEvidence[];
 }
 
-// ─── Comprehensive HTTP Checks ─────────────────────────────
+interface PlaywrightModules {
+  chromium: typeof import('playwright').chromium;
+}
 
-async function testUrl(url: string): Promise<BrowserTestResult> {
+// ─── Playwright Lazy Loader ────────────────────────────────
+
+let cachedPlaywright: PlaywrightModules | null = null;
+let playwrightLoadFailed = false;
+
+async function loadPlaywright(): Promise<PlaywrightModules | null> {
+  if (playwrightLoadFailed) return null;
+  if (cachedPlaywright) return cachedPlaywright;
+
+  try {
+    const pw = await import('playwright');
+    cachedPlaywright = { chromium: pw.chromium };
+    return cachedPlaywright;
+  } catch (err: any) {
+    console.error('Playwright not available:', err.message);
+    playwrightLoadFailed = true;
+    return null;
+  }
+}
+
+// ─── Viewport Presets ──────────────────────────────────────
+
+const VIEWPORTS = [
+  { name: 'mobile', width: 375, height: 812 },
+  { name: 'tablet', width: 768, height: 1024 },
+  { name: 'desktop', width: 1280, height: 800 },
+];
+
+// ─── Playwright Browser Testing ────────────────────────────
+
+async function testUrlWithPlaywright(
+  url: string,
+  evidenceCollector: EvidenceCollector,
+): Promise<BrowserTestResult> {
+  const findings: AuditFinding[] = [];
+  const evidence: AuditEvidence[] = [];
+  const pw = await loadPlaywright();
+
+  if (!pw) {
+    findings.push(sealFinding({
+      severity: 'info',
+      category: 'code-quality',
+      title: 'Playwright not available',
+      description: 'Playwright browser is not installed. Falling back to HTTP-based analysis only.',
+      fix: 'Install Playwright: npm install playwright && npx playwright install chromium',
+      confidence: 1.0,
+    }));
+    return { findings, evidence };
+  }
+
+  let browser;
+  try {
+    browser = await pw.chromium.launch({ headless: true });
+  } catch (err: any) {
+    findings.push(sealFinding({
+      severity: 'info',
+      category: 'code-quality',
+      title: 'Playwright browser launch failed',
+      description: `Could not launch headless browser: ${err.message}. Falling back to HTTP-based analysis.`,
+      fix: 'Install Chromium: npx playwright install chromium',
+      confidence: 1.0,
+    }));
+    return { findings, evidence };
+  }
+
+  try {
+    const context = await browser.newContext({
+      ignoreHTTPSErrors: true,
+      userAgent: 'WebsiteAuditBot/1.0 (Playwright)',
+    });
+
+    const consoleLogs: Array<{ type: string; text: string; url: string; timestamp: number }> = [];
+    const failedRequests: Array<{ url: string; status: number; statusText: string; timestamp: number }> = [];
+
+    // ── Desktop viewport test ────────────────────────────
+    const desktopPage = await context.newPage();
+
+    // Collect console messages
+    desktopPage.on('console', (msg) => {
+      consoleLogs.push({
+        type: msg.type(),
+        text: msg.text(),
+        url: url,
+        timestamp: Date.now(),
+      });
+    });
+
+    // Collect failed network requests
+    desktopPage.on('requestfailed', (req) => {
+      failedRequests.push({
+        url: req.url(),
+        status: 0,
+        statusText: req.failure()?.errorText || 'Unknown',
+        timestamp: Date.now(),
+      });
+    });
+
+    desktopPage.on('response', (res) => {
+      if (res.status() >= 400) {
+        failedRequests.push({
+          url: res.url(),
+          status: res.status(),
+          statusText: res.statusText(),
+          timestamp: Date.now(),
+        });
+      }
+    });
+
+    let navigationTimeout = false;
+    try {
+      await desktopPage.goto(url, {
+        waitUntil: 'networkidle',
+        timeout: 30000,
+      });
+    } catch (err: any) {
+      if (err.message?.includes('Timeout') || err.message?.includes('timeout')) {
+        navigationTimeout = true;
+        findings.push(sealFinding({
+          severity: 'high',
+          category: 'performance',
+          title: 'Page load timeout',
+          description: `The page at ${url} did not reach network idle within 30 seconds. This may indicate heavy resources or slow server response.`,
+          fix: 'Optimize server response time, reduce render-blocking resources, or implement lazy loading.',
+          confidence: 0.9,
+        }));
+      } else {
+        findings.push(sealFinding({
+          severity: 'critical',
+          category: 'bug',
+          title: 'Page failed to load',
+          description: `Could not navigate to ${url}: ${err.message}`,
+          fix: 'Verify the URL is correct and the server is accessible.',
+          confidence: 0.95,
+        }));
+      }
+    }
+
+    // ── Screenshot ───────────────────────────────────────
+    if (!navigationTimeout) {
+      try {
+        const screenshotBuffer = await desktopPage.screenshot({ fullPage: true, type: 'png' });
+        const screenshotId = uuidv4();
+        const screenshotEvidence = evidenceCollector.add(screenshotId, 'testing', {
+          url,
+          viewport: 'desktop',
+          size: screenshotBuffer.length,
+          format: 'png',
+        });
+        // Store screenshot data as base64 in metadata
+        screenshotEvidence.metadata = {
+          ...screenshotEvidence.metadata,
+          base64: screenshotBuffer.toString('base64'),
+        };
+        evidence.push(screenshotEvidence);
+      } catch (err: any) {
+        console.error('Screenshot failed:', err.message);
+      }
+    }
+
+    // ── Console error/warning findings ───────────────────
+    const consoleErrors = consoleLogs.filter((l) => l.type === 'error');
+    const consoleWarnings = consoleLogs.filter((l) => l.type === 'warning');
+
+    if (consoleErrors.length > 0) {
+      findings.push(sealFinding({
+        severity: 'high',
+        category: 'bug',
+        title: `${consoleErrors.length} console error(s) detected`,
+        description: `The page produced ${consoleErrors.length} console error(s):\n${consoleErrors.slice(0, 5).map((e) => `- ${e.text}`).join('\n')}`,
+        fix: 'Fix the JavaScript errors shown in the console. These indicate runtime issues.',
+        confidence: 0.95,
+      }));
+    }
+
+    if (consoleWarnings.length > 0) {
+      findings.push(sealFinding({
+        severity: 'medium',
+        category: 'code-quality',
+        title: `${consoleWarnings.length} console warning(s) detected`,
+        description: `The page produced ${consoleWarnings.length} console warning(s):\n${consoleWarnings.slice(0, 5).map((w) => `- ${w.text}`).join('\n')}`,
+        fix: 'Review and address console warnings to improve code quality.',
+        confidence: 0.8,
+      }));
+    }
+
+    // Store console log evidence
+    if (consoleLogs.length > 0) {
+      const consoleEvidenceId = uuidv4();
+      evidence.push(evidenceCollector.add(consoleEvidenceId, 'testing', {
+        url,
+        total: consoleLogs.length,
+        errors: consoleErrors.length,
+        warnings: consoleWarnings.length,
+        logs: consoleLogs.slice(0, 20),
+      }));
+    }
+
+    // ── Failed network request findings ──────────────────
+    if (failedRequests.length > 0) {
+      findings.push(sealFinding({
+        severity: 'high',
+        category: 'bug',
+        title: `${failedRequests.length} failed network request(s)`,
+        description: `The page triggered ${failedRequests.length} failed network request(s):\n${failedRequests.slice(0, 5).map((r) => `- ${r.url} (${r.status || r.statusText})`).join('\n')}`,
+        fix: 'Fix broken resource URLs, API endpoints, or CDN links.',
+        confidence: 0.9,
+      }));
+
+      const networkEvidenceId = uuidv4();
+      evidence.push(evidenceCollector.add(networkEvidenceId, 'testing', {
+        url,
+        failedRequests: failedRequests.slice(0, 20),
+      }));
+    }
+
+    // ── Performance metrics ──────────────────────────────
+    if (!navigationTimeout) {
+      try {
+        const perfMetrics = await desktopPage.evaluate(() => {
+          const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+          const paint = performance.getEntriesByType('paint');
+          const resources = performance.getEntriesByType('resource');
+
+          return {
+            domContentLoaded: nav?.domContentLoadedEventEnd || 0,
+            loadComplete: nav?.loadEventEnd || 0,
+            ttfb: nav?.responseStart || 0,
+            domInteractive: nav?.domInteractive || 0,
+            firstPaint: paint.find((p) => p.name === 'first-paint')?.startTime || 0,
+            firstContentfulPaint: paint.find((p) => p.name === 'first-contentful-paint')?.startTime || 0,
+            totalResources: resources.length,
+            totalTransferSize: resources.reduce((sum, r) => sum + ((r as any).transferSize || 0), 0),
+          };
+        });
+
+        const perfEvidenceId = uuidv4();
+        evidence.push(evidenceCollector.add(perfEvidenceId, 'testing', {
+          url,
+          viewport: 'desktop',
+          metrics: perfMetrics,
+        }));
+
+        // Flag slow metrics
+        if (perfMetrics.loadComplete > 5000) {
+          findings.push(sealFinding({
+            severity: 'high',
+            category: 'performance',
+            title: 'Slow page load',
+            description: `Full page load took ${(perfMetrics.loadComplete / 1000).toFixed(1)}s. Target is under 3s.`,
+            fix: 'Optimize images, enable compression, reduce render-blocking resources, and use a CDN.',
+            confidence: 0.85,
+          }));
+        }
+
+        if (perfMetrics.firstContentfulPaint > 2500) {
+          findings.push(sealFinding({
+            severity: 'medium',
+            category: 'performance',
+            title: 'Slow First Contentful Paint',
+            description: `FCP took ${(perfMetrics.firstContentfulPaint / 1000).toFixed(1)}s. Target is under 1.8s.`,
+            fix: 'Reduce server response time, eliminate render-blocking resources, and inline critical CSS.',
+            confidence: 0.85,
+          }));
+        }
+
+        if (perfMetrics.ttfb > 800) {
+          findings.push(sealFinding({
+            severity: 'medium',
+            category: 'performance',
+            title: 'Slow Time to First Byte',
+            description: `TTFB was ${(perfMetrics.ttfb / 1000).toFixed(1)}s. Target is under 200ms.`,
+            fix: 'Optimize server response time, use caching, or deploy closer to users.',
+            confidence: 0.8,
+          }));
+        }
+      } catch (err: any) {
+        console.error('Performance metrics collection failed:', err.message);
+      }
+    }
+
+    // ── DOM snapshot evidence ────────────────────────────
+    if (!navigationTimeout) {
+      try {
+        const domSnapshot = await desktopPage.evaluate(() => {
+          const html = document.documentElement.outerHTML;
+          return {
+            length: html.length,
+            title: document.title,
+            lang: document.documentElement.lang,
+            scripts: document.querySelectorAll('script').length,
+            stylesheets: document.querySelectorAll('link[rel="stylesheet"]').length,
+            images: document.querySelectorAll('img').length,
+            forms: document.querySelectorAll('form').length,
+            links: document.querySelectorAll('a').length,
+          };
+        });
+
+        const domEvidenceId = uuidv4();
+        evidence.push(evidenceCollector.add(domEvidenceId, 'testing', {
+          url,
+          viewport: 'desktop',
+          snapshot: domSnapshot,
+        }));
+      } catch {
+        // DOM snapshot is best-effort
+      }
+    }
+
+    // ── Responsive viewport tests ────────────────────────
+    for (const vp of VIEWPORTS) {
+      if (vp.name === 'desktop') continue; // Already tested desktop
+
+      const vpPage = await context.newPage();
+      try {
+        await vpPage.setViewportSize({ width: vp.width, height: vp.height });
+        await vpPage.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+
+        // Take viewport screenshot
+        try {
+          const vpScreenshot = await vpPage.screenshot({ type: 'png' });
+          const vpScreenshotId = uuidv4();
+          const vpEvidence = evidenceCollector.add(vpScreenshotId, 'testing', {
+            url,
+            viewport: vp.name,
+            width: vp.width,
+            height: vp.height,
+            size: vpScreenshot.length,
+          });
+          vpEvidence.metadata = {
+            ...vpEvidence.metadata,
+            base64: vpScreenshot.toString('base64'),
+          };
+          evidence.push(vpEvidence);
+        } catch {
+          // Screenshot is best-effort
+        }
+
+        // Check for horizontal scroll (layout issue)
+        const hasHorizontalScroll = await vpPage.evaluate(() => {
+          return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+        }).catch(() => false);
+
+        if (hasHorizontalScroll) {
+          findings.push(sealFinding({
+            severity: 'medium',
+            category: 'ux',
+            title: `Horizontal scroll on ${vp.name} viewport`,
+            description: `The page has horizontal scrolling at ${vp.width}px viewport width. Content may be cut off or users need to scroll sideways.`,
+            fix: 'Use responsive design techniques (max-width, flexbox, grid) to prevent horizontal overflow.',
+            confidence: 0.85,
+          }));
+        }
+
+        // Viewport test evidence
+        const vpEvidenceId = uuidv4();
+        evidence.push(evidenceCollector.add(vpEvidenceId, 'testing', {
+          url,
+          viewport: vp.name,
+          width: vp.width,
+          height: vp.height,
+          hasHorizontalScroll,
+        }));
+      } catch (err: any) {
+        console.error(`Viewport test (${vp.name}) failed:`, err.message);
+      } finally {
+        await vpPage.close();
+      }
+    }
+
+    // ── Mixed content check (HTTPS) ──────────────────────
+    if (url.startsWith('https://') && !navigationTimeout) {
+      try {
+        const httpResources = await desktopPage.evaluate(() => {
+          const resources = document.querySelectorAll('[src],[href]');
+          const httpRefs: string[] = [];
+          resources.forEach((el) => {
+            const src = el.getAttribute('src') || el.getAttribute('href') || '';
+            if (src.startsWith('http://') && !src.startsWith('http://localhost')) {
+              httpRefs.push(src);
+            }
+          });
+          return httpRefs;
+        }).catch(() => []);
+
+        if (httpResources.length > 0) {
+          findings.push(sealFinding({
+            severity: 'high',
+            category: 'security',
+            title: 'Mixed content detected',
+            description: `Found ${httpResources.length} HTTP resource(s) loaded from an HTTPS page. Browsers may block these resources.\n${httpResources.slice(0, 5).map((r) => `- ${r}`).join('\n')}`,
+            fix: 'Update all resource URLs to use HTTPS.',
+            confidence: 0.9,
+          }));
+        }
+      } catch {
+        // Mixed content check is best-effort
+      }
+    }
+
+    await desktopPage.close();
+    await context.close();
+  } finally {
+    await browser.close();
+  }
+
+  return { findings, evidence };
+}
+
+// ─── HTTP Security Header Checks ───────────────────────────
+
+async function testHttpHeaders(url: string): Promise<BrowserTestResult> {
   const findings: AuditFinding[] = [];
   const evidence: AuditEvidence[] = [];
 
@@ -30,7 +443,7 @@ async function testUrl(url: string): Promise<BrowserTestResult> {
     });
     clearTimeout(timeout);
 
-    // ── HTTP Status ───────────────────────────────────────
+    // HTTP Status
     if (response.status >= 400) {
       findings.push(sealFinding({
         severity: response.status >= 500 ? 'critical' : 'high',
@@ -44,23 +457,21 @@ async function testUrl(url: string): Promise<BrowserTestResult> {
       }));
     }
 
-    // ── Redirect Analysis ─────────────────────────────────
+    // Redirect Analysis
     if (response.redirected) {
-      const redirectCount = response.url !== url ? 1 : 0;
       findings.push(sealFinding({
         severity: 'info',
         category: 'ux',
         title: 'Page redirects',
-        description: `The URL redirects to ${response.url}. ${redirectCount > 0 ? 'Multiple redirects may slow down loading.' : 'Verify this redirect is intended.'}`,
+        description: `The URL redirects to ${response.url}. Verify this redirect is intended.`,
         fix: 'Ensure redirects are necessary and use 301 for permanent moves.',
         confidence: 0.7,
       }));
     }
 
-    // ── Security Headers ──────────────────────────────────
+    // Security Headers
     const headers = response.headers;
 
-    // X-Content-Type-Options
     if (!headers.get('x-content-type-options')) {
       findings.push(sealFinding({
         severity: 'medium',
@@ -72,7 +483,6 @@ async function testUrl(url: string): Promise<BrowserTestResult> {
       }));
     }
 
-    // X-Frame-Options / CSP frame-ancestors
     if (!headers.get('x-frame-options') && !headers.get('content-security-policy')) {
       findings.push(sealFinding({
         severity: 'medium',
@@ -84,7 +494,6 @@ async function testUrl(url: string): Promise<BrowserTestResult> {
       }));
     }
 
-    // Strict-Transport-Security
     if (url.startsWith('https://') && !headers.get('strict-transport-security')) {
       findings.push(sealFinding({
         severity: 'medium',
@@ -96,7 +505,6 @@ async function testUrl(url: string): Promise<BrowserTestResult> {
       }));
     }
 
-    // Content-Security-Policy
     if (!headers.get('content-security-policy')) {
       findings.push(sealFinding({
         severity: 'medium',
@@ -108,7 +516,6 @@ async function testUrl(url: string): Promise<BrowserTestResult> {
       }));
     }
 
-    // X-XSS-Protection (legacy but still useful)
     if (!headers.get('x-xss-protection')) {
       findings.push(sealFinding({
         severity: 'low',
@@ -120,7 +527,6 @@ async function testUrl(url: string): Promise<BrowserTestResult> {
       }));
     }
 
-    // Referrer-Policy
     if (!headers.get('referrer-policy')) {
       findings.push(sealFinding({
         severity: 'low',
@@ -132,7 +538,6 @@ async function testUrl(url: string): Promise<BrowserTestResult> {
       }));
     }
 
-    // Permissions-Policy
     if (!headers.get('permissions-policy') && !headers.get('feature-policy')) {
       findings.push(sealFinding({
         severity: 'low',
@@ -144,194 +549,9 @@ async function testUrl(url: string): Promise<BrowserTestResult> {
       }));
     }
 
-    // ── HTML Content Analysis ─────────────────────────────
-    const contentType = headers.get('content-type') || '';
-    if (contentType.includes('text/html')) {
-      const body = await response.text();
-
-      // Response size
-      const sizeKB = body.length / 1024;
-      if (sizeKB > 500) {
-        findings.push(sealFinding({
-          severity: 'medium',
-          category: 'performance',
-          title: 'Large HTML response',
-          description: `The HTML response is ${Math.round(sizeKB)}KB. Large pages load slowly on mobile networks.`,
-          fix: 'Reduce page size by lazy-loading content, splitting pages, or optimizing server output.',
-          confidence: 0.8,
-        }));
-      }
-
-      if (sizeKB > 1000) {
-        findings.push(sealFinding({
-          severity: 'high',
-          category: 'performance',
-          title: 'Very large HTML response',
-          description: `The HTML response is ${Math.round(sizeKB)}KB. This is significantly larger than recommended and will cause slow initial loads.`,
-          fix: 'Consider server-side rendering, code splitting, or pagination to reduce HTML payload.',
-          confidence: 0.85,
-        }));
-      }
-
-      // Inline style blocks
-      const styleTagCount = (body.match(/<style/gi) || []).length;
-      if (styleTagCount > 5) {
-        findings.push(sealFinding({
-          severity: 'medium',
-          category: 'performance',
-          title: 'Multiple inline style blocks',
-          description: `Found ${styleTagCount} <style> tags. Excessive inline CSS increases page size and prevents caching.`,
-          fix: 'Extract CSS into external stylesheets for better caching.',
-          confidence: 0.7,
-        }));
-      }
-
-      // Inline scripts
-      const inlineScriptCount = (body.match(/<script[^>]*>/gi) || []).length;
-      const externalScripts = (body.match(/<script[^>]*src=/gi) || []).length;
-      if (inlineScriptCount > 5) {
-        findings.push(sealFinding({
-          severity: 'medium',
-          category: 'performance',
-          title: 'Multiple inline scripts',
-          description: `Found ${inlineScriptCount} inline script tags. Inline scripts prevent caching and delay rendering.`,
-          fix: 'Move scripts to external files and use defer/async attributes.',
-          confidence: 0.7,
-        }));
-      }
-
-      // Render-blocking scripts in head
-      const headMatch = body.match(/<head[^>]*>[\s\S]*?<\/head>/i);
-      if (headMatch) {
-        const head = headMatch[0];
-        const scriptsInHead = (head.match(/<script[^>]*>/gi) || []).filter(
-          (s) => !s.includes('defer') && !s.includes('async') && !s.includes('type="module"')
-        );
-        if (scriptsInHead.length > 0) {
-          findings.push(sealFinding({
-            severity: 'high',
-            category: 'performance',
-            title: 'Render-blocking scripts in head',
-            description: `Found ${scriptsInHead.length} script(s) in <head> without defer/async. These block page rendering.`,
-            fix: 'Add defer or async attributes, or move scripts to the end of <body>.',
-            confidence: 0.9,
-          }));
-        }
-      }
-
-      // Missing viewport meta
-      if (!body.includes('viewport')) {
-        findings.push(sealFinding({
-          severity: 'high',
-          category: 'ux',
-          title: 'Missing viewport meta tag',
-          description: 'No viewport meta tag found in the HTML response. The site will not render correctly on mobile devices.',
-          fix: 'Add <meta name="viewport" content="width=device-width, initial-scale=1"> to the <head>.',
-          confidence: 0.95,
-        }));
-      }
-
-      // Missing charset
-      if (!body.includes('charset') && !body.includes('encoding=')) {
-        findings.push(sealFinding({
-          severity: 'low',
-          category: 'code-quality',
-          title: 'Missing charset declaration',
-          description: 'No charset meta tag found. The browser may misinterpret text encoding.',
-          fix: 'Add <meta charset="UTF-8"> as the first tag in <head>.',
-          confidence: 0.8,
-        }));
-      }
-
-      // Missing lang attribute
-      if (body.includes('<html') && !body.match(/<html[^>]*\slang\s*=/i)) {
-        findings.push(sealFinding({
-          severity: 'medium',
-          category: 'accessibility',
-          title: 'Missing lang attribute on <html>',
-          description: 'The <html> element does not have a lang attribute. Screen readers cannot identify the page language.',
-          fix: 'Add lang="en" (or appropriate language) to the <html> tag.',
-          confidence: 0.9,
-        }));
-      }
-
-      // Missing title
-      if (!body.match(/<title[^>]*>[^<]+<\/title>/i)) {
-        findings.push(sealFinding({
-          severity: 'medium',
-          category: 'code-quality',
-          title: 'Missing or empty <title> tag',
-          description: 'No meaningful title tag found. This affects SEO and browser tab identification.',
-          fix: 'Add a descriptive <title> element inside <head>.',
-          confidence: 0.9,
-        }));
-      }
-
-      // Images without alt
-      const imgTags = body.match(/<img[^>]*>/gi) || [];
-      const imgsWithoutAlt = imgTags.filter((tag) => !tag.match(/alt\s*=/i));
-      if (imgsWithoutAlt.length > 0) {
-        findings.push(sealFinding({
-          severity: 'medium',
-          category: 'accessibility',
-          title: `${imgsWithoutAlt.length} image(s) missing alt text`,
-          description: `${imgsWithoutAlt.length} <img> elements are missing the alt attribute. Screen readers cannot describe these images.`,
-          fix: 'Add alt attributes describing the image content, or alt="" for decorative images.',
-          confidence: 0.9,
-        }));
-      }
-
-      // Form inputs without labels
-      const inputTags = body.match(/<input[^>]*>/gi) || [];
-      const inputsWithoutLabel = inputTags.filter((tag) => {
-        if (tag.includes('type="hidden"') || tag.includes('type="submit"') || tag.includes('type="button"')) return false;
-        const idMatch = tag.match(/id\s*=\s*["']([^"']+)["']/);
-        if (!idMatch) return true;
-        return !body.includes(`for="${idMatch[1]}"`);
-      });
-      if (inputsWithoutLabel.length > 0) {
-        findings.push(sealFinding({
-          severity: 'medium',
-          category: 'accessibility',
-          title: `${inputsWithoutLabel.length} form input(s) without labels`,
-          description: `${inputsWithoutLabel.length} form inputs have no associated <label> element.`,
-          fix: 'Add <label for="inputId">Label text</label> for each form input.',
-          confidence: 0.85,
-        }));
-      }
-
-      // Store evidence
-      const evidenceId = uuidv4();
-      evidence.push(storeEvidence(evidenceId, 'dom-snapshot', {
-        url,
-        status: response.status,
-        contentType: response.headers.get('content-type'),
-        responseSize: sizeKB,
-        inlineStyles: styleTagCount,
-        inlineScripts: inlineScriptCount,
-        externalScripts,
-        images: imgTags.length,
-        imagesWithoutAlt: imgsWithoutAlt.length,
-        inputs: inputTags.length,
-        inputsWithoutLabel: inputsWithoutLabel.length,
-      }));
-    }
-
-    // ── Non-HTML Content Checks ───────────────────────────
-    if (!contentType.includes('text/html') && !contentType.includes('application/json')) {
-      findings.push(sealFinding({
-        severity: 'info',
-        category: 'code-quality',
-        title: 'Non-HTML content type',
-        description: `The URL returns ${contentType || 'unknown content type'} instead of text/html.`,
-        fix: 'Ensure the URL points to an HTML page, not an API endpoint or asset.',
-        confidence: 0.6,
-      }));
-    }
-
-    // ── Store HTTP evidence ───────────────────────────────
-    const httpEvidenceId = uuidv4();
-    evidence.push(storeEvidence(httpEvidenceId, 'network-error', {
+    // Store HTTP response evidence
+    const evidenceId = uuidv4();
+    evidence.push(storeEvidence(evidenceId, 'network-error', {
       url,
       status: response.status,
       statusText: response.statusText,
@@ -435,48 +655,327 @@ async function checkAssets(url: string): Promise<BrowserTestResult> {
   return { findings, evidence };
 }
 
-// ─── Check for Mixed Content ───────────────────────────────
+// ─── Local File Server for Uploaded Files ───────────────────
 
-async function checkMixedContent(url: string): Promise<BrowserTestResult> {
+function createLocalServer(
+  rootDir: string,
+): Promise<{ server: http.Server; port: number }> {
+  return new Promise((resolve, reject) => {
+    const mimeTypes: Record<string, string> = {
+      '.html': 'text/html',
+      '.htm': 'text/html',
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.mjs': 'application/javascript',
+      '.json': 'application/json',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon',
+      '.woff': 'font/woff',
+      '.woff2': 'font/woff2',
+      '.ttf': 'font/ttf',
+      '.eot': 'application/vnd.ms-fontobject',
+    };
+
+    const server = http.createServer((req, res) => {
+      let urlPath = req.url?.split('?')[0] || '/';
+      if (urlPath === '/') urlPath = '/index.html';
+
+      const filePath = path.join(rootDir, urlPath);
+
+      // Security: prevent path traversal
+      if (!filePath.startsWith(rootDir)) {
+        res.writeHead(403);
+        res.end('Forbidden');
+        return;
+      }
+
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          res.writeHead(404);
+          res.end('Not Found');
+          return;
+        }
+        const ext = path.extname(filePath).toLowerCase();
+        const contentType = mimeTypes[ext] || 'application/octet-stream';
+        res.writeHead(200, { 'Content-Type': contentType });
+        res.end(data);
+      });
+    });
+
+    server.listen(0, '127.0.0.1', () => {
+      const addr = server.address();
+      if (addr && typeof addr === 'object') {
+        resolve({ server, port: addr.port });
+      } else {
+        reject(new Error('Failed to get server port'));
+      }
+    });
+
+    server.on('error', reject);
+  });
+}
+
+// ─── Test Local Files with Playwright ──────────────────────
+
+async function testLocalFilesWithPlaywright(
+  job: {
+    id: string;
+    inputType: string;
+    workspacePath: string;
+    mode: string;
+  },
+  evidenceCollector: EvidenceCollector,
+): Promise<BrowserTestResult> {
+  const findings: AuditFinding[] = [];
+  const evidence: AuditEvidence[] = [];
+  const pw = await loadPlaywright();
+
+  if (!pw) {
+    findings.push(sealFinding({
+      severity: 'info',
+      category: 'code-quality',
+      title: 'Playwright not available',
+      description: 'Playwright browser is not installed. Falling back to static file analysis only.',
+      fix: 'Install Playwright: npm install playwright && npx playwright install chromium',
+      confidence: 1.0,
+    }));
+    return testLocalFilesStatic(job, evidenceCollector);
+  }
+
+  const filesDir = path.join(job.workspacePath, 'files');
+  if (!fs.existsSync(filesDir)) {
+    return { findings, evidence };
+  }
+
+  // Find index.html or the first HTML file
+  const htmlFile = findIndexHtml(filesDir);
+  if (!htmlFile) {
+    findings.push(sealFinding({
+      severity: 'medium',
+      category: 'bug',
+      title: 'No HTML entry point found',
+      description: 'No index.html or HTML file found in the uploaded files.',
+      fix: 'Include an index.html file in the root of your upload.',
+      confidence: 0.9,
+    }));
+    return testLocalFilesStatic(job, evidenceCollector);
+  }
+
+  // Start local server
+  let serverInfo: { server: http.Server; port: number } | null = null;
+  let browser;
+  try {
+    serverInfo = await createLocalServer(filesDir);
+    const localUrl = `http://127.0.0.1:${serverInfo.port}`;
+
+    browser = await pw.chromium.launch({ headless: true });
+    const context = await browser.newContext({ ignoreHTTPSErrors: true });
+
+    const consoleLogs: Array<{ type: string; text: string; url: string; timestamp: number }> = [];
+
+    const page = await context.newPage();
+    page.on('console', (msg) => {
+      consoleLogs.push({
+        type: msg.type(),
+        text: msg.text(),
+        url: localUrl,
+        timestamp: Date.now(),
+      });
+    });
+
+    try {
+      await page.goto(`${localUrl}/${path.relative(filesDir, htmlFile).replace(/\\/g, '/')}`, {
+        waitUntil: 'networkidle',
+        timeout: 30000,
+      });
+    } catch (err: any) {
+      findings.push(sealFinding({
+        severity: 'high',
+        category: 'bug',
+        title: 'Local file failed to load',
+        description: `Could not load the local HTML file in the browser: ${err.message}`,
+        fix: 'Ensure the HTML file and its dependencies are valid.',
+        confidence: 0.9,
+      }));
+      await browser.close();
+      serverInfo.server.close();
+      return testLocalFilesStatic(job, evidenceCollector);
+    }
+
+    // Screenshot
+    try {
+      const screenshotBuffer = await page.screenshot({ fullPage: true, type: 'png' });
+      const screenshotId = uuidv4();
+      const screenshotEvidence = evidenceCollector.add(screenshotId, 'testing', {
+        url: localUrl,
+        viewport: 'desktop',
+        source: 'uploaded-files',
+        size: screenshotBuffer.length,
+      });
+      screenshotEvidence.metadata = {
+        ...screenshotEvidence.metadata,
+        base64: screenshotBuffer.toString('base64'),
+      };
+      evidence.push(screenshotEvidence);
+    } catch {
+      // Best-effort
+    }
+
+    // Console findings
+    const consoleErrors = consoleLogs.filter((l) => l.type === 'error');
+    if (consoleErrors.length > 0) {
+      findings.push(sealFinding({
+        severity: 'high',
+        category: 'bug',
+        title: `${consoleErrors.length} console error(s) in local files`,
+        description: `The uploaded files produced ${consoleErrors.length} console error(s):\n${consoleErrors.slice(0, 5).map((e) => `- ${e.text}`).join('\n')}`,
+        fix: 'Fix the JavaScript errors in your code.',
+        confidence: 0.95,
+      }));
+    }
+
+    // DOM analysis
+    try {
+      const domInfo = await page.evaluate(() => ({
+        title: document.title,
+        lang: document.documentElement.lang,
+        viewport: !!document.querySelector('meta[name="viewport"]'),
+        images: document.querySelectorAll('img').length,
+        imagesWithoutAlt: document.querySelectorAll('img:not([alt])').length,
+        forms: document.querySelectorAll('form').length,
+        inputsWithoutLabel: Array.from(document.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"])')).filter(
+          (input) => !input.id || !document.querySelector(`label[for="${input.id}"]`),
+        ).length,
+        scripts: document.querySelectorAll('script').length,
+        stylesheets: document.querySelectorAll('link[rel="stylesheet"]').length,
+      }));
+
+      if (!domInfo.viewport) {
+        findings.push(sealFinding({
+          severity: 'high',
+          category: 'ux',
+          title: 'Missing viewport meta tag',
+          description: 'The page does not have a viewport meta tag. It will not render correctly on mobile devices.',
+          fix: 'Add <meta name="viewport" content="width=device-width, initial-scale=1"> to the <head>.',
+          confidence: 0.95,
+          file: path.relative(filesDir, htmlFile).replace(/\\/g, '/'),
+        }));
+      }
+
+      if (!domInfo.lang) {
+        findings.push(sealFinding({
+          severity: 'medium',
+          category: 'accessibility',
+          title: 'Missing lang attribute on <html>',
+          description: 'The <html> element does not have a lang attribute. Screen readers cannot identify the page language.',
+          fix: 'Add lang="en" (or appropriate language) to the <html> tag.',
+          confidence: 0.9,
+          file: path.relative(filesDir, htmlFile).replace(/\\/g, '/'),
+        }));
+      }
+
+      if (domInfo.imagesWithoutAlt > 0) {
+        findings.push(sealFinding({
+          severity: 'medium',
+          category: 'accessibility',
+          title: `${domInfo.imagesWithoutAlt} image(s) missing alt text`,
+          description: `${domInfo.imagesWithoutAlt} <img> elements are missing the alt attribute.`,
+          fix: 'Add alt attributes describing the image content, or alt="" for decorative images.',
+          confidence: 0.9,
+          file: path.relative(filesDir, htmlFile).replace(/\\/g, '/'),
+        }));
+      }
+
+      if (domInfo.inputsWithoutLabel > 0) {
+        findings.push(sealFinding({
+          severity: 'medium',
+          category: 'accessibility',
+          title: `${domInfo.inputsWithoutLabel} form input(s) without labels`,
+          description: `${domInfo.inputsWithoutLabel} form inputs have no associated <label> element.`,
+          fix: 'Add <label for="inputId">Label text</label> for each form input.',
+          confidence: 0.85,
+          file: path.relative(filesDir, htmlFile).replace(/\\/g, '/'),
+        }));
+      }
+    } catch {
+      // DOM analysis is best-effort
+    }
+
+    await page.close();
+    await context.close();
+  } finally {
+    if (browser) await browser.close();
+    if (serverInfo) serverInfo.server.close();
+  }
+
+  // Also run static analysis as fallback/supplement
+  const staticResult = await testLocalFilesStatic(job, evidenceCollector);
+  findings.push(...staticResult.findings);
+  evidence.push(...staticResult.evidence);
+
+  return { findings, evidence };
+}
+
+// ─── Static File Analysis (Fallback) ───────────────────────
+
+async function testLocalFilesStatic(
+  job: {
+    id: string;
+    inputType: string;
+    workspacePath: string;
+    mode: string;
+  },
+  _evidenceCollector: EvidenceCollector,
+): Promise<BrowserTestResult> {
   const findings: AuditFinding[] = [];
   const evidence: AuditEvidence[] = [];
 
-  if (!url.startsWith('https://')) return { findings, evidence };
+  if (job.inputType !== 'files' && job.inputType !== 'bundle') {
+    return { findings, evidence };
+  }
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: { 'User-Agent': 'WebsiteAuditBot/1.0' },
-    });
-    clearTimeout(timeout);
+  const filesDir = path.join(job.workspacePath, 'files');
+  if (!fs.existsSync(filesDir)) return { findings, evidence };
 
-    const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('text/html')) {
-      const body = await response.text();
+  const htmlFiles = findHtmlFiles(filesDir);
+  for (const htmlFile of htmlFiles) {
+    try {
+      const content = fs.readFileSync(htmlFile, 'utf-8');
+      const relative = path.relative(filesDir, htmlFile).replace(/\\/g, '/');
 
-      // Check for HTTP resources loaded from HTTPS page
-      const httpResources = body.match(/(src|href|action)\s*=\s*["']http:\/\//gi) || [];
-      if (httpResources.length > 0) {
-        findings.push(sealFinding({
-          severity: 'high',
-          category: 'security',
-          title: 'Mixed content detected',
-          description: `Found ${httpResources.length} HTTP resource(s) loaded from an HTTPS page. Browsers may block these resources.`,
-          fix: 'Update all resource URLs to use HTTPS.',
-          confidence: 0.9,
-        }));
+      // Broken relative asset references
+      const linkRefs = content.match(/(?:src|href)\s*=\s*["']([^"'#]+)["']/gi) || [];
+      for (const ref of linkRefs) {
+        const refUrl = ref.match(/["']([^"']+)["']/)?.[1];
+        if (!refUrl) continue;
+        if (refUrl.startsWith('http://') || refUrl.startsWith('https://') || refUrl.startsWith('data:') || refUrl.startsWith('mailto:')) continue;
+
+        const assetPath = path.join(path.dirname(htmlFile), refUrl);
+        if (!fs.existsSync(assetPath)) {
+          findings.push(sealFinding({
+            severity: 'medium',
+            category: 'bug',
+            title: 'Broken asset reference',
+            description: `File "${relative}" references "${refUrl}" which does not exist.`,
+            file: relative,
+            fix: `Ensure the asset "${refUrl}" exists at the referenced path.`,
+            confidence: 0.85,
+          }));
+        }
       }
+    } catch {
+      // Skip unreadable files
     }
-  } catch {
-    // Silently skip
   }
 
   return { findings, evidence };
 }
 
-// ─── Main Entry Point ──────────────────────────────────────
+// ─── Main Entry Point: URL / GitHub ────────────────────────
 
 export async function runBrowserTests(
   job: {
@@ -493,29 +992,27 @@ export async function runBrowserTests(
 
   const targetUrl = job.source;
 
-  // Always run HTTP checks for URL-based inputs
-  if (job.inputType === 'url' || job.inputType === 'github') {
-    const httpResult = await testUrl(targetUrl);
-    findings.push(...httpResult.findings);
-    evidence.push(...httpResult.evidence);
+  // Always run HTTP header checks
+  const headerResult = await testHttpHeaders(targetUrl);
+  findings.push(...headerResult.findings);
+  evidence.push(...headerResult.evidence);
 
-    // Check common assets
-    const assetResult = await checkAssets(targetUrl);
-    findings.push(...assetResult.findings);
-    evidence.push(...assetResult.evidence);
+  // Check common assets
+  const assetResult = await checkAssets(targetUrl);
+  findings.push(...assetResult.findings);
+  evidence.push(...assetResult.evidence);
 
-    // Check mixed content for HTTPS
-    if (targetUrl.startsWith('https://')) {
-      const mixedResult = await checkMixedContent(targetUrl);
-      findings.push(...mixedResult.findings);
-      evidence.push(...mixedResult.evidence);
-    }
+  // Run Playwright browser tests for recommended/full modes
+  if (job.mode === 'recommended' || job.mode === 'full') {
+    const browserResult = await testUrlWithPlaywright(targetUrl, evidenceCollector);
+    findings.push(...browserResult.findings);
+    evidence.push(...browserResult.evidence);
   }
 
   return { findings, evidence };
 }
 
-// ─── Local Preview Server (for uploaded files) ─────────────
+// ─── Main Entry Point: Local Files ─────────────────────────
 
 export async function testLocalFiles(
   job: {
@@ -526,117 +1023,13 @@ export async function testLocalFiles(
   },
   evidenceCollector: EvidenceCollector,
 ): Promise<BrowserTestResult> {
-  const findings: AuditFinding[] = [];
-  const evidence: AuditEvidence[] = [];
-
-  // For uploaded files, we can analyze the HTML content directly
-  if (job.inputType === 'files' || job.inputType === 'bundle') {
-    const filesDir = path.join(job.workspacePath, 'files');
-    if (fs.existsSync(filesDir)) {
-      const htmlFiles = findHtmlFiles(filesDir);
-      for (const htmlFile of htmlFiles) {
-        try {
-          const content = fs.readFileSync(htmlFile, 'utf-8');
-          const relative = path.relative(filesDir, htmlFile).replace(/\\/g, '/');
-
-          // Check viewport meta
-          if (!content.includes('viewport')) {
-            findings.push(sealFinding({
-              severity: 'high',
-              category: 'ux',
-              title: 'Missing viewport meta tag',
-              description: `File "${relative}" does not have a viewport meta tag. The site will not render correctly on mobile.`,
-              file: relative,
-              fix: 'Add <meta name="viewport" content="width=device-width, initial-scale=1"> to the <head>.',
-              confidence: 0.95,
-            }));
-          }
-
-          // Check lang attribute
-          if (content.includes('<html') && !content.match(/<html[^>]*\slang\s*=/i)) {
-            findings.push(sealFinding({
-              severity: 'medium',
-              category: 'accessibility',
-              title: 'Missing lang attribute on <html>',
-              description: `File "${relative}" does not have a lang attribute on the <html> element.`,
-              file: relative,
-              fix: 'Add lang="en" (or appropriate language) to the <html> tag.',
-              confidence: 0.9,
-            }));
-          }
-
-          // Check images without alt
-          const imgTags = content.match(/<img[^>]*>/gi) || [];
-          const imgsWithoutAlt = imgTags.filter((tag) => !tag.match(/alt\s*=/i));
-          if (imgsWithoutAlt.length > 0) {
-            findings.push(sealFinding({
-              severity: 'medium',
-              category: 'accessibility',
-              title: `${imgsWithoutAlt.length} image(s) missing alt text`,
-              description: `${imgsWithoutAlt.length} <img> elements in "${relative}" are missing the alt attribute.`,
-              file: relative,
-              fix: 'Add alt attributes describing the image content.',
-              confidence: 0.9,
-            }));
-          }
-
-          // Check for broken links (relative)
-          const linkRefs = content.match(/(?:src|href)\s*=\s*["']([^"'#]+)["']/gi) || [];
-          for (const ref of linkRefs) {
-            const url = ref.match(/["']([^"']+)["']/)?.[1];
-            if (!url) continue;
-            if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('mailto:')) continue;
-
-            const assetPath = path.join(path.dirname(htmlFile), url);
-            if (!fs.existsSync(assetPath)) {
-              findings.push(sealFinding({
-                severity: 'medium',
-                category: 'bug',
-                title: 'Broken asset reference',
-                description: `File "${relative}" references "${url}" which does not exist.`,
-                file: relative,
-                fix: `Ensure the asset "${url}" exists at the referenced path.`,
-                confidence: 0.85,
-              }));
-            }
-          }
-
-          // Check form inputs without labels
-          const inputTags = content.match(/<input[^>]*>/gi) || [];
-          const inputsWithoutLabel = inputTags.filter((tag) => {
-            if (tag.includes('type="hidden"') || tag.includes('type="submit"') || tag.includes('type="button"')) return false;
-            const idMatch = tag.match(/id\s*=\s*["']([^"']+)["']/);
-            if (!idMatch) return true;
-            return !content.includes(`for="${idMatch[1]}"`);
-          });
-          if (inputsWithoutLabel.length > 0) {
-            findings.push(sealFinding({
-              severity: 'medium',
-              category: 'accessibility',
-              title: `${inputsWithoutLabel.length} form input(s) without labels`,
-              description: `${inputsWithoutLabel.length} form inputs in "${relative}" have no associated <label>.`,
-              file: relative,
-              fix: 'Add <label for="inputId">Label text</label> for each form input.',
-              confidence: 0.85,
-            }));
-          }
-        } catch {
-          // Skip unreadable files
-        }
-      }
-    }
-
-    findings.push(sealFinding({
-      severity: 'info',
-      category: 'code-quality',
-      title: 'Uploaded files analyzed',
-      description: 'Static analysis was performed on uploaded files. For full browser testing, deploy the files to a URL.',
-      fix: 'Deploy the files to a public URL and submit that for browser-based testing.',
-      confidence: 1.0,
-    }));
+  // Run Playwright-based testing for recommended/full modes
+  if (job.mode === 'recommended' || job.mode === 'full') {
+    return testLocalFilesWithPlaywright(job, evidenceCollector);
   }
 
-  return { findings, evidence };
+  // Basic mode: static analysis only
+  return testLocalFilesStatic(job, evidenceCollector);
 }
 
 // ─── Helpers ───────────────────────────────────────────────
@@ -655,4 +1048,14 @@ function findHtmlFiles(dir: string): string[] {
     }
   }
   return results;
+}
+
+function findIndexHtml(dir: string): string | null {
+  // Check root first
+  const rootIndex = path.join(dir, 'index.html');
+  if (fs.existsSync(rootIndex)) return rootIndex;
+
+  // Check for any HTML file
+  const htmlFiles = findHtmlFiles(dir);
+  return htmlFiles.length > 0 ? htmlFiles[0] : null;
 }

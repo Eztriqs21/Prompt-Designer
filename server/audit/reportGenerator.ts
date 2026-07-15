@@ -1,6 +1,46 @@
 import { generateWithFallback } from '../geminiClient.js';
 import type { AuditFinding, AuditEvidence, AuditReport, Severity } from '../db/auditStore.js';
 
+const fs = await import('fs');
+const path = await import('path');
+
+// ─── Blueprint Prompt Loader ───────────────────────────────
+
+const ASSETS_DIR = path.join(process.cwd(), 'src', 'assets');
+
+const BLUEPRINT_FILES: Record<string, string> = {
+  basic: path.join(ASSETS_DIR, 'Basic Audit Prompt.txt'),
+  recommended: path.join(ASSETS_DIR, 'Recommended Audit Prompt.txt'),
+  full: path.join(ASSETS_DIR, 'Full Audit Prompt.txt'),
+};
+
+const PLACEHOLDER = '{{WEBSITE_LINK}}';
+
+function loadBlueprintPrompt(mode: string, inputType: string, source: string): string | null {
+  const filePath = BLUEPRINT_FILES[mode];
+  if (!filePath) return null;
+
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    return injectSourceIntoPrompt(content, inputType, source);
+  } catch (err: any) {
+    console.error(`Failed to load blueprint prompt from ${filePath}:`, err.message);
+    return null;
+  }
+}
+
+function injectSourceIntoPrompt(template: string, inputType: string, source: string): string {
+  let replacement: string;
+
+  if (inputType === 'url' || inputType === 'github') {
+    replacement = source;
+  } else {
+    replacement = 'Source files uploaded locally — analyze the code without a live URL.';
+  }
+
+  return template.replace(new RegExp(PLACEHOLDER.replace(/[{}]/g, '\\$&'), 'g'), replacement);
+}
+
 // ─── Score Calculation ─────────────────────────────────────
 
 function calculateScore(findings: AuditFinding[]): number {
@@ -37,9 +77,9 @@ function categorizeFindings(findings: AuditFinding[]) {
   return { codeIssues, browserIssues, accessibilityIssues, performanceIssues };
 }
 
-// ─── AI Report Prompt Builder ──────────────────────────────
+// ─── Findings Context Builder ──────────────────────────────
 
-function buildReportPrompt(
+function buildFindingsContext(
   findings: AuditFinding[],
   evidence: AuditEvidence[],
   inputType: string,
@@ -58,9 +98,19 @@ function buildReportPrompt(
     return parts.join('\n');
   }).join('\n\n');
 
-  return `You are a senior website auditor producing a professional audit report.
+  const evidenceSummary = evidence.slice(0, 20).map((e) => {
+    const parts = `[${e.type}] ${e.jobStage}`;
+    if (e.metadata) {
+      const meta = Object.entries(e.metadata)
+        .filter(([k]) => k !== 'base64')
+        .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`)
+        .join(', ');
+      if (meta) parts.push(`  ${meta}`);
+    }
+    return parts.join('\n');
+  }).join('\n');
 
-AUDIT CONTEXT:
+  return `AUDIT CONTEXT:
 - Input type: ${inputType}
 - Source: ${source}
 - Audit mode: ${mode}
@@ -70,8 +120,11 @@ AUDIT CONTEXT:
 FINDINGS:
 ${findingsSummary || '(No findings detected)'}
 
+EVIDENCE COLLECTED:
+${evidenceSummary || '(No evidence collected)'}
+
 TASK:
-Produce a JSON response with exactly this structure:
+Analyze the findings and evidence above. Produce a JSON response with exactly this structure:
 {
   "summary": "A 3-5 sentence executive summary of the audit. Highlight the most important findings, overall quality assessment, and top recommendation. Do NOT invent issues beyond what the findings show.",
   "recommendations": ["An array of 5-10 top actionable recommendations, prioritized by impact. Each should be a concise sentence."],
@@ -188,11 +241,27 @@ export async function generateReport(
 
   if (findings.length > 0) {
     try {
-      const prompt = buildReportPrompt(findings, evidence, inputType, source, mode);
+      // Load the blueprint prompt for the current mode
+      const blueprintPrompt = loadBlueprintPrompt(mode, inputType, source);
+      const findingsContext = buildFindingsContext(findings, evidence, inputType, source, mode);
+
+      let systemMessage: string;
+      let userMessage: string;
+
+      if (blueprintPrompt) {
+        // Use the blueprint as the system message
+        systemMessage = blueprintPrompt;
+        userMessage = findingsContext;
+      } else {
+        // Fallback to inline system message
+        systemMessage = 'You are a professional website auditor. Respond only in valid JSON.';
+        userMessage = findingsContext;
+      }
+
       const result = await generateWithFallback(
         [
-          { role: 'system', content: 'You are a professional website auditor. Respond only in valid JSON.' },
-          { role: 'user', content: prompt },
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: userMessage },
         ],
         {
           temperature: 0.4,

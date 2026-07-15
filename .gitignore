@@ -28,3 +28,6 @@ src/assets/gemini-key.txt
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright
+ms-playwright/

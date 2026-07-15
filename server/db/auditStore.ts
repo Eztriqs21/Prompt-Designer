@@ -40,7 +40,7 @@ export interface AuditFinding {
 
 export interface AuditEvidence {
   id: string;
-  type: 'screenshot' | 'console-log' | 'network-error' | 'trace' | 'dom-snapshot';
+  type: 'screenshot' | 'console-log' | 'network-error' | 'trace' | 'dom-snapshot' | 'performance-metrics' | 'viewport-test';
   jobStage: string;
   filePath: string;
   timestamp: number;
