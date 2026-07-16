@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Copy, Check, Code, Palette, ShieldCheck, Loader2, User } from 'lucide-react';
+import { Send, Copy, Check, Code, Palette, ShieldCheck, Loader2, User, Maximize2, Minimize2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { SectionType, SectionState } from '../../types';
 import type { SectionMessage } from '../../lib/apiClient';
 
@@ -20,6 +21,7 @@ const SECTION_META: Record<SectionType, { label: string; icon: typeof Code; colo
 export default function SectionConversation({ sectionType, state, messages, onGenerate, onLoadMessages }: SectionConversationProps) {
   const [input, setInput] = useState('');
   const [copied, setCopied] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const meta = SECTION_META[sectionType];
@@ -49,8 +51,17 @@ export default function SectionConversation({ sectionType, state, messages, onGe
     }
   }, [input]);
 
+  useEffect(() => {
+    if (!fullscreen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFullscreen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [fullscreen]);
+
   const handleSend = () => {
-    if (!input.trim()) return;
+    if (!input.trim() || state.isGenerating) return;
     const request = input.trim();
     setInput('');
     onGenerate(request);
@@ -78,27 +89,8 @@ export default function SectionConversation({ sectionType, state, messages, onGe
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!state.data && !state.isGenerating) {
-    return (
-      <div className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md p-6 text-center">
-        <div className="inline-flex p-3 rounded-md bg-primary-dark border border-secondary-borderGray mb-3">
-          <meta.icon className={`w-5 h-5 ${meta.color}`} />
-        </div>
-        <p className="text-body text-secondary-midGray mb-3">
-          Generate a {meta.label.toLowerCase()} section prompt to get started.
-        </p>
-        <button
-          onClick={() => onGenerate()}
-          className="px-4 py-2 text-small font-medium rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange hover:border-accent-orange/30 transition-colors"
-        >
-          Generate {meta.label} Section
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md flex flex-col" style={{ height: 'min(500px, 60vh)' }}>
+  const card = (
+    <div className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md flex flex-col overflow-hidden h-full">
       {/* Header */}
       <div className="px-4 py-3 border-b border-secondary-borderGray shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -107,28 +99,55 @@ export default function SectionConversation({ sectionType, state, messages, onGe
             {meta.label} Section
           </h3>
         </div>
-        {state.data && (
-              <button
-                onClick={() => handleCopy(state.data!.masterPrompt)}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-small font-medium rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-primary-light transition-colors"
-              >
-            {copied ? (
-              <>
-                <Check className="w-3 h-3 text-success-green" />
-                Copied
-              </>
-            ) : (
-              <>
-                <Copy className="w-3 h-3" />
-                Copy
-              </>
-            )}
+        <div className="flex items-center gap-2">
+          {state.data && (
+            <button
+              onClick={() => handleCopy(state.data!.masterPrompt)}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-small font-medium rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-primary-light transition-colors"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3 h-3 text-success-green" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  Copy
+                </>
+              )}
+            </button>
+          )}
+          <button
+            onClick={() => setFullscreen((v) => !v)}
+            aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            className="p-1.5 rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange transition-colors"
+          >
+            {fullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
-        )}
+        </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 min-h-0" ref={scrollRef}>
+        {messages.length === 0 && !state.isGenerating && !state.error && (
+          <div className="h-full flex flex-col items-center justify-center text-center gap-3">
+            <div className="inline-flex p-3 rounded-md bg-primary-dark border border-secondary-borderGray">
+              <meta.icon className={`w-5 h-5 ${meta.color}`} />
+            </div>
+            <p className="text-body text-secondary-midGray max-w-[36ch] leading-relaxed">
+              Describe what you want from the {meta.label.toLowerCase()} section and send it, or generate a baseline below.
+            </p>
+            <button
+              onClick={() => onGenerate()}
+              disabled={state.isGenerating}
+              className="px-4 py-2 text-small font-medium rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange hover:border-accent-orange/30 transition-colors disabled:opacity-30"
+            >
+              Generate {meta.label} Section
+            </button>
+          </div>
+        )}
+
         {messages.map((msg) => (
           <div key={msg.id} className="flex items-start gap-2.5">
             {msg.role === 'assistant' ? (
@@ -170,7 +189,7 @@ export default function SectionConversation({ sectionType, state, messages, onGe
         )}
       </div>
 
-      {/* Input */}
+      {/* Input — always available so a typed request drives generation */}
       <div className="shrink-0 px-4 py-3 border-t border-secondary-borderGray">
         <div className="flex items-end gap-2">
           <textarea
@@ -180,7 +199,8 @@ export default function SectionConversation({ sectionType, state, messages, onGe
             onKeyDown={handleKeyDown}
             placeholder={`Ask about the ${meta.label.toLowerCase()} section...`}
             rows={1}
-                className="flex-1 min-w-0 bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray resize-none outline-none focus:border-accent-orange/30 transition-colors"
+            className="flex-1 min-w-0 bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray resize-none outline-none focus:border-accent-orange/30 transition-colors disabled:opacity-40"
+            disabled={state.isGenerating}
           />
           <button
             onClick={handleSend}
@@ -193,4 +213,32 @@ export default function SectionConversation({ sectionType, state, messages, onGe
       </div>
     </div>
   );
+
+  if (fullscreen) {
+    return (
+      <AnimatePresence>
+        <motion.div
+          key="section-fullscreen"
+          className="fixed inset-0 z-50 bg-primary-dark flex p-4 sm:p-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+        >
+          <motion.div
+            className="w-full"
+            initial={{ scale: 0.98, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.98, opacity: 0 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            style={{ height: 'calc(100vh - 32px)' }}
+          >
+            {card}
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+
+  return <div style={{ height: 'min(500px, 60vh)' }} className="w-full">{card}</div>;
 }
