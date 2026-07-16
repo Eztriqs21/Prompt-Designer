@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { generateWithFallback } from '../geminiClient.js';
+import { generateWithFallback, logStep } from '../geminiClient.js';
 import { checkRateLimit } from '../middleware/rateLimit.js';
 import { savePrompt, saveMessage, updateChatSession, getChatSessionById, savePromptVersion, getPromptVersionsByChatId } from '../db/store.js';
 import { buildFullMetaPrompt } from '../prompts/metaPrompt.js';
@@ -82,6 +82,7 @@ router.post('/', async (req, res) => {
     let parsed: { summary: string; analysis: string; masterPrompt: string };
 
     let meta: any = undefined;
+    const requestId = (req.body?.requestId as string | undefined) || undefined;
     try {
       const result = await generateWithFallback(
         [
@@ -93,11 +94,17 @@ router.post('/', async (req, res) => {
           topP: 0.9,
           maxTokens: 8192,
           responseFormat: { type: 'json_object' },
-        }
+        },
+        requestId,
       );
 
       raw = result.content;
       meta = result.meta;
+      logStep('master', 'generation-done', {
+        requestId,
+        chatId,
+        contentLen: raw.length,
+      });
     } catch (genErr: any) {
       console.error('OpenCode generation failed:', genErr);
       const isRateLimit = genErr?.message?.includes('rate limit') || genErr?.message?.includes('429');
@@ -132,6 +139,7 @@ router.post('/', async (req, res) => {
     let saved, versionedRecord;
     try {
       saved = savePrompt(title, parsed.summary ?? '', parsed.masterPrompt ?? '', chatId);
+      logStep('master', 'saved-prompt', { requestId, chatId, promptId: saved?.id });
     } catch (dbErr) {
       console.error('DB savePrompt failed:', dbErr);
     }
@@ -148,6 +156,12 @@ router.post('/', async (req, res) => {
           masterPrompt: parsed.masterPrompt ?? '',
           isPinned: isFirstVersion,
         });
+        logStep('master', 'saved-version', {
+          requestId,
+          chatId,
+          versionId: versionedRecord?.id,
+          version: versionedRecord?.version,
+        });
       }
     } catch (dbErr) {
       console.error('DB savePromptVersion failed:', dbErr);
@@ -160,6 +174,7 @@ router.post('/', async (req, res) => {
           role: 'assistant',
           content: `Here's your master prompt:\n\n${(parsed.masterPrompt ?? '').slice(0, 500)}${(parsed.masterPrompt ?? '').length > 500 ? '...' : ''}`,
         });
+        logStep('master', 'saved-assistant-msg', { requestId, chatId });
         const chat = getChatSessionById(chatId);
         if (chat && chat.isDefaultTitle) {
           updateChatSession(chatId, { title, isDefaultTitle: false });
@@ -169,6 +184,13 @@ router.post('/', async (req, res) => {
       console.error('DB saveMessage/updateChatSession failed:', dbErr);
     }
 
+    logStep('master', 'sending-response', {
+      requestId,
+      chatId,
+      status: 200,
+      hasMeta: Boolean(meta),
+      attempts: meta?.attempts?.length,
+    });
     res.json({
       id: saved?.id ?? 'unknown',
       chatId,

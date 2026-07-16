@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, useRef } from 'react';
 import { Copy, Check, Bot, ArrowLeft } from 'lucide-react';
 import FormattedPrompt from './FormattedPrompt';
 import SectionCard from './SectionCard';
@@ -34,6 +34,13 @@ export default function MasterPromptOutput({
   onLoadSectionMessages,
 }: MasterPromptOutputProps) {
   const [copied, setCopied] = useState(false);
+  const renderedRef = useRef(false);
+  if (!renderedRef.current && masterPrompt) {
+    renderedRef.current = true;
+    console.log(
+      `${new Date().toISOString()} | [fe:ui] MasterPromptOutput-displayed | generatedBy=${generatedBy} masterPromptLen=${masterPrompt.length}`,
+    );
+  }
 
   const handleCopy = async () => {
     if (!masterPrompt) return;

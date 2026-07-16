@@ -133,6 +133,7 @@ export function useMasterPrompt(config: MasterPromptConfig) {
 
       generatingRef.current = true;
       setState((prev) => ({ ...prev, isGenerating: true, error: null }));
+      console.log(`${new Date().toISOString()} | [fe:hook] generate-start | chatId=${chatId} ideaLen=${idea.length}`);
 
       // Real abort controller so the in-flight fetch is actually cancelled on
       // a client timeout / unmount. The server keeps running in the
@@ -163,6 +164,9 @@ export function useMasterPrompt(config: MasterPromptConfig) {
           error: null,
           remaining: Math.max(0, response.remaining ?? prev.remaining - 1),
         }));
+        console.log(
+          `${new Date().toISOString()} | [fe:hook] generate-success | generatedBy=${response.meta?.model} masterPromptLen=${response.masterPrompt?.length}`,
+        );
       };
 
       // Poll the server for a late save after a client abort/timeout.
@@ -220,8 +224,15 @@ export function useMasterPrompt(config: MasterPromptConfig) {
         // running and saves the result — poll for it so a valid reply is
         // never lost to a premature check.
         if (isAbort) {
+          console.log(
+            `${new Date().toISOString()} | [fe:hook] generate-aborted | reason=client-timeout-or-unmount chatId=${chatId}`,
+          );
           const recovered = await recoverLatest();
-          if (recovered) return null;
+          if (recovered) {
+            console.log(`${new Date().toISOString()} | [fe:hook] recovery-success | chatId=${chatId}`);
+            return null;
+          }
+          console.log(`${new Date().toISOString()} | [fe:hook] recovery-failed | chatId=${chatId}`);
           setState((prev) => ({
             ...prev,
             isGenerating: false,

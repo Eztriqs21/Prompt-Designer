@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { generateWithFallback } from '../geminiClient.js';
+import { generateWithFallback, logStep } from '../geminiClient.js';
 import { getSectionBlueprint } from '../prompts/sectionBlueprints.js';
 import { checkRateLimit } from '../middleware/rateLimit.js';
 import type { SectionType, Message } from '../src/types/index.js';
@@ -83,6 +83,7 @@ router.post('/:sectionType', async (req, res) => {
       conversationSummary,
     ].join('\n');
 
+    const requestId = (req.body?.requestId as string | undefined) || undefined;
     const result = await generateWithFallback(
       [
         { role: 'system', content: blueprint },
@@ -93,11 +94,17 @@ router.post('/:sectionType', async (req, res) => {
         topP: 0.9,
         maxTokens: 8192,
         responseFormat: { type: 'json_object' },
-      }
+      },
+      requestId,
     );
 
     const raw = result.content;
     const meta = result.meta;
+    logStep('section', 'generation-done', {
+      requestId,
+      sectionType,
+      contentLen: raw.length,
+    });
 
     let parsed: { summary: string; analysis: string; masterPrompt: string };
     try {
@@ -112,6 +119,12 @@ router.post('/:sectionType', async (req, res) => {
       };
     }
 
+    logStep('section', 'sending-response', {
+      requestId,
+      sectionType,
+      status: 200,
+      hasMeta: Boolean(meta),
+    });
     res.json({
       summary: parsed.summary ?? '',
       analysis: parsed.analysis ?? '',

@@ -40,6 +40,15 @@ export interface GenerationResult extends ChatResult {
   };
 }
 
+// ─── Structured debug logging ───────────────────────────
+// Single consistent format: ISO-time | [scope] message | k=v
+// so a single requestId can be traced across tiers.
+export function logStep(scope: string, msg: string, fields: Record<string, unknown> = {}): void {
+  const parts = Object.entries(fields)
+    .map(([k, v]) => `${k}=${typeof v === 'object' ? JSON.stringify(v) : v}`);
+  console.log(`${new Date().toISOString()} | [${scope}] ${msg}${parts.length ? ' | ' + parts.join(' ') : ''}`);
+}
+
 function getApiKey(): string {
   const key = process.env.OPENCODE_API_KEY;
   if (!key) {
@@ -59,6 +68,7 @@ async function callOpenCode(
   model: string,
   config?: ChatConfig,
   signal?: AbortSignal,
+  requestId?: string,
 ): Promise<ChatResult> {
   const apiKey = getApiKey();
   const baseUrl = getBaseUrl();
@@ -72,6 +82,9 @@ async function callOpenCode(
     response_format: config?.responseFormat ?? { type: 'json_object' },
   };
 
+  const startedAt = Date.now();
+  logStep('gen:call', 'fetch-start', { requestId, model });
+
   const response = await fetch(baseUrl, {
     method: 'POST',
     headers: {
@@ -84,10 +97,21 @@ async function callOpenCode(
     signal: signal ?? AbortSignal.timeout(45000),
   });
 
+  // KEY diagnostic: log the moment the HTTP response actually arrives.
+  // If this line is ABSENT for a model that OpenCode usage says completed,
+  // the local abort killed the fetch before the response was read.
+  logStep('gen:call', 'http-receipt', {
+    requestId,
+    model,
+    httpStatus: response.status,
+    receivedAtMs: Date.now() - startedAt,
+  });
+
   if (!response.ok) {
     const errorText = await response.text().catch(() => '');
     const error = new Error(`OpenCode API error ${response.status}: ${errorText}`) as any;
     error.status = response.status;
+    logStep('gen:call', 'http-error', { requestId, model, httpStatus: response.status });
     throw error;
   }
 
@@ -118,14 +142,21 @@ async function callOpenCode(
 export async function generateWithFallback(
   messages: ChatMessage[],
   config?: ChatConfig,
+  reqId?: string,
 ): Promise<GenerationResult> {
   const primary = process.env.OPENCODE_MODEL || FALLBACK_MODELS[0];
   const modelsToTry = [primary, ...FALLBACK_MODELS];
   // Deduplicate while preserving order, capped so we stay fast and cheap.
   const uniqueModels = [...new Set(modelsToTry)].slice(0, 3);
 
-  const requestId = `gen_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  // Prefer a caller-provided id (frontend correlation) else mint one.
+  const requestId = reqId || `gen_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const attempts: AttemptMeta[] = [];
+  logStep('gen', 'start', {
+    requestId,
+    models: uniqueModels,
+    strategy: 'parallel-first-success',
+  });
 
   interface TaskState {
     modelName: string;
@@ -149,27 +180,38 @@ export async function generateWithFallback(
       state.controller.abort();
     }, 45000);
 
-    const promise = callOpenCode(messages, modelName, config, state.controller.signal)
+    const promise = callOpenCode(messages, modelName, config, state.controller.signal, requestId)
       .then((result) => {
         clearTimeout(state.timer);
         const durationMs = Date.now() - startedAt;
         attempts.push({ model: modelName, status: 'success', durationMs });
+        logStep('gen:model', 'success', { requestId, model: modelName, durationMs });
         return { modelName, result };
       })
       .catch((err: any) => {
         clearTimeout(state.timer);
         const durationMs = Date.now() - startedAt;
         let status: AttemptMeta['status'] = 'failed';
-        if (state.abortedReason === 'timeout') status = 'timeout';
-        else if (state.abortedReason === 'cancelled') status = 'aborted';
+        let reasonKind = 'provider-error';
+        if (state.abortedReason === 'timeout') { status = 'timeout'; reasonKind = 'timeout-local'; }
+        else if (state.abortedReason === 'cancelled') { status = 'aborted'; reasonKind = 'aborted-by-winner'; }
         // Safety net for aborts that bypassed our reason flag.
-        else if (err?.name === 'TimeoutError' || err?.name === 'AbortError') status = 'timeout';
+        else if (err?.name === 'TimeoutError' || err?.name === 'AbortError') { status = 'timeout'; reasonKind = 'timeout-local'; }
 
         const reason = String(err?.message || 'unknown error');
         attempts.push({ model: modelName, status, durationMs, error: reason });
-        console.warn(
-          `[${requestId}] model=${modelName} status=${status} durationMs=${durationMs} error=${reason}`,
-        );
+        // Explicit, non-ambiguous reason so a local abort is never
+        // mistaken for a real provider timeout in the logs.
+        logStep('gen:model', reasonKind, {
+          requestId,
+          model: modelName,
+          durationMs,
+          httpStatus: err?.status,
+          note: reasonKind === 'timeout-local'
+            ? 'local 45s timer fired; provider may still be completing'
+            : undefined,
+          error: reason,
+        });
         return Promise.reject({ modelName, status, durationMs, error: reason });
       });
 
@@ -182,6 +224,7 @@ export async function generateWithFallback(
 
   let winner: { modelName: string; result: ChatResult } | null = null;
 
+  const genStart = Date.now();
   try {
     winner = await Promise.any(promises);
   } catch {
@@ -190,7 +233,11 @@ export async function generateWithFallback(
     const err = new Error('All OpenCode models failed') as any;
     err.code = 'UPSTREAM_ERROR';
     err.attempts = attempts;
-    console.error(`[${requestId}] all models failed:`, JSON.stringify(attempts));
+    logStep('gen', 'all-failed', {
+      requestId,
+      totalMs: Date.now() - genStart,
+      attempts,
+    });
     throw err;
   }
 
@@ -211,9 +258,13 @@ export async function generateWithFallback(
     .filter((a): a is AttemptMeta => Boolean(a));
 
   const winningMeta = orderedAttempts.find((a) => a.model === winner!.modelName);
-  console.log(
-    `[${requestId}] winner=${winner.modelName} durationMs=${winningMeta?.durationMs} attempts=${orderedAttempts.length}`,
-  );
+  logStep('gen', 'success', {
+    requestId,
+    winner: winner.modelName,
+    totalMs: Date.now() - genStart,
+    winnerMs: winningMeta?.durationMs,
+    attempts: orderedAttempts,
+  });
 
   return {
     ...winner.result,

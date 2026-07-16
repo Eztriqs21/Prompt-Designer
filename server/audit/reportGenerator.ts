@@ -1,4 +1,4 @@
-import { generateWithFallback } from '../geminiClient.js';
+import { generateWithFallback, logStep } from '../geminiClient.js';
 import type { AuditFinding, AuditEvidence, AuditReport, Severity } from '../db/auditStore.js';
 
 const fs = await import('fs');
@@ -273,7 +273,13 @@ export async function generateReport(
         },
       );
 
-      console.log(`[Report] AI report generated successfully: model=${result.meta?.model}`);
+      logStep('audit:report', 'generation-done', {
+        mode,
+        findings: findings.length,
+        evidence: evidence.length,
+        model: result.meta?.model,
+        attempts: result.meta?.attempts,
+      });
       generatedBy = result.meta?.model;
 
       const parsed = JSON.parse(result.content);

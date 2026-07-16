@@ -43,6 +43,7 @@ export interface MasterPromptRequest {
   };
   idea: string;
   conversationHistory: Message[];
+  requestId?: string;
 }
 
 export type AttemptStatus = 'success' | 'failed' | 'aborted' | 'timeout';
@@ -99,6 +100,7 @@ export interface SectionPromptRequest {
   masterPrompt: string;
   userRequest?: string;
   conversationHistory: Message[];
+  requestId?: string;
 }
 
 export interface SectionPromptResponse {
