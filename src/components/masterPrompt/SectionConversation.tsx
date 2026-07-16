@@ -98,7 +98,8 @@ export default function SectionConversation({ sectionType, state, messages, onGe
   if (headerOnly) {
     const hasData = !!state.data;
     const isWorking = state.isGenerating;
-    return (
+
+    const headerBar = (
       <div className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <meta.icon className={`w-4 h-4 ${meta.color}`} />
@@ -121,6 +122,43 @@ export default function SectionConversation({ sectionType, state, messages, onGe
         )}
       </div>
     );
+
+    // If fullscreen was triggered from header bar, show full card in overlay
+    if (fullscreen) {
+      return (
+        <AnimatePresence>
+          <motion.div
+            key="section-fullscreen"
+            className="fixed inset-0 z-50 bg-primary-dark flex p-4 sm:p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            <motion.div
+              className="w-full"
+              initial={{ scale: 0.98, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.98, opacity: 0 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              style={{ height: 'calc(100vh - 32px)' }}
+            >
+              <SectionConversation
+                sectionType={sectionType}
+                state={state}
+                messages={messages}
+                onGenerate={onGenerate}
+                onLoadMessages={onLoadMessages}
+                compact={false}
+                showFullscreen={false}
+              />
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+      );
+    }
+
+    return headerBar;
   }
 
   const card = (

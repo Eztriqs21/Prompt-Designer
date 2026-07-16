@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Maximize2, Minimize2, Expand } from 'lucide-react';
+import { Maximize2, Minimize2, Expand, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWorkflow } from '../../hooks/useWorkflow';
 import SectionSelector from './SectionSelector';
@@ -16,6 +16,7 @@ interface WorkflowPanelProps {
   sectionMessages: Record<SectionType, SectionMessage[]>;
   generateSection: (type: SectionType, userRequest?: string) => Promise<void>;
   onRun: (input: string, selected: SectionType[]) => void;
+  masterPrompt?: string | null;
 }
 
 export default function WorkflowPanel({
@@ -23,11 +24,13 @@ export default function WorkflowPanel({
   sectionMessages,
   generateSection,
   onRun,
+  masterPrompt,
 }: WorkflowPanelProps) {
   const { selectedSections, continuationInput, setContinuationInput, stage } = useWorkflow();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [lanesExpanded, setLanesExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -57,6 +60,22 @@ export default function WorkflowPanel({
     onRun(continuationInput, selectedSections);
   };
 
+  const handleCopyPrompt = async () => {
+    if (!masterPrompt) return;
+    try {
+      await navigator.clipboard.writeText(masterPrompt);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = masterPrompt;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const gridCols = laneCount === 1 ? 'grid-cols-1' : laneCount === 2 ? 'grid-cols-2' : 'grid-cols-3';
 
   const showLanes = laneTypes.length > 0;
@@ -72,6 +91,24 @@ export default function WorkflowPanel({
               Agents {stage === 'multi-agent' ? '· running' : ''}
             </div>
             <div className="flex items-center gap-2">
+              {masterPrompt && (
+                <button
+                  onClick={handleCopyPrompt}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-small font-medium rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange hover:border-accent-orange/30 transition-colors"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-success-green" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      Copy Prompt
+                    </>
+                  )}
+                </button>
+              )}
               {showLanes && (
                 <button
                   onClick={() => setLanesExpanded((v) => !v)}

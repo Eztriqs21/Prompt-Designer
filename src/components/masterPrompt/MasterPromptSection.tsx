@@ -197,6 +197,7 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
               sectionMessages={sectionMessages}
               generateSection={generateSection}
               onRun={runSections}
+              masterPrompt={generatedPrompt}
             />
           </div>
         )}
