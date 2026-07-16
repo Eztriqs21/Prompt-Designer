@@ -191,7 +191,7 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
         </div>
 
         {generatedPrompt && activeChatId && (
-          <div className="flex-1 min-h-0 border-t border-secondary-borderGray">
+          <div className="flex-[1.2] min-h-0 border-t border-secondary-borderGray">
             <WorkflowPanel
               sections={sections}
               sectionMessages={sectionMessages}
