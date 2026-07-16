@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import MasterPromptSection from '../components/masterPrompt/MasterPromptSection';
 import NewChatForm from '../components/masterPrompt/NewChatForm';
 import ChatList from '../components/masterPrompt/ChatList';
+import Button from '../components/ui/Button';
 import { useChats } from '../hooks/useChats';
 
 export default function ChatWorkspace() {
@@ -43,14 +44,8 @@ export default function ChatWorkspace() {
       {/* Main workspace */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Header */}
-        <header className="shrink-0 px-6 py-4 border-b border-secondary-borderGray flex items-center justify-between">
+        <header className="shrink-0 px-6 py-4 border-b border-secondary-borderGray flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowNewChatForm(true)}
-              className="sm:hidden inline-flex items-center gap-2 px-3 py-1.5 text-small font-medium bg-primary-light text-primary-dark rounded-md hover:bg-primary-light/90 transition-colors"
-            >
-              New Chat
-            </button>
             {isInSpecificChat && (
               <button
                 onClick={handleBackToList}
@@ -62,6 +57,10 @@ export default function ChatWorkspace() {
             )}
             <h1 className="text-heading text-primary-light">Chat Workspace</h1>
           </div>
+          <Button variant="secondary" size="sm" onClick={() => setShowNewChatForm(true)}>
+            <Plus className="w-3.5 h-3.5" />
+            New Chat
+          </Button>
         </header>
 
         {/* Content */}
@@ -95,6 +94,7 @@ export default function ChatWorkspace() {
                   chatsState={chatsState}
                   onToggleLibrary={() => setShowLibrary((v) => !v)}
                   showLibrary={showLibrary}
+                  onNewChat={() => setShowNewChatForm(true)}
                 />
               </motion.div>
             )}

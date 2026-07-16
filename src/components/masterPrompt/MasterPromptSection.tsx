@@ -1,8 +1,10 @@
 import { useMemo, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { Plus } from 'lucide-react';
 import ConversationPane from './ConversationPane';
 import PromptLibraryPane from './PromptLibraryPane';
 import FormattedPrompt from './FormattedPrompt';
+import Button from '../ui/Button';
 import { useMasterPrompt } from '../../hooks/useMasterPrompt';
 import { usePromptLibrary } from '../../hooks/usePromptLibrary';
 import { useSectionPrompts } from '../../hooks/useSectionPrompts';
@@ -30,10 +32,11 @@ interface MasterPromptSectionProps {
   chatsState: ChatsState;
   onToggleLibrary: () => void;
   showLibrary: boolean;
+  onNewChat: () => void;
   onPromptCountChange?: (count: number) => void;
 }
 
-export default function MasterPromptSection({ chatsState, onToggleLibrary, showLibrary, onPromptCountChange }: MasterPromptSectionProps) {
+export default function MasterPromptSection({ chatsState, onToggleLibrary, showLibrary, onNewChat, onPromptCountChange }: MasterPromptSectionProps) {
   const {
     activeChatId,
     chats,
@@ -168,13 +171,17 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
-              <div>
+               <div>
                 <h2 className="text-xl font-semibold text-primary-light tracking-tight mb-1">
                   Start a conversation
                 </h2>
                 <p className="text-body text-secondary-midGray max-w-[280px] mx-auto leading-relaxed">
                   Create a new chat or select an existing one to continue where you left off.
                 </p>
+                <Button variant="secondary" size="sm" onClick={onNewChat}>
+                  <Plus className="w-3.5 h-3.5" />
+                  Create a new chat
+                </Button>
               </div>
             </div>
           </div>

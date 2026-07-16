@@ -15,6 +15,18 @@ function previewOf(content: string | undefined): string {
   return text.length > 42 ? `${text.slice(0, 42)}...` : text;
 }
 
+function timeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day}d ago`;
+  return new Date(ts).toLocaleDateString();
+}
+
 export default function ChatList({ onNewChat }: ChatListProps) {
   const { chats, activeChatId, messagesByChatId, deleteChat, renameChat, setActiveChat } = useChatContext();
   const navigate = useNavigate();
@@ -50,13 +62,14 @@ export default function ChatList({ onNewChat }: ChatListProps) {
   return (
     <div className="flex flex-col h-full min-h-0 bg-secondary-darkSurface border-r border-secondary-borderGray">
       {/* Header */}
-      <div className="px-4 py-4 border-b border-secondary-borderGray shrink-0">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-secondary-borderGray shrink-0">
+        <h2 className="text-small font-semibold uppercase tracking-wider text-secondary-midGray">Chats</h2>
         <button
           onClick={onNewChat}
-          className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-body font-medium bg-primary-light text-primary-dark rounded-md hover:bg-primary-light/90 transition-colors duration-150"
+          aria-label="New chat"
+          className="inline-flex items-center justify-center w-7 h-7 rounded-md text-secondary-midGray border border-secondary-borderGray hover:text-accent-orange hover:bg-primary-light/5 transition-colors duration-150"
         >
           <Plus className="w-4 h-4" />
-          New Chat
         </button>
       </div>
 
@@ -112,6 +125,7 @@ export default function ChatList({ onNewChat }: ChatListProps) {
                     </div>
                   )}
                   <p className="text-small text-secondary-midGray truncate mt-0.5">{previewOf(lastMsg?.content)}</p>
+                  <p className="text-xs text-secondary-midGray/40 mt-0.5">{timeAgo(chat.updatedAt)}</p>
                 </div>
 
                 <button
