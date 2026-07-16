@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2, Expand } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWorkflow } from '../../hooks/useWorkflow';
 import SectionSelector from './SectionSelector';
@@ -27,6 +27,7 @@ export default function WorkflowPanel({
   const { selectedSections, continuationInput, setContinuationInput, stage } = useWorkflow();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const [lanesExpanded, setLanesExpanded] = useState(false);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -59,6 +60,9 @@ export default function WorkflowPanel({
   // Dynamic grid: 1 lane = 1 col, 2 lanes = 2 cols, 3 lanes = 3 cols
   const gridCols = laneCount === 1 ? 'grid-cols-1' : laneCount === 2 ? 'grid-cols-2' : 'grid-cols-3';
 
+  const showLanes = laneTypes.length > 0;
+  const isExpanded = lanesExpanded || fullscreen;
+
   const panel = (
     <div className="flex flex-col h-full min-h-0">
       {/* Controls header */}
@@ -69,13 +73,25 @@ export default function WorkflowPanel({
             <div className="text-small text-secondary-midGray uppercase tracking-wider">
               Agents {stage === 'multi-agent' ? '· running' : ''}
             </div>
-            <button
-              onClick={() => setFullscreen((v) => !v)}
-              aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-              className="p-1.5 rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange transition-colors"
-            >
-              {fullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-            </button>
+            <div className="flex items-center gap-2">
+              {showLanes && (
+                <button
+                  onClick={() => setLanesExpanded((v) => !v)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-small font-medium rounded-md bg-accent-orange/10 border border-accent-orange/30 text-accent-orange hover:bg-accent-orange/20 transition-colors"
+                >
+                  <Expand className="w-3.5 h-3.5" />
+                  {isExpanded ? 'Collapse' : 'Expand'}
+                </button>
+              )}
+              <button
+                onClick={() => setFullscreen((v) => !v)}
+                aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen all agents'}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-small font-medium rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange hover:border-accent-orange/30 transition-colors"
+              >
+                {fullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                {fullscreen ? 'Exit' : 'Fullscreen'}
+              </button>
+            </div>
           </div>
 
           {/* Textarea */}
@@ -101,24 +117,47 @@ export default function WorkflowPanel({
         </div>
       </div>
 
-      {/* Lanes divider + grid */}
-      {laneTypes.length > 0 && (
+      {/* Lanes */}
+      {showLanes && (
         <>
           <div className="mx-5 sm:mx-8 border-t border-secondary-borderGray" />
           <div className="flex-1 overflow-y-auto px-5 sm:px-8 py-5 min-h-0">
-            <div className={`max-w-5xl mx-auto grid ${gridCols} gap-5 h-full`}>
-              {laneTypes.map((type) => (
-                <div key={type} className="min-h-0">
-                  <SectionConversation
-                    sectionType={type}
-                    state={sections[type]}
-                    messages={sectionMessages[type]}
-                    onGenerate={(request) => generateSection(type, request)}
-                    onLoadMessages={() => Promise.resolve()}
-                    compact
-                  />
+            <div className="max-w-5xl mx-auto">
+              {/* Collapsed: header bars in a flex row */}
+              {!isExpanded && (
+                <div className="flex flex-wrap gap-3">
+                  {laneTypes.map((type) => (
+                    <div key={type} className="flex-1 min-w-[200px]">
+                      <SectionConversation
+                        sectionType={type}
+                        state={sections[type]}
+                        messages={sectionMessages[type]}
+                        onGenerate={(request) => generateSection(type, request)}
+                        onLoadMessages={() => Promise.resolve()}
+                        headerOnly
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              {/* Expanded: full content grid */}
+              {isExpanded && (
+                <div className={`grid ${gridCols} gap-5 h-full`}>
+                  {laneTypes.map((type) => (
+                    <div key={type} className="min-h-0">
+                      <SectionConversation
+                        sectionType={type}
+                        state={sections[type]}
+                        messages={sectionMessages[type]}
+                        onGenerate={(request) => generateSection(type, request)}
+                        onLoadMessages={() => Promise.resolve()}
+                        compact
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </>

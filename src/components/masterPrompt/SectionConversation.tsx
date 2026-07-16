@@ -12,6 +12,7 @@ interface SectionConversationProps {
   onGenerate: (userRequest?: string) => void;
   onLoadMessages: () => Promise<void>;
   compact?: boolean;
+  headerOnly?: boolean;
 }
 
 const SECTION_META: Record<SectionType, { label: string; icon: typeof Code; color: string }> = {
@@ -20,7 +21,7 @@ const SECTION_META: Record<SectionType, { label: string; icon: typeof Code; colo
   audit: { label: 'Audit', icon: ShieldCheck, color: 'text-secondary-midGray' },
 };
 
-export default function SectionConversation({ sectionType, state, messages, onGenerate, onLoadMessages, compact }: SectionConversationProps) {
+export default function SectionConversation({ sectionType, state, messages, onGenerate, onLoadMessages, compact, headerOnly }: SectionConversationProps) {
   const [input, setInput] = useState('');
   const [copied, setCopied] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
@@ -90,6 +91,33 @@ export default function SectionConversation({ sectionType, state, messages, onGe
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // Header-only mode: compact bar with status, no content
+  if (headerOnly) {
+    const hasData = !!state.data;
+    const isWorking = state.isGenerating;
+    return (
+      <div className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <meta.icon className={`w-4 h-4 ${meta.color}`} />
+          <span className="text-small font-semibold tracking-wide uppercase text-secondary-midGray">
+            {meta.label}
+          </span>
+          <span className={`w-2 h-2 rounded-full ${isWorking ? 'bg-accent-orange animate-pulse' : hasData ? 'bg-success-green' : 'bg-secondary-midGray'}`} />
+          <span className="text-small text-secondary-midGray">
+            {isWorking ? 'Working' : hasData ? 'Done' : 'Idle'}
+          </span>
+        </div>
+        <button
+          onClick={() => setFullscreen(true)}
+          aria-label={`${meta.label} section fullscreen`}
+          className="p-1.5 rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange transition-colors"
+        >
+          <Maximize2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    );
+  }
 
   const card = (
     <div className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md flex flex-col overflow-hidden h-full">
