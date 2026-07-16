@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../hooks/useAuth';
 import EmailLoginForm from './EmailLoginForm';
 
 interface LoginDialogProps {
@@ -11,6 +13,18 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const titleId = useRef(`login-title-${Math.random().toString(36).slice(2, 8)}`).current;
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const prevUser = useRef(currentUser);
+
+  // On a successful login/register (null -> user), close and go to the app.
+  useEffect(() => {
+    if (prevUser.current === null && currentUser !== null) {
+      onClose();
+      navigate('/home');
+    }
+    prevUser.current = currentUser;
+  }, [currentUser, navigate, onClose]);
 
   useEffect(() => {
     if (open) closeRef.current?.focus();
