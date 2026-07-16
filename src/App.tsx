@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { motion, MotionConfig } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import Sidebar from './components/layout/Sidebar';
@@ -51,7 +51,8 @@ function AuthSplash() {
 
 function AppLayout() {
   const location = useLocation();
-  const { authReady } = useAuth();
+  const navigate = useNavigate();
+  const { authReady, currentUser } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
 
   useEffect(() => {
@@ -62,6 +63,14 @@ function AppLayout() {
     window.addEventListener('pd:login-dialog', handler as EventListener);
     return () => window.removeEventListener('pd:login-dialog', handler as EventListener);
   }, []);
+
+  // Logged-in users always land inside the app, never on the hero, so their
+  // signed-in state is visible (sidebar) and the session feels persisted.
+  useEffect(() => {
+    if (authReady && currentUser && location.pathname === '/') {
+      navigate('/home', { replace: true });
+    }
+  }, [authReady, currentUser, location.pathname, navigate]);
 
   if (!authReady) {
     return <AuthSplash />;
