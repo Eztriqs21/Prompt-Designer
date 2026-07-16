@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Sparkles, AlertTriangle, RotateCcw } from 'lucide-react';
 import { PROMPT_TEMPLATES } from '../../lib/promptTemplates';
 
 interface UserInputBarProps {
-  onSend: (message: string) => void;
   onGenerate: (idea: string) => void;
   disabled: boolean;
   isGenerating: boolean;
@@ -11,7 +10,6 @@ interface UserInputBarProps {
 }
 
 export default function UserInputBar({
-  onSend,
   onGenerate,
   disabled,
   isGenerating,
@@ -26,12 +24,6 @@ export default function UserInputBar({
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 72)}px`;
     }
   }, [input]);
-
-  const handleSend = () => {
-    if (!input.trim() || disabled) return;
-    onSend(input.trim());
-    setInput('');
-  };
 
   const handleGenerate = () => {
     if (!input.trim() || disabled) return;
@@ -49,7 +41,7 @@ export default function UserInputBar({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      handleGenerate();
     }
   };
 
@@ -98,13 +90,6 @@ export default function UserInputBar({
             <Sparkles className="w-3 h-3" />
             Generate
           </button>
-          <button
-            onClick={handleSend}
-            disabled={!hasInput || disabled || isGenerating}
-            className="p-2 rounded-md bg-primary-light text-primary-dark hover:bg-primary-light/90 transition-colors disabled:opacity-30"
-          >
-            <Send className="w-4 h-4" />
-          </button>
         </div>
       </div>
       {showError && (
@@ -123,7 +108,7 @@ export default function UserInputBar({
       )}
       {!showError && !isGenerating && (
         <p className="mt-1.5 text-small text-secondary-midGray text-center">
-          Describe your idea, then click Generate when ready.
+          Describe your idea, then click Generate or press Enter when ready.
         </p>
       )}
       {isGenerating && !error && (

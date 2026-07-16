@@ -1,19 +1,20 @@
 import { useRef, useEffect } from 'react';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Bot, AlertTriangle } from 'lucide-react';
 import type { Message, SectionType, SectionState } from '../../types';
 import type { SectionMessage } from '../../lib/apiClient';
 import QuestionBubble from './QuestionBubble';
 import MasterPromptBubble from './MasterPromptBubble';
 import UserInputBar from './UserInputBar';
+import GenerationLoader from './GenerationLoader';
 import FadeIn from '../ui/FadeIn';
 
 interface ConversationPaneProps {
   messages: Message[];
-  onSend: (message: string) => void;
   onGenerate: (idea: string) => void;
   disabled: boolean;
   isGenerating: boolean;
   error?: string | null;
+  hasPrompt: boolean;
   sections: Record<SectionType, SectionState>;
   sectionMessages: Record<SectionType, SectionMessage[]>;
   activeSection: SectionType | null;
@@ -25,11 +26,11 @@ interface ConversationPaneProps {
 
 export default function ConversationPane({
   messages,
-  onSend,
   onGenerate,
   disabled,
   isGenerating,
   error,
+  hasPrompt,
   sections,
   sectionMessages,
   activeSection,
@@ -83,14 +84,10 @@ export default function ConversationPane({
         {isGenerating && !error && (
           <FadeIn className="flex items-start gap-3">
             <div className="w-7 h-7 rounded-md bg-secondary-darkSurface border border-secondary-borderGray flex items-center justify-center shrink-0 mt-0.5">
-              <Loader2 className="w-3.5 h-3.5 text-accent-orange animate-spin" />
+              <Bot className="w-3.5 h-3.5 text-secondary-midGray" />
             </div>
             <div className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md rounded-tl-sm px-4 py-3">
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-accent-orange/40 animate-pulse-subtle" />
-                <div className="w-1.5 h-1.5 rounded-full bg-accent-orange/40 animate-pulse-subtle" style={{ animationDelay: '300ms' }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-accent-orange/40 animate-pulse-subtle" style={{ animationDelay: '600ms' }} />
-              </div>
+              <GenerationLoader />
             </div>
           </FadeIn>
         )}
@@ -115,13 +112,14 @@ export default function ConversationPane({
 
       {/* Input ÔÇö fixed at bottom */}
       <div className="shrink-0 px-4 sm:px-6 pb-4 pt-3 border-t border-secondary-borderGray">
-        <UserInputBar
-          onSend={onSend}
-          onGenerate={onGenerate}
-          disabled={disabled}
-          isGenerating={isGenerating}
-          error={error}
-        />
+        {!hasPrompt && (
+          <UserInputBar
+            onGenerate={onGenerate}
+            disabled={disabled}
+            isGenerating={isGenerating}
+            error={error}
+          />
+        )}
       </div>
     </div>
   );

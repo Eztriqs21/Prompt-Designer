@@ -10,7 +10,7 @@ import { useMasterPrompt } from '../../hooks/useMasterPrompt';
 import { usePromptLibrary } from '../../hooks/usePromptLibrary';
 import { useSectionPrompts } from '../../hooks/useSectionPrompts';
 import { useChatContext } from '../../context/ChatContext';
-import { saveChatMessage } from '../../lib/apiClient';
+import CodeBackdrop from '../ui/CodeBackdrop';
 import type { ChatSession, Message, MasterPromptResponse } from '../../types';
 import type { PromptVersion } from '../../types';
 
@@ -61,7 +61,6 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     messages,
     isGenerating,
     generatedPrompt,
-    addUserMessage,
     generate,
     error,
     clearError,
@@ -101,22 +100,6 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     onPromptCountChange?.(promptVersions.length);
   }, [promptVersions.length, onPromptCountChange]);
 
-  const handleSend = async (content: string) => {
-    if (!activeChatId) return;
-    const msg = addUserMessage(content);
-    if (msg) {
-      try {
-        await saveChatMessage(activeChatId, 'user', content);
-      } catch (err) {
-        console.error('Failed to persist user message:', err);
-      }
-      const chat = chats.find((c) => c.id === activeChatId);
-      if (chat?.isDefaultTitle) {
-        renameChat(activeChatId, content.slice(0, 50).trim());
-      }
-    }
-  };
-
   const handleGenerate = async (idea: string) => {
     if (!activeChatId) return;
     clearError();
@@ -151,11 +134,11 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
         {activeChatId ? (
           <ConversationPane
             messages={messages}
-            onSend={handleSend}
             onGenerate={handleGenerate}
             disabled={isGenerating}
             isGenerating={isGenerating}
             error={error}
+            hasPrompt={!!generatedPrompt}
             sections={sections}
             sectionMessages={sectionMessages}
             activeSection={activeSection}
@@ -165,8 +148,9 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
             onLoadSectionMessages={loadSectionMessages}
           />
         ) : (
-          <div className="flex-1 flex items-center justify-center h-full">
-            <FadeIn className="text-center space-y-4 px-6">
+          <div className="relative flex-1 flex items-center justify-center h-full overflow-hidden">
+            <CodeBackdrop />
+            <FadeIn className="relative text-center space-y-4 px-6">
               <div className="w-16 h-16 rounded-md bg-secondary-darkSurface border border-secondary-borderGray flex items-center justify-center mx-auto">
                 <svg className="w-7 h-7 text-secondary-midGray/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />

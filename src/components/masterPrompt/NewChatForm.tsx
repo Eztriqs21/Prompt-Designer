@@ -48,6 +48,25 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
     }
   };
 
+  const handleSkip = async () => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onSubmit({
+        title: '',
+        websiteType: 'SaaS',
+        audience: '',
+        goal: '',
+        preferredStack: '',
+        style: 'Minimal',
+      });
+    } catch (err: any) {
+      setError(err?.message || 'Failed to create chat. Is the server running?');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const update = (field: keyof FormValues, value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }));
   };
@@ -154,21 +173,31 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
         </p>
       )}
 
-      <div className="flex justify-end gap-2 pt-1">
+      <div className="flex items-center justify-between gap-2 pt-1">
         <button
           type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-small font-medium text-secondary-midGray hover:text-primary-light transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
+          onClick={handleSkip}
           disabled={submitting}
-          className="px-5 py-2 text-small font-medium rounded-md bg-primary-light text-primary-dark hover:bg-primary-light/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+          className="text-small text-secondary-midGray hover:text-accent-orange transition-colors disabled:opacity-30"
         >
-          {submitting ? 'Creating...' : 'Create Chat'}
+          Skip &amp; start prompting →
         </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 text-small font-medium text-secondary-midGray hover:text-primary-light transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="px-5 py-2 text-small font-medium rounded-md bg-primary-light text-primary-dark hover:bg-primary-light/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+          >
+            {submitting ? 'Creating...' : 'Create Chat'}
+          </button>
+        </div>
       </div>
     </form>
   );

@@ -67,6 +67,23 @@ body {
   line-height: 1.5;
 }
 
+/* Custom cursor — subtle, on-theme pointer. Keeps the text caret in inputs. */
+body,
+button,
+a,
+summary,
+label,
+[role="button"] {
+  cursor: url('/cursor.svg') 3 1, auto;
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  cursor: text;
+}
+
 *::-webkit-scrollbar {
   display: none;
 }

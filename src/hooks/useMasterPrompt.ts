@@ -126,6 +126,9 @@ export function useMasterPrompt(config: MasterPromptConfig) {
       generatingRef.current = true;
       setState((prev) => ({ ...prev, isGenerating: true, error: null }));
 
+      // Render the user's typed idea as a visible bubble before generation begins.
+      const userMsg = addUserMessage(idea.trim());
+
       // Abort controller for genuine client-side cancellation (e.g. unmount).
       // NOTE: There is intentionally NO client-side timeout here. Free OpenCode
       // models can take minutes to reply, and aborting early would throw away a
@@ -193,7 +196,8 @@ export function useMasterPrompt(config: MasterPromptConfig) {
       };
 
       try {
-        const conversationHistory: Message[] = state.messages.map((m) => ({
+        const baseHistory = userMsg ? [...state.messages, userMsg] : state.messages;
+        const conversationHistory: Message[] = baseHistory.map((m) => ({
           ...m,
           chatId,
         }));
@@ -243,7 +247,7 @@ export function useMasterPrompt(config: MasterPromptConfig) {
         generatingRef.current = false;
       }
     },
-    [activeChatId, state.messages, addMessage, setPrompt]
+    [activeChatId, state.messages, addMessage, addUserMessage, setPrompt]
   );
 
   const clearError = useCallback(() => {
