@@ -55,14 +55,14 @@ export default function HomePage() {
 
         {/* Command strip */}
         <div className="inline-flex items-center gap-3 bg-secondary-darkSurface border border-secondary-borderGray rounded-md px-4 py-3">
-          <span className="text-accent-blue text-sm">$</span>
+          <span className="text-accent-purple text-sm">$</span>
           <code className="text-sm text-primary-light flex-1">Start a new chat at /chat</code>
           <button
             onClick={handleCopy}
-            className="p-1 rounded-sm text-secondary-midGray hover:text-accent-blue hover:bg-primary-light/5 transition-colors duration-150"
+            className="p-1 rounded-sm text-secondary-midGray hover:text-accent-orange hover:bg-primary-light/5 transition-colors duration-150"
             aria-label="Copy command"
           >
-            {copied ? <Check className="w-4 h-4 text-accent-blue" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 text-success-green" /> : <Copy className="w-4 h-4" />}
           </button>
         </div>
       </section>
@@ -77,11 +77,11 @@ export default function HomePage() {
               <Link
                 key={feature.title}
                 to={feature.link}
-                className="block bg-secondary-darkSurface border border-secondary-borderGray rounded-md p-5 hover:border-accent-blue transition-colors duration-150"
+                className="block bg-secondary-darkSurface border border-secondary-borderGray rounded-md p-5 hover:border-accent-orange transition-colors duration-150"
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 rounded-md bg-secondary-darkSurface border border-secondary-borderGray flex items-center justify-center">
-                    <Icon className="w-4 h-4 text-accent-blue" />
+                    <Icon className="w-4 h-4 text-accent-orange" />
                   </div>
                   <h3 className="text-small font-semibold text-primary-light">{feature.title}</h3>
                 </div>
@@ -111,14 +111,14 @@ export default function HomePage() {
                   <td className="px-4 py-3 text-primary-light">{row.feature}</td>
                   <td className="px-4 py-3 text-center">
                     {row.basic ? (
-                      <Check className="w-4 h-4 text-accent-blue mx-auto" />
+                      <Check className="w-4 h-4 text-success-green mx-auto" />
                     ) : (
                       <span className="text-secondary-midGray/30">â€”</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {row.recommended ? (
-                      <Check className="w-4 h-4 text-accent-blue mx-auto" />
+                      <Check className="w-4 h-4 text-success-green mx-auto" />
                     ) : (
                       <span className="text-secondary-midGray/30">â€”</span>
                     )}

@@ -101,7 +101,7 @@ export default function CustomSelect({
         type="button"
         onClick={() => setIsOpen((v) => !v)}
         onKeyDown={handleKeyDown}
-        className="w-full flex items-center justify-between appearance-none bg-primary-dark hover:bg-secondary-darkSurface border border-secondary-borderGray hover:border-accent-blue/30 rounded-md px-3 py-2 text-sm text-primary-light focus:outline-none focus:border-accent-blue/40 transition-colors cursor-pointer"
+        className="w-full flex items-center justify-between appearance-none bg-primary-dark hover:bg-secondary-darkSurface border border-secondary-borderGray hover:border-accent-orange/30 rounded-md px-3 py-2 text-sm text-primary-light focus:outline-none focus:border-accent-orange/40 transition-colors cursor-pointer"
       >
         <span className="truncate font-medium">{selectedLabel}</span>
         <span className={`ml-2 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>

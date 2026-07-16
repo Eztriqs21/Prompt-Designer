@@ -19,16 +19,16 @@ const SECTION_INTROS: Record<string, string> = {
 };
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return 'text-accent-blue';
-  if (score >= 60) return 'text-secondary-midGray';
-  if (score >= 40) return 'text-secondary-midGray';
+  if (score >= 80) return 'text-success-green';
+  if (score >= 60) return 'text-accent-orange';
+  if (score >= 40) return 'text-warn-yellow';
   return 'text-semantic-dangerRed';
 }
 
 function getScoreRing(score: number): string {
-  if (score >= 80) return 'stroke-accent-blue';
-  if (score >= 60) return 'stroke-secondary-midGray';
-  if (score >= 40) return 'stroke-secondary-midGray';
+  if (score >= 80) return 'stroke-success-green';
+  if (score >= 60) return 'stroke-accent-orange';
+  if (score >= 40) return 'stroke-warn-yellow';
   return 'stroke-semantic-dangerRed';
 }
 
@@ -205,7 +205,7 @@ export default memo(function AuditReport({ report, onReset }: AuditReportProps) 
             <Button variant="secondary" size="sm" onClick={handleCopyFixPrompt}>
               {fixPromptCopied ? (
                 <>
-                  <Check className="w-3 h-3 text-accent-blue" />
+                  <Check className="w-3 h-3 text-success-green" />
                   Copied
                 </>
               ) : (

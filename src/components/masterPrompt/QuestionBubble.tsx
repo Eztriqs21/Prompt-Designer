@@ -24,7 +24,7 @@ export default memo(function QuestionBubble({ message }: QuestionBubbleProps) {
     <div className="flex items-start gap-3">
       <div className="w-7 h-7 rounded-md bg-secondary-darkSurface border border-secondary-borderGray flex items-center justify-center shrink-0 mt-0.5">
         {isUser ? (
-          <User className="w-3.5 h-3.5 text-accent-blue" />
+          <User className="w-3.5 h-3.5 text-accent-orange" />
         ) : (
           <Bot className="w-3.5 h-3.5 text-secondary-midGray" />
         )}

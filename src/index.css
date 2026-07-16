@@ -5,14 +5,17 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --default-font-family: var(--font-mono);
 
-  /* Colors — v2 monochrome + blue accent (source of truth: DESIGN.md) */
+  /* Colors — OpenCode palette (source of truth: DESIGN.md). No blue. */
   --color-primary-dark: #201d1d;
   --color-primary-light: #fdfcfc;
   --color-secondary-midGray: #9a9898;
   --color-secondary-darkSurface: #302c2c;
   --color-secondary-borderGray: #646262;
-  --color-accent-blue: #007aff;
-  --color-semantic-dangerRed: #ff3b30;
+  --color-accent-orange: #fab283;      /* primary actions, links, selection, focus */
+  --color-accent-purple: #9d7cd8;      /* headings / keywords */
+  --color-success-green: #7fd88f;       /* success / strings */
+  --color-warn-yellow: #e5c07b;        /* warnings */
+  --color-semantic-dangerRed: #ff3b30;  /* danger / errors */
 
   /* Spacing (4px base) */
   --space-xs: 4px;

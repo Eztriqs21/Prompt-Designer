@@ -69,7 +69,7 @@ export default function FormattedPrompt({ content }: FormattedPromptProps) {
           <div key={i} className="space-y-2">
             {seg.label && (
               <>
-                <p className="text-small text-secondary-midGray">{seg.label}</p>
+                <p className="text-small text-accent-purple">{seg.label}</p>
                 <hr className="border-t border-secondary-borderGray" />
               </>
             )}

@@ -12,8 +12,8 @@ interface SectionConversationProps {
 }
 
 const SECTION_META: Record<SectionType, { label: string; icon: typeof Code; color: string }> = {
-  coding: { label: 'Coding', icon: Code, color: 'text-accent-blue' },
-  'ui-ux': { label: 'UI/UX', icon: Palette, color: 'text-accent-blue' },
+  coding: { label: 'Coding', icon: Code, color: 'text-accent-orange' },
+  'ui-ux': { label: 'UI/UX', icon: Palette, color: 'text-accent-orange' },
   audit: { label: 'Audit', icon: ShieldCheck, color: 'text-secondary-midGray' },
 };
 
@@ -89,7 +89,7 @@ export default function SectionConversation({ sectionType, state, messages, onGe
         </p>
         <button
           onClick={() => onGenerate()}
-          className="px-4 py-2 text-small font-medium rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-blue hover:border-accent-blue/30 transition-colors"
+          className="px-4 py-2 text-small font-medium rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange hover:border-accent-orange/30 transition-colors"
         >
           Generate {meta.label} Section
         </button>
@@ -114,7 +114,7 @@ export default function SectionConversation({ sectionType, state, messages, onGe
               >
             {copied ? (
               <>
-                <Check className="w-3 h-3" />
+                <Check className="w-3 h-3 text-success-green" />
                 Copied
               </>
             ) : (
@@ -137,7 +137,7 @@ export default function SectionConversation({ sectionType, state, messages, onGe
               </div>
             ) : (
               <div className="p-1.5 rounded-md bg-secondary-darkSurface border border-secondary-borderGray">
-                <User className="w-3.5 h-3.5 text-accent-blue" />
+                <User className="w-3.5 h-3.5 text-accent-orange" />
               </div>
             )}
             <div className="flex-1 min-w-0">
@@ -180,7 +180,7 @@ export default function SectionConversation({ sectionType, state, messages, onGe
             onKeyDown={handleKeyDown}
             placeholder={`Ask about the ${meta.label.toLowerCase()} section...`}
             rows={1}
-            className="flex-1 min-w-0 bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray resize-none outline-none focus:border-accent-blue/30 transition-colors"
+                className="flex-1 min-w-0 bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray resize-none outline-none focus:border-accent-orange/30 transition-colors"
           />
           <button
             onClick={handleSend}

@@ -9,8 +9,8 @@ interface AuditFindingCardProps {
 const SEVERITY_CONFIG: Record<Severity, { label: string; color: string; bg: string; border: string }> = {
   critical: { label: 'Critical', color: 'text-semantic-dangerRed', bg: 'bg-semantic-dangerRed/10', border: 'border-semantic-dangerRed/20' },
   high: { label: 'High', color: 'text-semantic-dangerRed', bg: 'bg-semantic-dangerRed/10', border: 'border-semantic-dangerRed/20' },
-  medium: { label: 'Medium', color: 'text-secondary-midGray', bg: 'bg-secondary-darkSurface', border: 'border-secondary-borderGray' },
-  low: { label: 'Low', color: 'text-secondary-midGray', bg: 'bg-secondary-darkSurface', border: 'border-secondary-borderGray' },
+  medium: { label: 'Medium', color: 'text-warn-yellow', bg: 'bg-warn-yellow/10', border: 'border-warn-yellow/20' },
+  low: { label: 'Low', color: 'text-success-green', bg: 'bg-success-green/10', border: 'border-success-green/20' },
   info: { label: 'Info', color: 'text-secondary-midGray', bg: 'bg-secondary-darkSurface', border: 'border-secondary-borderGray' },
 };
 
@@ -53,9 +53,9 @@ export default memo(function AuditFindingCard({ finding }: AuditFindingCardProps
 
       {/* Fix Suggestion */}
       {finding.fix && (
-        <div className="flex items-start gap-2 p-2.5 rounded-md bg-accent-blue/5 border border-accent-blue/10">
-          <Wrench className="w-3.5 h-3.5 text-accent-blue mt-0.5 shrink-0" />
-          <p className="text-xs text-accent-blue leading-relaxed">{finding.fix}</p>
+        <div className="flex items-start gap-2 p-2.5 rounded-md bg-accent-orange/5 border border-accent-orange/10">
+          <Wrench className="w-3.5 h-3.5 text-accent-orange mt-0.5 shrink-0" />
+          <p className="text-xs text-accent-orange leading-relaxed">{finding.fix}</p>
         </div>
       )}
 

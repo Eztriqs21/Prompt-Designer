@@ -138,8 +138,8 @@ export default function AuditInput({
           onClick={() => fileInputRef.current?.click()}
           className={`relative cursor-pointer rounded-md border-2 border-dashed p-8 text-center transition-colors duration-150 ${
             isDragOver
-              ? 'border-accent-blue bg-accent-blue/5'
-              : 'border-secondary-borderGray bg-secondary-darkSurface hover:border-accent-blue/40'
+              ? 'border-accent-orange bg-accent-orange/5'
+              : 'border-secondary-borderGray bg-secondary-darkSurface hover:border-accent-orange/40'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <input
@@ -151,7 +151,7 @@ export default function AuditInput({
             className="hidden"
             disabled={disabled}
           />
-          <Upload className={`w-8 h-8 mx-auto mb-3 ${isDragOver ? 'text-accent-blue' : 'text-secondary-midGray/40'}`} />
+          <Upload className={`w-8 h-8 mx-auto mb-3 ${isDragOver ? 'text-accent-orange' : 'text-secondary-midGray/40'}`} />
           <p className="text-body text-secondary-midGray mb-1">
             {isDragOver ? 'Drop files here' : 'Drag & drop files or click to upload'}
           </p>

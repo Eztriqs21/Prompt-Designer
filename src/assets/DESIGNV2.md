@@ -11,9 +11,12 @@ colors:
     darkSurface: "#302c2c" # Elevated cards, panels, modals
     borderGray: "#646262" # Borders, dividers, outlines
   accent:
-    blue: "#007aff"       # Interactive highlights, links, selected states
+    orange: "#fab283"     # Primary actions, links, selection, focus
+    purple: "#9d7cd8"     # Headings / keywords
   semantic:
-    dangerRed: "#ff3b30"  # Error states, destructive actions
+    successGreen: "#7fd88f" # Success / strings
+    warnYellow: "#e5c07b"   # Warnings
+    dangerRed: "#ff3b30"    # Error states, destructive actions
 
 typography:
   fontFamily:

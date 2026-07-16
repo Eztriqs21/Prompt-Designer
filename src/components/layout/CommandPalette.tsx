@@ -186,7 +186,7 @@ export default function CommandPalette() {
               setActive(0);
             }}
             placeholder="Type a command…"
-            className="w-full bg-secondary-darkSurface text-primary-light placeholder:text-secondary-midGray border border-secondary-borderGray rounded-md px-3 py-2 text-body outline-none focus:border-accent-blue"
+            className="w-full bg-secondary-darkSurface text-primary-light placeholder:text-secondary-midGray border border-secondary-borderGray rounded-md px-3 py-2 text-body outline-none focus:border-accent-orange"
             aria-label="Search commands"
           />
         </div>

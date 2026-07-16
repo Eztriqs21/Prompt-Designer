@@ -11,7 +11,7 @@ type TextareaProps = CommonProps & TextareaHTMLAttributes<HTMLTextAreaElement> &
 type Props = InputProps | TextareaProps;
 
 const fieldCls =
-  'w-full bg-secondary-darkSurface text-primary-light placeholder:text-secondary-midGray border border-secondary-borderGray rounded-md px-3 py-2 text-body outline-none transition-colors duration-150 focus:border-accent-blue';
+  'w-full bg-secondary-darkSurface text-primary-light placeholder:text-secondary-midGray border border-secondary-borderGray rounded-md px-3 py-2 text-body outline-none transition-colors duration-150 focus:border-accent-orange';
 
 export default function TextInput(props: Props) {
   const { label, className = '', ...rest } = props;

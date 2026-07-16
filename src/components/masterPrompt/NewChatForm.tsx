@@ -59,7 +59,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
     >
       <div className="flex items-center justify-between">
           <h3 className="text-body font-semibold text-primary-light flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-accent-blue" />
+          <Sparkles className="w-4 h-4 text-accent-orange" />
           New Chat
         </h3>
         <button
@@ -92,7 +92,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
             value={values.title}
             onChange={(e) => update('title', e.target.value)}
             placeholder={`${values.websiteType} project`}
-            className="w-full bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray focus:outline-none focus:border-accent-blue/30 transition-colors"
+            className="w-full bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray focus:outline-none focus:border-accent-orange/30 transition-colors"
           />
         </div>
 
@@ -105,7 +105,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
             value={values.audience}
             onChange={(e) => update('audience', e.target.value)}
             placeholder="e.g., small business owners, developers"
-            className="w-full bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray focus:outline-none focus:border-accent-blue/30 transition-colors"
+            className="w-full bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray focus:outline-none focus:border-accent-orange/30 transition-colors"
           />
         </div>
 
@@ -118,7 +118,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
             value={values.goal}
             onChange={(e) => update('goal', e.target.value)}
             placeholder="e.g., signups, sales, portfolio showcase"
-            className="w-full bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray focus:outline-none focus:border-accent-blue/30 transition-colors"
+            className="w-full bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray focus:outline-none focus:border-accent-orange/30 transition-colors"
           />
         </div>
 
@@ -132,7 +132,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
             value={values.preferredStack}
             onChange={(e) => update('preferredStack', e.target.value)}
             placeholder="e.g., Next.js, Vue, Svelte"
-            className="w-full bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray focus:outline-none focus:border-accent-blue/30 transition-colors"
+            className="w-full bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray focus:outline-none focus:border-accent-orange/30 transition-colors"
           />
         </div>
 

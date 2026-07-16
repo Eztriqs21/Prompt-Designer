@@ -72,7 +72,7 @@ export default function UserInputBar({
           <button
             onClick={handleGenerate}
             disabled={!hasInput || disabled || isGenerating}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-small font-medium rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-blue hover:border-accent-blue/30 transition-colors disabled:opacity-30"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-small font-medium rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange hover:border-accent-orange/30 transition-colors disabled:opacity-30"
           >
             <Sparkles className="w-3 h-3" />
             Generate
@@ -92,7 +92,7 @@ export default function UserInputBar({
           <span className="flex-1 text-center">{error}</span>
           <button
             onClick={handleRetry}
-            className="flex items-center gap-1 px-2 py-1 text-accent-blue hover:underline disabled:opacity-50"
+            className="flex items-center gap-1 px-2 py-1 text-accent-orange hover:underline disabled:opacity-50"
             disabled={!hasInput || disabled}
           >
             <RotateCcw className="w-3 h-3" />

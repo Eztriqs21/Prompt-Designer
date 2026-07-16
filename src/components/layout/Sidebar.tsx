@@ -22,7 +22,7 @@ export default function Sidebar() {
     <nav className="flex flex-col h-full">
       {/* Product name */}
       <div className="px-5 py-6 shrink-0">
-        <h1 className="text-lg font-bold tracking-tight text-accent-blue">
+        <h1 className="text-lg font-bold tracking-tight text-accent-orange">
           Prompt Designer
         </h1>
       </div>
@@ -43,7 +43,7 @@ export default function Sidebar() {
                   onClick={() => setMobileOpen(false)}
                   className={`relative flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium border-l-2 transition-colors duration-150 ${
                     active
-                      ? 'bg-secondary-darkSurface text-primary-light border-accent-blue'
+                      ? 'bg-secondary-darkSurface text-primary-light border-accent-orange'
                       : 'text-secondary-midGray border-transparent hover:text-primary-light hover:bg-primary-light/5'
                   }`}
                 >
@@ -62,7 +62,7 @@ export default function Sidebar() {
         <button
           type="button"
           onClick={() => window.dispatchEvent(new CustomEvent('pd:command-palette', { detail: { open: true } }))}
-          className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-small text-secondary-midGray border border-secondary-borderGray hover:text-primary-light hover:border-accent-blue transition-colors duration-150"
+          className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-small text-secondary-midGray border border-secondary-borderGray hover:text-primary-light hover:border-accent-orange transition-colors duration-150"
         >
           <span>Command Palette</span>
           <span className="text-secondary-midGray">⌘K</span>
@@ -76,7 +76,7 @@ export default function Sidebar() {
       {/* Mobile hamburger */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-secondary-darkSurface border border-secondary-borderGray text-secondary-midGray hover:text-accent-blue transition-colors"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-secondary-darkSurface border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange transition-colors"
         aria-label="Open menu"
       >
         <Menu className="w-5 h-5" />
@@ -95,7 +95,7 @@ export default function Sidebar() {
         <div className="md:hidden fixed inset-y-0 left-0 z-50 w-[260px] bg-secondary-darkSurface border-r border-secondary-borderGray">
           <button
             onClick={() => setMobileOpen(false)}
-            className="absolute top-4 right-4 p-1 rounded-md text-secondary-midGray hover:text-accent-blue transition-colors"
+            className="absolute top-4 right-4 p-1 rounded-md text-secondary-midGray hover:text-accent-orange transition-colors"
             aria-label="Close menu"
           >
             <X className="w-4 h-4" />

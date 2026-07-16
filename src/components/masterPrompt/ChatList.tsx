@@ -94,7 +94,7 @@ export default function ChatList({ onNewChat }: ChatListProps) {
                         if (e.key === 'Escape') setEditingId(null);
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-full bg-primary-dark border border-secondary-borderGray rounded px-2 py-1 text-body text-primary-light outline-none focus:border-accent-blue/40"
+                      className="w-full bg-primary-dark border border-secondary-borderGray rounded px-2 py-1 text-body text-primary-light outline-none focus:border-accent-orange/40"
                     />
                   ) : (
                     <div className="flex items-center gap-1.5">
@@ -104,7 +104,7 @@ export default function ChatList({ onNewChat }: ChatListProps) {
                           e.stopPropagation();
                           startRename(chat.id, chat.title);
                         }}
-                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-secondary-midGray hover:text-accent-blue transition-opacity shrink-0"
+                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-secondary-midGray hover:text-accent-orange transition-opacity shrink-0"
                         aria-label="Rename chat"
                       >
                         <Pencil className="w-3 h-3" />

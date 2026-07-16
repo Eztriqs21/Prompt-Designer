@@ -10,12 +10,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors duration-150 ease-out disabled:opacity-50 disabled:cursor-not-allowed select-none';
+  'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors duration-150 ease-out disabled:opacity-50 disabled:cursor-not-allowed select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-orange/40';
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-primary-light text-primary-dark hover:bg-primary-light/90 border border-transparent',
+  primary: 'bg-accent-orange text-primary-dark hover:bg-accent-orange/90 border border-transparent',
   secondary:
-    'bg-secondary-darkSurface text-secondary-midGray border border-secondary-borderGray hover:text-primary-light hover:border-accent-blue',
+    'bg-secondary-darkSurface text-secondary-midGray border border-secondary-borderGray hover:text-primary-light hover:border-accent-orange',
   danger:
     'bg-secondary-darkSurface text-semantic-dangerRed border border-semantic-dangerRed hover:bg-semantic-dangerRed/10',
   ghost: 'bg-transparent text-secondary-midGray hover:text-primary-light border border-transparent',

@@ -1,8 +1,9 @@
 /**
- * Lightweight prompt text formatter (v2 tokenized).
+ * Lightweight prompt text formatter (OpenCode palette tokenized).
  * Converts raw generated prompt text into structured HTML for display using the
- * monochrome design tokens (no off-palette colors). Falls back to escaped
- * raw text if anything goes wrong. Input is escaped, so the emitted HTML is safe.
+ * OpenCode design tokens (no blue). Headings/keywords -> purple, strings/code
+ * -> green, links -> orange. Falls back to escaped raw text on error. Input is
+ * escaped, so the emitted HTML is safe.
  */
 
 function escapeHtml(text: string): string {
@@ -15,11 +16,11 @@ function escapeHtml(text: string): string {
 
 function processInline(text: string): string {
   return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-primary-light">$1</strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-accent-purple">$1</strong>')
     .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em class="text-secondary-midGray italic">$1</em>')
     .replace(
       /`([^`]+)`/g,
-      '<code class="text-small bg-primary-dark/40 border border-secondary-borderGray rounded px-1.5 py-0.5">$1</code>',
+      '<code class="text-small bg-primary-dark/40 border border-secondary-borderGray rounded px-1.5 py-0.5 text-success-green">$1</code>',
     );
 }
 
@@ -77,7 +78,7 @@ export function formatPromptContent(raw: string): string {
           inList = false;
         }
         htmlParts.push(
-          `<h3 class="text-body font-semibold text-primary-light mt-4 mb-2">${escapeHtml(
+          `<h3 class="text-body font-semibold text-accent-purple mt-4 mb-2">${escapeHtml(
             sectionMatch[1],
           )}</h3>`,
         );
@@ -93,8 +94,8 @@ export function formatPromptContent(raw: string): string {
         const headerText = trimmed.replace(/^#{1,3}\s+/, '');
         const cls =
           level === 1
-            ? 'text-body font-semibold text-primary-light mt-4 mb-2'
-            : 'text-small font-medium text-primary-light mt-3 mb-1.5';
+            ? 'text-body font-semibold text-accent-purple mt-4 mb-2'
+            : 'text-small font-medium text-accent-purple mt-3 mb-1.5';
         htmlParts.push(`<h4 class="${cls}">${processInline(escapeHtml(headerText))}</h4>`);
         continue;
       }

@@ -19,7 +19,7 @@ const FEATURES = [
 
 function Indicator({ value }: { value: boolean }) {
   return value ? (
-    <Check className="w-4 h-4 text-accent-blue mx-auto" />
+    <Check className="w-4 h-4 text-success-green mx-auto" />
   ) : (
     <Minus className="w-4 h-4 text-secondary-midGray/30 mx-auto" />
   );

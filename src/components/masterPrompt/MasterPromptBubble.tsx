@@ -106,7 +106,7 @@ export default function MasterPromptBubble({
           type="button"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
-          className="w-full text-left bg-secondary-darkSurface text-primary-light border border-secondary-borderGray rounded-md rounded-tl-sm px-4 py-3 transition-colors hover:border-accent-blue"
+          className="w-full text-left bg-secondary-darkSurface text-primary-light border border-secondary-borderGray rounded-md rounded-tl-sm px-4 py-3 transition-colors hover:border-accent-orange"
         >
           <div className="text-body leading-relaxed font-medium">Master prompt generated.</div>
           <div className="mt-1 text-small text-secondary-midGray/70">
@@ -169,7 +169,7 @@ export default function MasterPromptBubble({
                   >
                     {copied ? (
                       <>
-                        <Check className="w-3 h-3" />
+                        <Check className="w-3 h-3 text-success-green" />
                         Copied
                       </>
                     ) : (

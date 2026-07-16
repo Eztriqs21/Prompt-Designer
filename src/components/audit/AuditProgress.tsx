@@ -35,8 +35,8 @@ function StageDot({ status }: { status: string }) {
   }
   if (status === 'running') {
     return (
-      <span className="w-3 h-3 rounded-full border border-accent-blue flex items-center justify-center">
-        <span className="w-1.5 h-1.5 rounded-full bg-accent-blue" />
+      <span className="w-3 h-3 rounded-full border border-accent-orange flex items-center justify-center">
+        <span className="w-1.5 h-1.5 rounded-full bg-accent-orange" />
       </span>
     );
   }
@@ -62,7 +62,7 @@ export default memo(function AuditProgress({ status, progress, stages, error }: 
       {/* Progress Bar */}
       <div className="h-1.5 rounded-full bg-secondary-darkSurface overflow-hidden">
         <div
-          className="h-full rounded-full bg-accent-blue transition-all duration-500 ease-out"
+          className="h-full rounded-full bg-accent-orange transition-all duration-500 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>

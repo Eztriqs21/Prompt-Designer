@@ -165,7 +165,7 @@ export default function PromptLibraryPane({
                       </button>
                     </div>
                     {copiedId === prompt.id && (
-                      <span className="text-small text-secondary-midGray">Copied</span>
+                      <span className="text-small text-success-green">Copied</span>
                     )}
                   </div>
                 </div>

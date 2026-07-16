@@ -52,8 +52,8 @@ export default memo(function AuditModeSelector({ value, onChange, disabled }: Au
               disabled={disabled}
               className={`relative text-left rounded-md border p-4 transition-colors duration-150 ${
                 isActive
-                  ? 'border-accent-blue bg-primary-light/5'
-                  : 'border-secondary-borderGray bg-secondary-darkSurface hover:border-accent-blue/30'
+                  ? 'border-accent-orange bg-primary-light/5'
+                  : 'border-secondary-borderGray bg-secondary-darkSurface hover:border-accent-orange/30'
               } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               {config.recommended && (
@@ -63,7 +63,7 @@ export default memo(function AuditModeSelector({ value, onChange, disabled }: Au
               )}
 
               <div className="flex items-center gap-2.5 mb-2">
-                <Icon className={`w-5 h-5 ${isActive ? 'text-accent-blue' : 'text-secondary-midGray'}`} />
+                <Icon className={`w-5 h-5 ${isActive ? 'text-accent-orange' : 'text-secondary-midGray'}`} />
                 <span className="text-subheading text-primary-light">{config.label}</span>
               </div>
 

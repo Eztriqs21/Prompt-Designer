@@ -170,7 +170,7 @@ export default function HistoryPage() {
                       >
                         {copiedId === prompt.id ? (
                           <>
-                            <Check className="w-3.5 h-3.5 text-accent-blue" />
+                            <Check className="w-3.5 h-3.5 text-success-green" />
                             Copied
                           </>
                         ) : (
@@ -247,7 +247,7 @@ export default function HistoryPage() {
                       >
                         {copiedId === audit.id ? (
                           <>
-                            <Check className="w-3.5 h-3.5 text-accent-blue" />
+                            <Check className="w-3.5 h-3.5 text-success-green" />
                             Copied
                           </>
                         ) : (

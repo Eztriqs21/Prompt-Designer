@@ -10,7 +10,7 @@ interface ChipProps {
 
 const variants: Record<Variant, string> = {
   default: 'bg-secondary-darkSurface text-secondary-midGray border-secondary-borderGray',
-  accent: 'bg-secondary-darkSurface text-accent-blue border-accent-blue',
+  accent: 'bg-secondary-darkSurface text-accent-orange border-accent-orange',
   danger: 'bg-secondary-darkSurface text-semantic-dangerRed border-semantic-dangerRed',
 };
 

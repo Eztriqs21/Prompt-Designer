@@ -13,13 +13,13 @@ const SECTION_CONFIG: Record<SectionType, { label: string; icon: typeof Code; co
   coding: {
     label: 'Coding',
     icon: Code,
-    color: 'text-accent-blue',
+    color: 'text-accent-orange',
     description: 'Implementation brief for your coding agent',
   },
   'ui-ux': {
     label: 'UI/UX',
     icon: Palette,
-    color: 'text-accent-blue',
+    color: 'text-accent-orange',
     description: 'Design specification for your coding agent',
   },
   audit: {
@@ -41,9 +41,9 @@ export default memo(function SectionCard({ type, state, isActive, onClick }: Sec
       onClick={onClick}
       className={`w-full text-left p-4 rounded-md border transition-colors duration-150 ${
         isActive
-          ? 'bg-secondary-darkSurface border-accent-blue/30'
+          ? 'bg-secondary-darkSurface border-accent-orange/30'
           : hasData
-          ? 'bg-secondary-darkSurface border-secondary-borderGray hover:border-accent-blue/20'
+          ? 'bg-secondary-darkSurface border-secondary-borderGray hover:border-accent-orange/20'
           : 'bg-primary-dark border-secondary-borderGray hover:border-secondary-borderGray'
       }`}
     >
@@ -57,11 +57,11 @@ export default memo(function SectionCard({ type, state, isActive, onClick }: Sec
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className={`text-body font-medium ${isActive ? 'text-accent-blue' : hasData ? 'text-primary-light' : 'text-secondary-midGray'}`}>
+            <h4 className={`text-body font-medium ${isActive ? 'text-accent-orange' : hasData ? 'text-primary-light' : 'text-secondary-midGray'}`}>
               {config.label}
             </h4>
             {hasData && !isGenerating && (
-              <span className="text-small text-accent-blue font-medium">Ready</span>
+              <span className="text-small text-success-green font-medium">Ready</span>
             )}
             {isGenerating && (
               <span className="text-small text-secondary-midGray font-medium">Generating...</span>
@@ -75,7 +75,7 @@ export default memo(function SectionCard({ type, state, isActive, onClick }: Sec
           )}
         </div>
         <ChevronRight className={`w-4 h-4 shrink-0 mt-1 transition-colors ${
-          isActive ? 'text-accent-blue' : 'text-secondary-midGray/40'
+          isActive ? 'text-accent-orange' : 'text-secondary-midGray/40'
         }`} />
       </div>
     </button>

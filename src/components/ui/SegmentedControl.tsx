@@ -31,7 +31,7 @@ export default function SegmentedControl<T extends string>({
             onClick={() => onChange(opt.value)}
             className={`px-3 py-1.5 rounded-sm text-small transition-colors duration-150 ${
               active
-                ? 'bg-accent-blue text-primary-light'
+                ? 'bg-accent-orange text-primary-dark'
                 : 'bg-secondary-darkSurface text-secondary-midGray hover:text-primary-light'
             }`}
           >

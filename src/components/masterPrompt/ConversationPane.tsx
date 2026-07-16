@@ -82,13 +82,13 @@ export default function ConversationPane({
         {isGenerating && !error && (
           <div className="flex items-start gap-3">
             <div className="w-7 h-7 rounded-md bg-secondary-darkSurface border border-secondary-borderGray flex items-center justify-center shrink-0 mt-0.5">
-              <Loader2 className="w-3.5 h-3.5 text-accent-blue animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 text-accent-orange animate-spin" />
             </div>
             <div className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md rounded-tl-sm px-4 py-3">
               <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-accent-blue/40 animate-pulse-subtle" />
-                <div className="w-1.5 h-1.5 rounded-full bg-accent-blue/40 animate-pulse-subtle" style={{ animationDelay: '300ms' }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-accent-blue/40 animate-pulse-subtle" style={{ animationDelay: '600ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-orange/40 animate-pulse-subtle" />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-orange/40 animate-pulse-subtle" style={{ animationDelay: '300ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-orange/40 animate-pulse-subtle" style={{ animationDelay: '600ms' }} />
               </div>
             </div>
           </div>
@@ -103,7 +103,7 @@ export default function ConversationPane({
               <p className="text-body text-semantic-dangerRed whitespace-pre-wrap">{error}</p>
               <button
                 onClick={() => onGenerate('')}
-                className="mt-2 text-small text-accent-blue hover:underline"
+                className="mt-2 text-small text-accent-orange hover:underline"
               >
                 Retry
               </button>

@@ -11,9 +11,12 @@ colors:
     darkSurface: "#302c2c" # Elevated cards, panels, modals
     borderGray: "#646262" # Borders, dividers, outlines
   accent:
-    blue: "#007aff"       # Interactive highlights, links, selected states
+    orange: "#fab283"     # Primary actions, links, selection, focus
+    purple: "#9d7cd8"     # Headings / keywords
   semantic:
-    dangerRed: "#ff3b30"  # Error states, destructive actions
+    successGreen: "#7fd88f" # Success / strings
+    warnYellow: "#e5c07b"   # Warnings
+    dangerRed: "#ff3b30"    # Error states, destructive actions
 
 typography:
   fontFamily:
@@ -90,7 +93,7 @@ components:
     width: 260
   button:
     primary:
-      background: "primary.light"
+      background: "accent.orange"
       textColor: "primary.dark"
       radius: "radius.md"
       paddingX: 16
@@ -112,7 +115,7 @@ components:
     radius: "radius.md"
     paddingX: 12
     paddingY: 8
-    focusRingColor: "accent.blue"
+    focusRingColor: "accent.orange"
   card:
     background: "secondary.darkSurface"
     textColor: "primary.light"
@@ -140,7 +143,7 @@ components:
   segmentedControl:
     background: "primary.dark"
     segmentBackground: "secondary.darkSurface"
-    segmentSelectedBackground: "accent.blue"
+    segmentSelectedBackground: "accent.orange"
     segmentTextColor: "secondary.midGray"
     segmentSelectedTextColor: "primary.light"
     borderColor: "secondary.borderGray"
@@ -171,7 +174,7 @@ brand:
 ## 1. Overview
 
 This design system is for a developer-focused AI app that combines a **Prompt Workspace** with a **Website AUDIT** tool.  
-The UI should feel like a serious, reliable developer console, not a marketing site. It is **monochrome-first** with subtle blue accents, built for clarity, keyboard control, and high attention to detail.
+The UI should feel like a serious, reliable developer console, not a marketing site. It is **monochrome** with an orange accent, purple for headings/keywords, and semantic green/yellow/red — no blue. Built for clarity, keyboard control, and high attention to detail.
 
 Agents MUST treat this app as a **tool interface**, not a landing page. Prioritize legibility, hierarchy, and responsiveness.
 
@@ -180,8 +183,10 @@ Key principles:
 - Single monospace font everywhere (code-like feel).
 - Dark base surfaces with lighter text and cards.
 - Minimal shadows; hierarchy expressed via spacing, borders, and typography.
-- Blue accent only for real interactivity (selected states, links, highlights).
-- Red only for genuine error/destructive states.
+- Orange accent for real interactivity (primary actions, links, selected states, focus).
+- Purple for headings and keywords (e.g., prompt section labels, markdown headings, **bold**).
+- Green for success / strings (code, "Copied", "Ready", low severity).
+- Yellow for warnings (medium severity). Red only for genuine error/destructive/critical states.
 
 ## 2. Layout & Structure
 
@@ -211,7 +216,7 @@ Agents SHOULD reuse the same page shell (sidebar + header + content) across all 
 - Active item:
   - Background: `components.sidebar.activeBackground`.
   - Text: `components.sidebar.activeTextColor`.
-  - Optionally, a 2–4px Accent.Blue bar on the left edge.
+  - Optionally, a 2–4px Accent.Orange bar on the left edge.
 - Inactive items:
   - Text: `components.sidebar.textColor` (muted).
   - No strong background; maybe a slight dark hover.
@@ -257,7 +262,7 @@ Baseline:
   - Use `components.button.secondary` tokens.
   - Hover: subtle background and border color shift.
 
-Agents MUST NOT use bright, multi-colored buttons. Keep them monochrome with Accent.Blue carefully used for outlines or focus.
+Agents MUST NOT use bright, multi-colored buttons. Keep them monochrome with orange used for outlines/focus and purple for headings/keywords.
 
 ### Inputs
 
@@ -267,7 +272,7 @@ Agents MUST NOT use bright, multi-colored buttons. Keep them monochrome with Acc
   - search fields.
 - Placeholder text in `components.input.placeholderColor`.
 - Focus:
-  - show a clear but subtle focus ring in Accent.Blue around the input.
+  - show a clear but subtle focus ring in orange around the input.
 
 Keep inputs flat. Do NOT add inner shadows or glassmorphism.
 
@@ -283,7 +288,7 @@ Use `components.card` for:
 Selected card state:
 
 - Maintain background, emphasize border:
-  - strengthen borderColor (toward Accent.Blue or lighter BorderGray),
+  - strengthen borderColor (toward orange or lighter BorderGray),
   - optionally add a thin inner glow.
 
 ### Tables
@@ -313,8 +318,10 @@ Use `components.chip` for:
 Severity colors:
 
 - Base chip style plus:
-  - DangerRed text/border accent for “critical”/“error”.
-  - Accent.Blue accent for important but non-error labels.
+  - DangerRed text/border for “critical”/“high”/“error”.
+  - WarnYellow for “medium”.
+  - SuccessGreen for “low”.
+  - Orange accent for important but non-error labels.
 
 Chip text stays small and monospace.
 
@@ -327,7 +334,7 @@ Use `components.segmentedControl` for:
 
 Selected segment:
 
-- Background: `components.segmentedControl.segmentSelectedBackground` (Accent.Blue).
+  - Background: `components.segmentedControl.segmentSelectedBackground` (orange).
 - Text: `components.segmentedControl.segmentSelectedTextColor` (light).
 
 Unselected segment:
@@ -380,7 +387,7 @@ Mode selector:
 
 Progress & report:
 
-- Progress bar using Accent.Blue.
+- Progress bar using orange.
 - Stage labels in Small typography and Secondary.MidGray.
 - Report structured into sections (Code, Browser, Accessibility, Performance, Security).
 - Each section uses Card + Table to show findings and evidence.
@@ -400,7 +407,7 @@ Comparison table:
   - date/time,
   - type,
   - status.
-- Use subtle hover states (background tint, Accent.Blue underline on title).
+- Use subtle hover states (background tint, orange underline on title).
 
 Empty states:
 
@@ -442,7 +449,7 @@ Agents SHOULD treat motion as a secondary layer. Core layout and hierarchy come 
 
 - Keep the UI calm, serious, and technical.
 - Use monospace for everything.
-- Use Accent.Blue sparingly for interactive states.
+- Use orange for interactive states; purple for headings/keywords; green/yellow/red for semantic states. No blue.
 - Use Small typography for metadata and labels.
 - Use the spacing scale and radius tokens consistently.
 

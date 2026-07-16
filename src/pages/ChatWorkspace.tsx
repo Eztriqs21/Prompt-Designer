@@ -54,7 +54,7 @@ export default function ChatWorkspace() {
             {isInSpecificChat && (
               <button
                 onClick={handleBackToList}
-                className="p-1.5 rounded-md text-secondary-midGray hover:text-accent-blue hover:bg-secondary-darkSurface transition-colors"
+                className="p-1.5 rounded-md text-secondary-midGray hover:text-accent-orange hover:bg-secondary-darkSurface transition-colors"
                 aria-label="Back to chat list"
               >
                 <ArrowLeft className="w-4 h-4" />
