@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { motion, MotionConfig } from 'framer-motion';
 import Sidebar from './components/layout/Sidebar';
 import HomePage from './pages/HomePage';
+import HeroLandingPage from './pages/HeroLandingPage';
 import ChatWorkspace from './pages/ChatWorkspace';
 import HistoryPage from './pages/HistoryPage';
 import AuditPage from './pages/AuditPage';
@@ -19,12 +20,27 @@ function AnimatedRoutes() {
       transition={{ duration: 0.2, ease: 'easeOut' }}
     >
       <Routes location={location}>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<HeroLandingPage />} />
+        <Route path="/home" element={<HomePage />} />
         <Route path="/chat/*" element={<ChatWorkspace />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/audit" element={<AuditPage />} />
       </Routes>
     </motion.div>
+  );
+}
+
+function AppLayout() {
+  const location = useLocation();
+  const showSidebar = location.pathname !== '/';
+  return (
+    <div className="flex w-full min-h-screen bg-primary-dark text-primary-light">
+      {showSidebar && <Sidebar />}
+      <main className="flex-1 min-w-0 overflow-x-hidden">
+        <AnimatedRoutes />
+      </main>
+      <CommandPalette />
+    </div>
   );
 }
 
@@ -34,13 +50,7 @@ export default function App() {
       <MotionConfig reducedMotion="user">
         <ChatProvider>
           <ToastProvider>
-            <div className="flex w-full min-h-screen bg-primary-dark text-primary-light">
-              <Sidebar />
-              <main className="flex-1 min-w-0 overflow-x-hidden">
-                <AnimatedRoutes />
-              </main>
-              <CommandPalette />
-            </div>
+            <AppLayout />
           </ToastProvider>
         </ChatProvider>
       </MotionConfig>
