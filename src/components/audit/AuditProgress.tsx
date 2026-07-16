@@ -1,5 +1,4 @@
 import { memo } from 'react';
-import { Check, Loader2, AlertCircle, Clock } from 'lucide-react';
 import type { AuditStatus, AuditJobStages } from '../../types';
 
 interface AuditProgressProps {
@@ -9,13 +8,13 @@ interface AuditProgressProps {
   error: string | null;
 }
 
-const STAGE_ORDER: Array<{ key: keyof AuditJobStages; label: string }> = [
-  { key: 'ingesting', label: 'Ingesting input' },
-  { key: 'analyzing', label: 'Analyzing code' },
-  { key: 'testing', label: 'Browser testing' },
-  { key: 'accessibility', label: 'Accessibility & performance' },
-  { key: 'collecting', label: 'Collecting evidence' },
-  { key: 'summarizing', label: 'Generating report' },
+const STAGE_ORDER: { key: keyof AuditJobStages; label: string; description: string }[] = [
+  { key: 'ingesting', label: 'Ingesting', description: 'Ingest and validate the input source' },
+  { key: 'analyzing', label: 'Analyzing', description: 'Statically analyze code for issues' },
+  { key: 'testing', label: 'Testing', description: 'Run browser checks against rendered pages' },
+  { key: 'accessibility', label: 'A11y & Perf', description: 'Evaluate accessibility and performance' },
+  { key: 'collecting', label: 'Collecting', description: 'Capture evidence: screenshots, console, network' },
+  { key: 'summarizing', label: 'Reporting', description: 'Generate the AI audit report' },
 ];
 
 const STATUS_TEXT: Record<string, string> = {
@@ -30,76 +29,74 @@ const STATUS_TEXT: Record<string, string> = {
   failed: 'Audit failed',
 };
 
-function StageIcon({ stageStatus }: { stageStatus: string }) {
-  if (stageStatus === 'completed') {
-    return <Check className="w-3.5 h-3.5 text-accent-success" />;
+function StageDot({ status }: { status: string }) {
+  if (status === 'completed') {
+    return <span className="w-3 h-3 rounded-full bg-primary-light border border-secondary-borderGray" />;
   }
-  if (stageStatus === 'running') {
-    return <Loader2 className="w-3.5 h-3.5 text-accent-info animate-spin" />;
+  if (status === 'running') {
+    return (
+      <span className="w-3 h-3 rounded-full border border-accent-blue flex items-center justify-center">
+        <span className="w-1.5 h-1.5 rounded-full bg-accent-blue" />
+      </span>
+    );
   }
-  if (stageStatus === 'failed') {
-    return <AlertCircle className="w-3.5 h-3.5 text-accent-error" />;
+  if (status === 'failed') {
+    return (
+      <span className="w-3 h-3 rounded-full border border-semantic-dangerRed flex items-center justify-center">
+        <span className="w-1.5 h-1.5 rounded-full bg-semantic-dangerRed" />
+      </span>
+    );
   }
-  return <Clock className="w-3.5 h-3.5 text-ink-muted/30" />;
+  return <span className="w-3 h-3 rounded-full border border-secondary-midGray/30" />;
 }
 
 export default memo(function AuditProgress({ status, progress, stages, error }: AuditProgressProps) {
   return (
-    <div className="bg-surface-alt border border-border-soft rounded-md p-6 space-y-5">
+    <div className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-ink-primary">Audit Progress</h3>
-        <span className="text-xs text-ink-muted">{Math.round(progress)}%</span>
+        <h3 className="text-sm font-medium text-primary-light">Audit Progress</h3>
+        <span className="text-xs text-secondary-midGray">{Math.round(progress)}%</span>
       </div>
 
       {/* Progress Bar */}
-      <div className="h-1.5 rounded-full bg-surface-base overflow-hidden">
+      <div className="h-1.5 rounded-full bg-secondary-darkSurface overflow-hidden">
         <div
-          className="h-full rounded-full bg-ink-primary transition-all duration-500 ease-out"
+          className="h-full rounded-full bg-accent-blue transition-all duration-500 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
 
       {/* Status Text */}
-      <p className="text-sm text-ink-muted">
-        {error || STATUS_TEXT[status] || 'Processing...'}
-      </p>
+      <p className="text-sm text-secondary-midGray">{error || STATUS_TEXT[status] || 'Processing...'}</p>
 
-      {/* Stage Timeline */}
+      {/* Stage Stepper */}
       {stages && (
-        <div className="space-y-1">
-          {STAGE_ORDER.map(({ key, label }) => {
+        <div className="flex flex-wrap gap-x-5 gap-y-3 pt-1">
+          {STAGE_ORDER.map(({ key, label, description }) => {
             const stageData = stages[key];
             if (!stageData || stageData.status === 'skipped') return null;
 
+            const dimmed = stageData.status === 'pending';
+            const failed = stageData.status === 'failed';
+            const running = stageData.status === 'running';
+
             return (
-              <div
-                key={key}
-                className={`flex items-center gap-3 py-1.5 px-3 rounded-md transition-colors duration-150 ${
-                  stageData.status === 'running'
-                    ? 'bg-surface-base'
-                    : stageData.status === 'completed'
-                    ? 'opacity-60'
-                    : ''
-                }`}
-              >
-                <StageIcon stageStatus={stageData.status} />
-                <span className={`text-xs ${
-                  stageData.status === 'running'
-                    ? 'text-ink-primary'
-                    : stageData.status === 'completed'
-                    ? 'text-ink-muted'
-                    : stageData.status === 'failed'
-                    ? 'text-accent-error'
-                    : 'text-ink-muted/40'
-                }`}>
+              <div key={key} className="flex flex-col items-center gap-1.5 text-center" title={description}>
+                <StageDot status={stageData.status} />
+                <span
+                  className={`text-small ${
+                    failed
+                      ? 'text-semantic-dangerRed'
+                      : dimmed
+                        ? 'text-secondary-midGray/30'
+                        : running
+                          ? 'text-primary-light'
+                          : 'text-secondary-midGray'
+                  }`}
+                >
                   {label}
                 </span>
-                {stageData.status === 'completed' && stageData.completedAt && stageData.startedAt && (
-                  <span className="ml-auto text-xs text-ink-muted/40">
-                    {((stageData.completedAt - stageData.startedAt) / 1000).toFixed(1)}s
-                  </span>
-                )}
               </div>
             );
           })}

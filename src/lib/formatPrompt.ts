@@ -1,7 +1,8 @@
 /**
- * Lightweight prompt text formatter.
- * Converts raw generated prompt text into structured HTML for display.
- * Falls back to escaped raw text if anything goes wrong.
+ * Lightweight prompt text formatter (v2 tokenized).
+ * Converts raw generated prompt text into structured HTML for display using the
+ * monochrome design tokens (no off-palette colors). Falls back to escaped
+ * raw text if anything goes wrong. Input is escaped, so the emitted HTML is safe.
  */
 
 function escapeHtml(text: string): string {
@@ -12,47 +13,40 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function processInlineFormatting(text: string): string {
+function processInline(text: string): string {
   return text
-    // Bold: **text**
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white/90 font-semibold">$1</strong>')
-    // Italic: *text*
-    .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em class="text-white/60 italic">$1</em>')
-    // Inline code: `text`
-    .replace(/`([^`]+)`/g, '<code class="text-[12px] font-mono bg-white/[0.06] px-1.5 py-0.5 rounded text-indigo-300/80">$1</code>');
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-primary-light">$1</strong>')
+    .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em class="text-secondary-midGray italic">$1</em>')
+    .replace(
+      /`([^`]+)`/g,
+      '<code class="text-small bg-primary-dark/40 border border-secondary-borderGray rounded px-1.5 py-0.5">$1</code>',
+    );
 }
 
 export function formatPromptContent(raw: string): string {
   try {
     if (!raw) return '';
 
-    // Normalize line endings
-    let text = raw.replace(/\r\n/g, '\n');
-
-    // Collapse 3+ consecutive newlines to 2
-    text = text.replace(/\n{3,}/g, '\n\n');
-
-    // Trim leading/trailing whitespace
-    text = text.trim();
-
+    let text = raw.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
     const lines = text.split('\n');
     const htmlParts: string[] = [];
     let inCodeBlock = false;
     let codeContent = '';
     let inList = false;
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
+    for (const line of lines) {
       const trimmed = line.trim();
 
-      // Code block: ``` ... ```
       if (trimmed.startsWith('```')) {
         if (inCodeBlock) {
-          htmlParts.push(`<pre class="bg-black/40 border border-white/[0.05] rounded-lg px-4 py-3 my-3 overflow-x-auto"><code class="text-[12px] font-mono text-white/70 leading-relaxed">${escapeHtml(codeContent.trim())}</code></pre>`);
+          htmlParts.push(
+            `<pre class="bg-primary-dark/40 border border-secondary-borderGray rounded-md px-4 py-3 my-3 overflow-x-auto"><code class="text-small text-secondary-midGray leading-relaxed">${escapeHtml(
+              codeContent.trim(),
+            )}</code></pre>`,
+          );
           codeContent = '';
           inCodeBlock = false;
         } else {
-          // Close any open list
           if (inList) {
             htmlParts.push('</ul>');
             inList = false;
@@ -67,7 +61,6 @@ export function formatPromptContent(raw: string): string {
         continue;
       }
 
-      // Empty line = paragraph break
       if (trimmed === '') {
         if (inList) {
           htmlParts.push('</ul>');
@@ -77,7 +70,6 @@ export function formatPromptContent(raw: string): string {
         continue;
       }
 
-      // Section header: === SECTION N: NAME ===
       const sectionMatch = trimmed.match(/^===+\s*SECTION\s+\d+:\s*(.+?)\s*===+$/i);
       if (sectionMatch) {
         if (inList) {
@@ -85,12 +77,13 @@ export function formatPromptContent(raw: string): string {
           inList = false;
         }
         htmlParts.push(
-          `<h3 class="text-[14px] font-semibold text-white/90 mt-5 mb-2 tracking-wide">${escapeHtml(sectionMatch[1])}</h3>`
+          `<h3 class="text-body font-semibold text-primary-light mt-4 mb-2">${escapeHtml(
+            sectionMatch[1],
+          )}</h3>`,
         );
         continue;
       }
 
-      // Standalone header-like lines (all caps, or starts with #)
       if (/^#{1,3}\s/.test(trimmed)) {
         if (inList) {
           htmlParts.push('</ul>');
@@ -98,29 +91,28 @@ export function formatPromptContent(raw: string): string {
         }
         const level = trimmed.match(/^(#{1,3})/)?.[1].length || 1;
         const headerText = trimmed.replace(/^#{1,3}\s+/, '');
-        const cls = level === 1
-          ? 'text-[15px] font-bold text-white/90 mt-5 mb-2'
-          : level === 2
-            ? 'text-[14px] font-semibold text-white/85 mt-4 mb-2'
-            : 'text-[13px] font-medium text-white/80 mt-3 mb-1.5';
-        htmlParts.push(`<h4 class="${cls}">${processInlineFormatting(escapeHtml(headerText))}</h4>`);
+        const cls =
+          level === 1
+            ? 'text-body font-semibold text-primary-light mt-4 mb-2'
+            : 'text-small font-medium text-primary-light mt-3 mb-1.5';
+        htmlParts.push(`<h4 class="${cls}">${processInline(escapeHtml(headerText))}</h4>`);
         continue;
       }
 
-      // Bullet points: - text or * text
       if (/^[-*]\s+/.test(trimmed)) {
         if (!inList) {
-          htmlParts.push('<ul class="ml-4 mb-2 space-y-1">');
+          htmlParts.push('<ul class="pl-4 mb-2 space-y-1">');
           inList = true;
         }
         const bulletText = trimmed.replace(/^[-*]\s+/, '');
         htmlParts.push(
-          `<li class="text-[13px] text-white/65 leading-relaxed pl-1 relative before:content-[''] before:absolute before:-left-3 before:top-[9px] before:w-1 before:h-1 before:rounded-full before:bg-white/20">${processInlineFormatting(escapeHtml(bulletText))}</li>`
+          `<li class="text-small text-secondary-midGray leading-relaxed pl-3 border-l border-secondary-borderGray">${processInline(
+            escapeHtml(bulletText),
+          )}</li>`,
         );
         continue;
       }
 
-      // Numbered list: 1. text
       if (/^\d+\.\s+/.test(trimmed)) {
         if (inList) {
           htmlParts.push('</ul>');
@@ -129,23 +121,23 @@ export function formatPromptContent(raw: string): string {
         const numMatch = trimmed.match(/^(\d+)\.\s+(.+)/);
         if (numMatch) {
           htmlParts.push(
-            `<div class="flex gap-3 mb-1.5 ml-2"><span class="text-[12px] text-white/30 font-mono mt-0.5 shrink-0">${numMatch[1]}.</span><span class="text-[13px] text-white/65 leading-relaxed">${processInlineFormatting(escapeHtml(numMatch[2]))}</span></div>`
+            `<div class="flex gap-3 mb-1.5"><span class="text-small text-secondary-midGray/40 font-medium mt-0.5 shrink-0">${numMatch[1]}.</span><span class="text-small text-secondary-midGray leading-relaxed">${processInline(
+              escapeHtml(numMatch[2]),
+            )}</span></div>`,
           );
         }
         continue;
       }
 
-      // Horizontal rule: --- or ***
       if (/^[-*_]{3,}$/.test(trimmed)) {
         if (inList) {
           htmlParts.push('</ul>');
           inList = false;
         }
-        htmlParts.push('<hr class="border-white/[0.06] my-4" />');
+        htmlParts.push('<hr class="border-secondary-borderGray my-4" />');
         continue;
       }
 
-      // Blockquote: > text
       if (trimmed.startsWith('>')) {
         if (inList) {
           htmlParts.push('</ul>');
@@ -153,30 +145,37 @@ export function formatPromptContent(raw: string): string {
         }
         const quoteText = trimmed.replace(/^>\s*/, '');
         htmlParts.push(
-          `<blockquote class="border-l-2 border-white/10 pl-4 my-2 text-[13px] text-white/45 italic">${processInlineFormatting(escapeHtml(quoteText))}</blockquote>`
+          `<blockquote class="border-l-2 border-secondary-borderGray pl-4 my-2 text-small text-secondary-midGray italic">${processInline(
+            escapeHtml(quoteText),
+          )}</blockquote>`,
         );
         continue;
       }
 
-      // Regular paragraph
       if (inList) {
         htmlParts.push('</ul>');
         inList = false;
       }
       htmlParts.push(
-        `<p class="text-[13px] text-white/60 leading-[1.7] mb-2">${processInlineFormatting(escapeHtml(trimmed))}</p>`
+        `<p class="text-small text-secondary-midGray leading-relaxed mb-2">${processInline(
+          escapeHtml(trimmed),
+        )}</p>`,
       );
     }
 
-    // Close any open elements
     if (inList) htmlParts.push('</ul>');
     if (inCodeBlock) {
-      htmlParts.push(`<pre class="bg-black/40 border border-white/[0.05] rounded-lg px-4 py-3 my-3 overflow-x-auto"><code class="text-[12px] font-mono text-white/70 leading-relaxed">${escapeHtml(codeContent.trim())}</code></pre>`);
+      htmlParts.push(
+        `<pre class="bg-primary-dark/40 border border-secondary-borderGray rounded-md px-4 py-3 my-3 overflow-x-auto"><code class="text-small text-secondary-midGray leading-relaxed">${escapeHtml(
+          codeContent.trim(),
+        )}</code></pre>`,
+      );
     }
 
     return htmlParts.join('\n');
   } catch {
-    // Fallback: return escaped raw text
-    return `<pre class="text-[12px] font-mono whitespace-pre-wrap leading-relaxed text-white/70">${escapeHtml(raw)}</pre>`;
+    return `<pre class="text-small text-secondary-midGray whitespace-pre-wrap leading-relaxed">${escapeHtml(
+      raw,
+    )}</pre>`;
   }
 }

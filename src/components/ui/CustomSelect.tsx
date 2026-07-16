@@ -101,11 +101,11 @@ export default function CustomSelect({
         type="button"
         onClick={() => setIsOpen((v) => !v)}
         onKeyDown={handleKeyDown}
-        className="w-full flex items-center justify-between appearance-none bg-surface-base hover:bg-surface-alt border border-border-soft hover:border-ink-muted/30 rounded-md px-3 py-2 text-sm text-ink-primary focus:outline-none focus:border-ink-muted/40 transition-colors cursor-pointer"
+        className="w-full flex items-center justify-between appearance-none bg-primary-dark hover:bg-secondary-darkSurface border border-secondary-borderGray hover:border-accent-blue/30 rounded-md px-3 py-2 text-sm text-primary-light focus:outline-none focus:border-accent-blue/40 transition-colors cursor-pointer"
       >
         <span className="truncate font-medium">{selectedLabel}</span>
         <span className={`ml-2 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
-          <ChevronDown className="w-3.5 h-3.5 text-ink-muted" />
+          <ChevronDown className="w-3.5 h-3.5 text-secondary-midGray" />
         </span>
       </button>
 
@@ -113,7 +113,7 @@ export default function CustomSelect({
       {isOpen && (
         <div
           ref={listRef}
-          className="fixed z-[9999] mt-1.5 rounded-md border border-border-soft bg-surface-base shadow-md overflow-hidden max-h-60 overflow-y-auto"
+          className="fixed z-[9999] mt-1.5 rounded-md border border-secondary-borderGray bg-primary-dark shadow-md overflow-hidden max-h-60 overflow-y-auto"
           style={{
             width: containerRef.current?.offsetWidth ?? 200,
             top: (containerRef.current?.getBoundingClientRect().bottom ?? 0) + 6,
@@ -136,14 +136,14 @@ export default function CustomSelect({
                   onMouseEnter={() => setHighlightedIndex(index)}
                   className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between transition-colors duration-100 ${
                     isSelected
-                      ? 'text-ink-primary bg-surface-alt'
+                      ? 'text-primary-light bg-secondary-darkSurface'
                       : isHighlighted
-                        ? 'text-ink-primary bg-surface-alt'
-                        : 'text-ink-muted hover:text-ink-primary hover:bg-surface-alt'
+                        ? 'text-primary-light bg-secondary-darkSurface'
+                        : 'text-secondary-midGray hover:text-primary-light hover:bg-secondary-darkSurface'
                   }`}
                 >
                   <span className="font-medium">{option.label}</span>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-ink-muted shrink-0" />}
+                  {isSelected && <Check className="w-3.5 h-3.5 text-secondary-midGray shrink-0" />}
                 </button>
               );
             })}

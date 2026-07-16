@@ -1,326 +1,462 @@
-# Design System — Prompt Designer
+---
+name: Prompt Workspace + Website AUDIT
+version: 2.0.0
 
-Canonical design spec for all UI work. Every component, page, and interaction follows these tokens and guidelines.
+colors:
+  primary:
+    dark: "#201d1d"       # Backgrounds, button fills, main ink on light surfaces
+    light: "#fdfcfc"      # Text on dark surfaces, button text, light surfaces
+  secondary:
+    midGray: "#9a9898"    # Secondary text, muted labels and links
+    darkSurface: "#302c2c" # Elevated cards, panels, modals
+    borderGray: "#646262" # Borders, dividers, outlines
+  accent:
+    blue: "#007aff"       # Interactive highlights, links, selected states
+  semantic:
+    dangerRed: "#ff3b30"  # Error states, destructive actions
+
+typography:
+  fontFamily:
+    base: "JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace"
+  styles:
+    display:
+      size: 56
+      weight: 700
+      lineHeight: 1.1
+      letterSpacing: 0
+    heading:
+      size: 24
+      weight: 700
+      lineHeight: 1.2
+      letterSpacing: 0
+    subheading:
+      size: 18
+      weight: 500
+      lineHeight: 1.3
+      letterSpacing: 0
+    body:
+      size: 16
+      weight: 400
+      lineHeight: 1.5
+      letterSpacing: 0
+    small:
+      size: 13
+      weight: 400
+      lineHeight: 1.4
+      letterSpacing: 0.02
+
+spacing:
+  scale:
+    xs: 4
+    sm: 8
+    md: 12
+    lg: 16
+    xl: 24
+    "2xl": 32
+    "3xl": 48
+    "4xl": 64
+  layout:
+    pagePadding: 24
+    sectionGap: 32
+    cardGap: 16
+    containerWidth: 1200   # inner content container
+
+radius:
+  sm: 4
+  md: 6
+  lg: 8
+  pill: 999
+
+elevation:
+  card:
+    background: "secondary.darkSurface"
+    borderColor: "secondary.borderGray"
+    borderWidth: 1
+    shadow: "none"
+
+components:
+  page:
+    background: "primary.dark"
+    textColor: "primary.light"
+    containerWidth: "spacing.layout.containerWidth"
+    paddingX: "spacing.layout.pagePadding"
+    paddingY: "spacing.layout.pagePadding"
+  sidebar:
+    background: "primary.dark"
+    textColor: "secondary.midGray"
+    activeBackground: "secondary.darkSurface"
+    activeTextColor: "primary.light"
+    borderColor: "secondary.borderGray"
+    width: 260
+  button:
+    primary:
+      background: "primary.light"
+      textColor: "primary.dark"
+      radius: "radius.md"
+      paddingX: 16
+      paddingY: 8
+    secondary:
+      background: "secondary.darkSurface"
+      textColor: "secondary.midGray"
+      borderColor: "secondary.borderGray"
+      borderWidth: 1
+      radius: "radius.md"
+      paddingX: 16
+      paddingY: 8
+  input:
+    background: "secondary.darkSurface"
+    textColor: "primary.light"
+    placeholderColor: "secondary.midGray"
+    borderColor: "secondary.borderGray"
+    borderWidth: 1
+    radius: "radius.md"
+    paddingX: 12
+    paddingY: 8
+    focusRingColor: "accent.blue"
+  card:
+    background: "secondary.darkSurface"
+    textColor: "primary.light"
+    borderColor: "secondary.borderGray"
+    borderWidth: 1
+    radius: "radius.md"
+    padding: "spacing.lg"
+  table:
+    headerBackground: "primary.dark"
+    headerTextColor: "secondary.midGray"
+    rowBackground: "secondary.darkSurface"
+    rowTextColor: "primary.light"
+    borderColor: "secondary.borderGray"
+    borderWidth: 1
+    rowPaddingY: 8
+    rowPaddingX: 12
+  chip:
+    background: "secondary.darkSurface"
+    textColor: "secondary.midGray"
+    borderColor: "secondary.borderGray"
+    borderWidth: 1
+    radius: "radius.pill"
+    paddingX: 8
+    paddingY: 4
+  segmentedControl:
+    background: "primary.dark"
+    segmentBackground: "secondary.darkSurface"
+    segmentSelectedBackground: "accent.blue"
+    segmentTextColor: "secondary.midGray"
+    segmentSelectedTextColor: "primary.light"
+    borderColor: "secondary.borderGray"
+    borderWidth: 1
+    radius: "radius.md"
+
+motion:
+  duration:
+    fast: 0.15
+    normal: 0.2
+    slow: 0.4
+  easing:
+    standard: "cubic-bezier(0.4, 0, 0.2, 1)"
+  respectsReducedMotion: true
+
+accessibility:
+  minContrastRatio: 4.5
+  prefersReducedMotion: true
+
+brand:
+  tone: "developer-first, calm, technical"
+  personality: "serious tool, high craft, minimal flair"
 
 ---
 
-## Overview
+# Prompt Workspace + Website AUDIT — DESIGN.md v2
 
-Dark, developer-first design system inspired by warm terminal aesthetics.
+## 1. Overview
 
-- **Dark surfaces** with high-contrast foreground text
-- **Single monospace font** (JetBrains Mono) across the entire app
-- **Warm accent palette** — orange primary, purple headings, blue focus states
-- **Calm motion** — 150–200ms transitions, no flashy effects
-- **Technical voice** — headings and copy read like a README
+This design system is for a developer-focused AI app that combines a **Prompt Workspace** with a **Website AUDIT** tool.  
+The UI should feel like a serious, reliable developer console, not a marketing site. It is **monochrome-first** with subtle blue accents, built for clarity, keyboard control, and high attention to detail.
 
----
+Agents MUST treat this app as a **tool interface**, not a landing page. Prioritize legibility, hierarchy, and responsiveness.
 
-## Colors
+Key principles:
 
-### Base Palette
+- Single monospace font everywhere (code-like feel).
+- Dark base surfaces with lighter text and cards.
+- Minimal shadows; hierarchy expressed via spacing, borders, and typography.
+- Blue accent only for real interactivity (selected states, links, highlights).
+- Red only for genuine error/destructive states.
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `ink.primary` | `#eeeeee` | Primary text, headings, labels |
-| `ink.muted` | `#666666` | Secondary text, inactive nav, captions |
-| `surface.base` | `#0a0a0a` | Page background, main canvas |
-| `surface.alt` | `#141414` | Cards, elevated surfaces, sidebars |
-| `surface.hover` | `#1a1a1a` | Hover states on interactive elements |
-| `border.soft` | `rgba(255, 255, 255, 0.08)` | Borders, dividers, separators |
-| `border.medium` | `rgba(255, 255, 255, 0.15)` | Focus rings, active borders |
+## 2. Layout & Structure
 
-### Accent Colors
+### Global shell
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `accent.primary` | `#fab283` | Links, cursor, primary actions |
-| `accent.purple` | `#9d7cd8` | Headings, keywords |
-| `accent.blue` | `#5c9cf5` | Lists, focused states |
-| `accent.success` | `#7fd88f` | Strings, success states |
-| `accent.warning` | `#e5c07b` | Emphasis, warnings |
-| `accent.error` | `#e06c75` | Errors, deletions |
+- Use a fixed left **sidebar** and a main content area.
+- Sidebar width: `components.sidebar.width` (around 260px).
+- Main content should be centered in a container width of `spacing.layout.containerWidth` (~1200px) with `spacing.layout.pagePadding` padding.
+- The app is primarily desktop-first, but layouts should degrade gracefully on smaller widths using the same tokens.
 
-### Usage Rules
+Page types:
 
-- UI is **dark-first** — deep black base with panel surfaces
-- Primary text is **high-contrast** `#eeeeee` for readability
-- **Orange** is the primary action color (links, buttons, cursors)
-- **Purple** highlights headings and keywords
-- **Blue** indicates focus and list states
-- **Green/Yellow/Red** are semantic (success/warning/error)
+1. **Chat Workspace** — default route, where users write prompts and work with sections.
+2. **Website AUDIT** — audit inputs, progress, and reports.
+3. **History** — list of saved chats and past audits.
 
----
-
-## Typography
-
-### Font Family
-
-**JetBrains Mono** — single monospace family across the entire app.
-
-- All headings, labels, body text, inputs, and code use JetBrains Mono
-- No mixing with serif, sans-serif, or other font families
-- Loaded via Google Fonts: weights 400, 500, 600, 700
-
-### Type Scale
-
-| Token | Size | Weight | Line Height | Usage |
-|-------|------|--------|-------------|-------|
-| `type.display` | 56px | 700 | 1.1 | Hero headings, landing page titles |
-| `type.heading` | 24px | 700 | 1.2 | Page headings, section titles |
-| `type.body` | 16px | 400 | 1.5 | Body text, messages, descriptions |
-| `type.small` | 13px | 400 | 1.4 | Labels, captions, secondary text |
-
-### Text Colors
-
-| Usage | Color | Token |
-|-------|-------|-------|
-| Primary text | `#eeeeee` | `ink.primary` |
-| Secondary text | `#666666` | `ink.muted` |
-| Placeholder text | `#555555` | `ink.muted` at 80% |
-| Disabled text | `#444444` | `ink.muted` at 60% |
-
----
-
-## Layout & Spacing
-
-### Spacing Scale (4px base)
-
-| Token | Value |
-|-------|-------|
-| `space.xs` | 4px |
-| `space.sm` | 8px |
-| `space.md` | 12px |
-| `space.lg` | 16px |
-| `space.xl` | 24px |
-| `space.2xl` | 32px |
-| `space.3xl` | 64px |
-
-### Layout Tokens
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `layout.pagePadding` | 24px | Horizontal padding on page containers |
-| `layout.sectionGap` | 32px | Vertical gap between major sections |
-| `layout.cardGap` | 16px | Gap between adjacent cards |
-| `layout.containerWidth` | 1280px | Max width of main content area |
-| `layout.sidebarWidth` | 260px | Fixed width of global sidebar |
-
-### Responsive Breakpoints
-
-| Breakpoint | Width | Behavior |
-|------------|-------|----------|
-| `sm` | 640px | Stack layout, hide sidebar |
-| `md` | 768px | Show sidebar, single column content |
-| `lg` | 1024px | Two-column layouts where applicable |
-| `xl` | 1280px | Full container width |
-
----
-
-## Elevation & Depth
-
-### Shadows
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `shadow.sm` | `0 1px 2px rgba(0,0,0,0.3)` | Subtle lift on cards |
-| `shadow.md` | `0 2px 4px rgba(0,0,0,0.4)` | Elevated elements (modals, dropdowns) |
-| `shadow.lg` | `0 4px 8px rgba(0,0,0,0.5)` | Prominent overlays |
-
-### No Glassmorphism
-
-- Do **not** use `backdrop-filter: blur()` for main surfaces
-- Do **not** use gradient borders or translucent backgrounds
-- Use solid `surface.base` or `surface.alt` with subtle shadows instead
-
----
-
-## Shapes
-
-### Border Radius
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `radius.sm` | 4px | Inputs, buttons, small elements |
-| `radius.md` | 6px | Cards, containers, modals |
-| `radius.lg` | 8px | Larger containers, feature cards |
-| `radius.pill` | 999px | Badges, chips, status indicators |
-
-### Border Width
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `border.thin` | 1px | Standard borders, dividers |
-| `border.medium` | 2px | Focus rings, active states |
-
----
-
-## Components
-
-### Page
-
-Full-page container wrapping all route content.
-
-- Background: `surface.base` (`#0a0a0a`)
-- Text: `ink.primary` (`#eeeeee`)
-- Content centered in `layout.containerWidth`
-- Padding: `layout.pagePadding` horizontal, `space.3xl` vertical
+Agents SHOULD reuse the same page shell (sidebar + header + content) across all pages.
 
 ### Sidebar
 
-Fixed left navigation panel.
+- Background: `components.sidebar.background`.
+- Top section: small product label in `typography.styles.small` and `components.sidebar.textColor`.
+- Navigation items:
+  - “Chat Workspace”
+  - “Website AUDIT”
+  - “History”
+- Active item:
+  - Background: `components.sidebar.activeBackground`.
+  - Text: `components.sidebar.activeTextColor`.
+  - Optionally, a 2–4px Accent.Blue bar on the left edge.
+- Inactive items:
+  - Text: `components.sidebar.textColor` (muted).
+  - No strong background; maybe a slight dark hover.
 
-- Background: `surface.alt` (`#141414`)
-- Border right: `border.thin` `border.soft`
-- Width: `layout.sidebarWidth`
-- Nav items: `ink.muted` inactive, `accent.primary` active with subtle highlight
-- Product name at top in monospace, `type.heading` size
-- Thin `border.soft` separators between nav groups
+Do NOT use large icons or colorful badges in the sidebar. Keep it compact and text-first.
 
-### Card
+## 3. Typography & Spacing
 
-Generic container for content blocks.
+All text uses the `typography.fontFamily.base` monospace stack.
 
-- Background: `surface.alt` (`#141414`)
-- Border: `border.thin` `border.soft`
-- Border radius: `radius.md`
-- Padding: `space.lg`
-- Hover: `surface.hover` background shift
+Use these roles:
 
-### Button (Primary)
+- **Display**: product-level headings (e.g., “Prompt Workspace + Website AUDIT for developers”).
+- **Heading**: page titles (“Chat Workspace”, “Website AUDIT”, “History”).
+- **Subheading**: section titles and short intros.
+- **Body**: main explanatory copy, message content.
+- **Small**: labels, metadata, table headers, chip text.
 
-Main action button.
+Spacing:
 
-- Background: `accent.primary` (`#fab283`)
-- Text: `surface.base` (`#0a0a0a`)
-- Border radius: `radius.sm`
-- Padding: `space.sm` vertical, `space.lg` horizontal
-- Hover: darken background slightly
+- Use the 4px `spacing.scale` for everything:
+  - vertical gaps between sections: `spacing.layout.sectionGap`.
+  - padding inside cards: `spacing.lg`.
+  - gaps between buttons, inputs, and labels: `spacing.sm`–`spacing.md`.
+- Agents MUST NOT invent arbitrary spacings. Always pick from the defined scale.
 
-### Button (Secondary)
+Baseline:
 
-Ghost/outline action button.
+- Align headings, body text, and card content on a consistent vertical rhythm.
+- Tables and lists should visually align to the same baseline grid.
 
-- Background: transparent
-- Border: `border.thin` `border.soft`
-- Text: `ink.primary` (`#eeeeee`)
-- Border radius: `radius.sm`
-- Padding: `space.sm` vertical, `space.lg` horizontal
-- Hover: `surface.hover` background
+## 4. Components & Patterns
 
-### TextInput
+### Buttons
 
-Text and textarea inputs.
+- **Primary**:
+  - For main actions: “Generate Prompt”, “Start Audit”, “Run First Audit”.
+  - Use `components.button.primary` tokens.
+  - Hover state: slightly brighter background, maintain contrast, no huge scale changes.
 
-- Background: `surface.base` (`#0a0a0a`)
-- Border: `border.thin` `border.soft`
-- Border radius: `radius.sm`
-- Padding: `space.sm` vertical, `space.md` horizontal
-- Font: JetBrains Mono, `type.body` size
-- Focus: `border.medium` `accent.primary` border, subtle ring
+- **Secondary**:
+  - For secondary actions: “View details”, “Copy”, “Cancel”.
+  - Use `components.button.secondary` tokens.
+  - Hover: subtle background and border color shift.
 
-### SimpleTable
+Agents MUST NOT use bright, multi-colored buttons. Keep them monochrome with Accent.Blue carefully used for outlines or focus.
 
-Data table with monospace text.
+### Inputs
 
-- Headers: `ink.primary`, `font-weight: 600`, `type.small`
-- Cells: `ink.primary`, `type.body`
-- Grid lines: `border.thin` `border.soft`
-- Cell padding: `space.md` vertical, `space.lg` horizontal
-- Alternating row: subtle `surface.hover` background
+- Use `components.input` tokens for:
+  - chat composer,
+  - URL / GitHub input fields,
+  - search fields.
+- Placeholder text in `components.input.placeholderColor`.
+- Focus:
+  - show a clear but subtle focus ring in Accent.Blue around the input.
 
-### Chip
+Keep inputs flat. Do NOT add inner shadows or glassmorphism.
 
-Small badge or status indicator.
+### Cards
 
-- Background: `surface.alt`
-- Border: `border.thin` `border.soft`
-- Border radius: `radius.pill`
-- Padding: `space.xs` vertical, `space.sm` horizontal
-- Font: JetBrains Mono, `type.small`
-- Variant: accent color background for semantic states (error, success, etc.)
+Use `components.card` for:
 
-### SegmentedControl
+- Feature cards on the landing/overview.
+- Audit mode cards (Basic / Recommended / Full).
+- Audit finding cards.
+- Structured content blocks (e.g., “Fix roadmap”).
 
-Input type selector (tabs).
+Selected card state:
 
-- Container: `surface.hover` background, `radius.sm`
-- Items: `ink.muted` inactive, `accent.primary` active
-- Active indicator: `surface.base` background with `shadow.sm`
-- Border radius: `radius.sm`
+- Maintain background, emphasize border:
+  - strengthen borderColor (toward Accent.Blue or lighter BorderGray),
+  - optionally add a thin inner glow.
 
----
+### Tables
 
-## Do's and Don'ts
+Use `components.table` for:
+
+- Audit mode comparison tables.
+- History lists (chats and audits).
+- Technical overview tables.
+
+Requirements:
+
+- Headers in `typography.styles.small`.
+- Row background: `components.table.rowBackground`.
+- Row text: `components.table.rowTextColor`.
+- Border grid using `components.table.borderColor` and `components.table.borderWidth`.
+
+Do NOT paint rows in strong alternating colors. Keep them subtle.
+
+### Chips
+
+Use `components.chip` for:
+
+- Severity labels (e.g., “critical”, “high”, “medium”, “low”).
+- Mode tags (“Recommended”, “Full”).
+
+Severity colors:
+
+- Base chip style plus:
+  - DangerRed text/border accent for “critical”/“error”.
+  - Accent.Blue accent for important but non-error labels.
+
+Chip text stays small and monospace.
+
+### Segmented Control
+
+Use `components.segmentedControl` for:
+
+- Input type selector (URL / GitHub / Files).
+- Possibly for small mode toggles.
+
+Selected segment:
+
+- Background: `components.segmentedControl.segmentSelectedBackground` (Accent.Blue).
+- Text: `components.segmentedControl.segmentSelectedTextColor` (light).
+
+Unselected segment:
+
+- Background: `components.segmentedControl.segmentBackground`.
+- Text: `components.segmentedControl.segmentTextColor`.
+
+## 5. Page-Specific Guidance
+
+### Chat Workspace
+
+- Use the global shell.
+- Content structure:
+  - Header row with:
+    - Heading “Chat Workspace”.
+    - Right-aligned small metadata (current model, mode).
+  - Message list using Card patterns:
+    - User messages: slightly stronger ink (Primary.Light), more prominent.
+    - Assistant messages: Secondary.MidGray, same card background.
+  - Composer:
+    - Large multiline input plus Primary button.
+
+Section branching:
+
+- Below the master prompt, show three tabs/cards for:
+  - “Coding”
+  - “UI/UX”
+  - “Audit”
+- Each section has its own mini-thread styled like the main chat.
+
+Agents MUST keep Chat Workspace minimal and functional; avoid decorative shapes.
+
+### Website AUDIT
+
+- Header:
+  - Title “Website AUDIT”.
+  - Subheading describing what it does in one sentence.
+
+Input area:
+
+- One card containing:
+  - Segmented control for input type.
+  - Conditional inputs for URL, GitHub, or Files.
+- Keep layout single-column to preserve clarity.
+
+Mode selector:
+
+- Three mode cards with simple text and minimal iconography.
+- Highlight “Recommended” as default but not via neon or gradients.
+
+Progress & report:
+
+- Progress bar using Accent.Blue.
+- Stage labels in Small typography and Secondary.MidGray.
+- Report structured into sections (Code, Browser, Accessibility, Performance, Security).
+- Each section uses Card + Table to show findings and evidence.
+
+Comparison table:
+
+- At the bottom; uses Table tokens.
+
+### History
+
+- Simple, table-first layout.
+- Two sections:
+  - Chats.
+  - Audits.
+- Each entry row shows:
+  - title,
+  - date/time,
+  - type,
+  - status.
+- Use subtle hover states (background tint, Accent.Blue underline on title).
+
+Empty states:
+
+- Provide guidance text and a primary CTA.
+- No illustrations; just text and simple layout.
+
+## 6. Motion & Micro-interactions
+
+Motion:
+
+- Keep durations inside `motion.duration.fast`–`motion.duration.normal`.
+- Use `motion.easing.standard`.
+- Respect `motion.respectsReducedMotion`: when OS requests reduced motion, disable non-essential animations.
+
+Micro-interactions:
+
+- Hover:
+  - Slight background and border changes.
+  - DO NOT use large scale or rotation.
+- Loading:
+  - Use simple linear progress or small spinners in the dark surfaces.
+- Feedback:
+  - Inline messages for events like “Copied” or “Audit complete”.
+  - Use Secondary.MidGray text; do not pop modal dialogs for minor events.
+
+Agents SHOULD treat motion as a secondary layer. Core layout and hierarchy come first.
+
+## 7. Accessibility & Performance
+
+- Ensure text contrast meets `accessibility.minContrastRatio` (AA level).
+- Maintain consistent font sizes and line heights so developers can scan quickly.
+- Do NOT rely solely on color to indicate state:
+  - use icons, labels, or text when necessary (especially for errors and selected states).
+- Keep DOM and component structures simple to allow fast rendering even during heavy audits.
+
+## 8. Do’s and Don’ts
 
 ### Do
 
-- Keep the interface dark, warm, and technical
-- Use consistent spacing from the 4px scale
-- Use JetBrains Mono for all text
-- Use `surface.base` for pages, `surface.alt` for panels and cards
-- Use `ink.primary` for text, `ink.muted` for secondary
-- Use `accent.primary` (orange) for links and primary actions
-- Use `accent.purple` for headings and keywords
-- Keep transitions at 150–200ms with simple easing
-- Write copy in a technical README voice
+- Keep the UI calm, serious, and technical.
+- Use monospace for everything.
+- Use Accent.Blue sparingly for interactive states.
+- Use Small typography for metadata and labels.
+- Use the spacing scale and radius tokens consistently.
 
-### Don't
+### Don’t
 
-- Use light backgrounds or white surfaces
-- Mix fonts or use serif/sans-serif alongside monospace
-- Use `backdrop-filter: blur()` for main surfaces
-- Apply glassmorphism effects (translucent backgrounds, gradient borders)
-- Use large scale or shadow jumps on hover
-- Write marketing buzzwords or exclamation-heavy copy
-- Use arbitrary font sizes — stick to the type scale
+- Don’t add gradients, glassmorphism, or neon glows.
+- Don’t introduce new color families beyond this palette.
+- Don’t mix multiple typefaces.
+- Don’t animate large layout changes or break accessibility.
 
 ---
 
-## Component Inventory
+Agents implementing UI changes MUST:
 
-| Component | File | Status |
-|-----------|------|--------|
-| Page | `src/components/layout/PageShell.tsx` | Update |
-| Sidebar | `src/components/layout/Sidebar.tsx` | Rewrite |
-| Card | `src/components/ui/Card.tsx` | New |
-| Button | `src/components/ui/Button.tsx` | New |
-| TextInput | `src/components/ui/TextInput.tsx` | New |
-| SimpleTable | `src/components/ui/SimpleTable.tsx` | New |
-| Chip | `src/components/ui/Chip.tsx` | New |
-| SegmentedControl | `src/components/ui/SegmentedControl.tsx` | New |
-| ConfirmModal | `src/components/layout/ConfirmModal.tsx` | Update |
-| CustomSelect | `src/components/ui/CustomSelect.tsx` | Update |
-
----
-
-## File Structure
-
-```
-src/
-├── index.css                    # Global styles, font imports, Tailwind config
-├── App.tsx                      # Root layout: Sidebar + content
-├── components/
-│   ├── layout/
-│   │   ├── PageShell.tsx        # Centered content container
-│   │   ├── Sidebar.tsx          # Global navigation
-│   │   └── ConfirmModal.tsx     # Reusable confirmation dialog
-│   ├── ui/
-│   │   ├── Button.tsx           # Primary & secondary buttons
-│   │   ├── TextInput.tsx        # Text/textarea inputs
-│   │   ├── Card.tsx             # Generic content card
-│   │   ├── SimpleTable.tsx      # Monospace data table
-│   │   ├── Chip.tsx             # Badge/status indicator
-│   │   ├── SegmentedControl.tsx # Tab-like input selector
-│   │   └── CustomSelect.tsx     # Custom dropdown select
-│   ├── audit/                   # Audit-specific components
-│   └── masterPrompt/            # Chat workspace components
-├── motion/
-│   └── presets.ts               # Simplified animation presets
-├── pages/
-│   ├── HomePage.tsx             # Landing/overview page
-│   ├── ChatWorkspace.tsx        # Chat workspace (from old HomePage)
-│   ├── AuditPage.tsx            # Website AUDIT page
-│   └── HistoryPage.tsx          # History/saved prompts page
-└── ...
-```
+- Read this file before editing UI.
+- Use tokens from the frontmatter instead of inventing new values.
+- Keep all new components compatible with the patterns described above.

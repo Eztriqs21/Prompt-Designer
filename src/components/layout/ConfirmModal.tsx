@@ -63,7 +63,7 @@ export default function ConfirmModal({
       {open && (
         <>
           <motion.div
-            className="fixed inset-0 bg-black/60 z-[999]"
+            className="fixed inset-0 bg-primary-dark/70 z-[999]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -82,30 +82,30 @@ export default function ConfirmModal({
               aria-modal="true"
               aria-labelledby={titleId}
               aria-describedby={descId}
-              className="bg-surface-alt rounded-md border border-border-soft shadow-lg max-w-sm w-full p-6"
+              className="bg-secondary-darkSurface rounded-md border border-secondary-borderGray shadow-lg max-w-sm w-full p-6"
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-md bg-accent-error/10 flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 text-accent-error" />
+                <div className="w-10 h-10 rounded-md bg-semantic-dangerRed/10 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-semantic-dangerRed" />
                 </div>
-                <h3 id={titleId} className="text-ink-primary font-semibold text-base">
+                <h3 id={titleId} className="text-primary-light font-semibold text-base">
                   {title}
                 </h3>
               </div>
-              <p id={descId} className="text-ink-muted text-sm mb-6">
+              <p id={descId} className="text-secondary-midGray text-sm mb-6">
                 {message}
               </p>
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={onCancel}
-                  className="px-4 py-2 rounded-md text-sm text-ink-muted hover:text-ink-primary hover:bg-surface-hover transition-colors duration-150"
+                  className="px-4 py-2 rounded-md text-sm text-secondary-midGray hover:text-primary-light hover:bg-primary-light/5 transition-colors duration-150"
                 >
                   Cancel
                 </button>
                 <button
                   ref={confirmRef}
                   onClick={onConfirm}
-                  className="px-4 py-2 rounded-md text-sm font-medium bg-accent-error/15 text-accent-error hover:bg-accent-error/25 border border-accent-error/20 transition-colors duration-150"
+                  className="px-4 py-2 rounded-md text-sm font-medium bg-semantic-dangerRed/15 text-semantic-dangerRed hover:bg-semantic-dangerRed/25 border border-semantic-dangerRed/20 transition-colors duration-150"
                 >
                   {confirmLabel}
                 </button>

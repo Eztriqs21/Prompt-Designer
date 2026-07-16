@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import CustomSelect from '../ui/CustomSelect';
 
@@ -55,17 +55,17 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-surface-alt border border-border-soft rounded-md p-5 space-y-4 w-full"
+      className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md p-5 space-y-4 w-full"
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-ink-primary flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-accent-primary" />
+          <h3 className="text-body font-semibold text-primary-light flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-accent-blue" />
           New Chat
         </h3>
         <button
           type="button"
           onClick={onCancel}
-          className="text-xs text-ink-muted hover:text-ink-primary transition-colors"
+          className="text-small text-secondary-midGray hover:text-primary-light transition-colors"
         >
           Cancel
         </button>
@@ -73,7 +73,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-ink-muted uppercase tracking-wider mb-1.5">
+            <label className="block text-small font-medium text-secondary-midGray uppercase tracking-wider mb-1.5">
             Website Type
           </label>
           <CustomSelect
@@ -84,7 +84,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-ink-muted uppercase tracking-wider mb-1.5">
+            <label className="block text-small font-medium text-secondary-midGray uppercase tracking-wider mb-1.5">
             Chat Title
           </label>
           <input
@@ -92,12 +92,12 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
             value={values.title}
             onChange={(e) => update('title', e.target.value)}
             placeholder={`${values.websiteType} project`}
-            className="w-full bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-accent-primary/30 transition-colors"
+            className="w-full bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray focus:outline-none focus:border-accent-blue/30 transition-colors"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-ink-muted uppercase tracking-wider mb-1.5">
+            <label className="block text-small font-medium text-secondary-midGray uppercase tracking-wider mb-1.5">
             Target Audience
           </label>
           <input
@@ -105,12 +105,12 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
             value={values.audience}
             onChange={(e) => update('audience', e.target.value)}
             placeholder="e.g., small business owners, developers"
-            className="w-full bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-accent-primary/30 transition-colors"
+            className="w-full bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray focus:outline-none focus:border-accent-blue/30 transition-colors"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-ink-muted uppercase tracking-wider mb-1.5">
+            <label className="block text-small font-medium text-secondary-midGray uppercase tracking-wider mb-1.5">
             Primary Goal
           </label>
           <input
@@ -118,26 +118,26 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
             value={values.goal}
             onChange={(e) => update('goal', e.target.value)}
             placeholder="e.g., signups, sales, portfolio showcase"
-            className="w-full bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-accent-primary/30 transition-colors"
+            className="w-full bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray focus:outline-none focus:border-accent-blue/30 transition-colors"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-ink-muted uppercase tracking-wider mb-1.5">
+            <label className="block text-small font-medium text-secondary-midGray uppercase tracking-wider mb-1.5">
             Preferred Stack
-            <span className="text-ink-muted/60 ml-1 normal-case">(optional)</span>
+            <span className="text-secondary-midGray/60 ml-1 normal-case">(optional)</span>
           </label>
           <input
             type="text"
             value={values.preferredStack}
             onChange={(e) => update('preferredStack', e.target.value)}
             placeholder="e.g., Next.js, Vue, Svelte"
-            className="w-full bg-surface-base border border-border-soft rounded-md px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-accent-primary/30 transition-colors"
+            className="w-full bg-primary-dark border border-secondary-borderGray rounded-md px-3 py-2 text-body text-primary-light placeholder:text-secondary-midGray focus:outline-none focus:border-accent-blue/30 transition-colors"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-ink-muted uppercase tracking-wider mb-1.5">
+            <label className="block text-small font-medium text-secondary-midGray uppercase tracking-wider mb-1.5">
             Style / Vibe
           </label>
           <CustomSelect
@@ -149,7 +149,7 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
       </div>
 
       {error && (
-        <p className="text-xs text-accent-error bg-accent-error/10 border border-accent-error/20 rounded-md px-3 py-2">
+        <p className="text-small text-semantic-dangerRed bg-semantic-dangerRed/10 border border-semantic-dangerRed/20 rounded-md px-3 py-2">
           {error}
         </p>
       )}
@@ -158,14 +158,14 @@ export default function NewChatForm({ onSubmit, onCancel }: NewChatFormProps) {
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-xs font-medium text-ink-muted hover:text-ink-primary transition-colors"
+          className="px-4 py-2 text-small font-medium text-secondary-midGray hover:text-primary-light transition-colors"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={submitting}
-          className="px-5 py-2 text-xs font-medium rounded-md bg-accent-primary text-surface-base hover:bg-accent-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+          className="px-5 py-2 text-small font-medium rounded-md bg-primary-light text-primary-dark hover:bg-primary-light/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
         >
           {submitting ? 'Creating...' : 'Create Chat'}
         </button>

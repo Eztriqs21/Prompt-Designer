@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ShieldCheck, Loader2, AlertTriangle } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { useAudit } from '../hooks/useAudit';
 import AuditInput from '../components/audit/AuditInput';
 import AuditModeSelector from '../components/audit/AuditModeSelector';
@@ -14,7 +15,20 @@ export default function AuditPage() {
   const [inputType, setInputType] = useState<AuditInputType>('url');
   const [source, setSource] = useState('');
   const [files, setFiles] = useState<File[]>([]);
-  const [mode, setMode] = useState<AuditMode>('recommended');
+  const location = useLocation();
+  const [mode, setMode] = useState<AuditMode>(
+    ((location.state as unknown) as { mode?: AuditMode } | null)?.mode ?? 'recommended',
+  );
+
+  useEffect(() => {
+    if (audit.report?.fixPrompt) {
+      try {
+        localStorage.setItem('pd:lastAuditFixPrompt', audit.report.fixPrompt);
+      } catch {
+        /* ignore persistence failures */
+      }
+    }
+  }, [audit.report]);
 
   const canStart = audit.status === null || audit.status === 'complete' || audit.status === 'failed';
 
@@ -45,17 +59,17 @@ export default function AuditPage() {
     <div className="h-full overflow-y-auto">
       <div className="px-6 py-12">
         {/* Header */}
-        <div className="mb-10">
+        <div className="mb-8">
           <div className="inline-flex items-center gap-2 mb-3">
-            <ShieldCheck className="w-5 h-5 text-accent-warning" />
-            <span className="text-xs font-medium uppercase tracking-widest text-ink-muted">Website AUDIT</span>
+            <ShieldCheck className="w-5 h-5 text-secondary-midGray" />
+            <span className="text-xs font-medium uppercase tracking-widest text-secondary-midGray">Website AUDIT</span>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold text-ink-primary tracking-tight mb-2">
+          <h1 className="text-heading text-primary-light mb-4">
             Website Audit
           </h1>
 
-          <p className="text-sm text-ink-muted leading-relaxed">
+            <p className="text-small text-secondary-midGray leading-relaxed">
             Analyze websites for code issues, bugs, UX problems, and performance concerns.
             Get a professional QA-style report.
           </p>
@@ -65,10 +79,10 @@ export default function AuditPage() {
         {hasReport && audit.report ? (
           <>
             {audit.hasPartialData && (
-              <div className="flex items-center gap-3 p-4 mb-6 rounded-md bg-accent-warning/10 border border-accent-warning/20">
-                <AlertTriangle className="w-4 h-4 text-accent-warning shrink-0" />
-                <p className="text-sm text-accent-warning">
-                  Partial results — the report stage failed, so some findings may be missing. What was collected is shown below.
+              <div className="flex items-center gap-3 p-4 mb-6 rounded-md bg-secondary-midGray/10 border border-secondary-midGray/20">
+                <AlertTriangle className="w-4 h-4 text-secondary-midGray shrink-0" />
+                <p className="text-sm text-secondary-midGray">
+                  Partial results â€” the report stage failed, so some findings may be missing. What was collected is shown below.
                 </p>
               </div>
             )}
@@ -96,7 +110,7 @@ export default function AuditPage() {
 
             {/* Mode Selector */}
             <div>
-              <label className="block text-xs text-ink-muted mb-3 uppercase tracking-wider font-medium">
+                <label className="block text-small text-secondary-midGray mb-3 uppercase tracking-wider font-medium">
                 Audit Depth
               </label>
               <AuditModeSelector value={mode} onChange={setMode} disabled={isRunning} />
@@ -104,9 +118,9 @@ export default function AuditPage() {
 
             {/* Error Display */}
             {audit.error && (
-              <div className="flex items-center gap-3 p-4 rounded-md bg-accent-error/10 border border-accent-error/20">
-                <AlertTriangle className="w-4 h-4 text-accent-error shrink-0" />
-                <p className="text-sm text-accent-error">{audit.error}</p>
+              <div className="flex items-center gap-3 p-4 rounded-md bg-semantic-dangerRed/10 border border-semantic-dangerRed/20">
+                <AlertTriangle className="w-4 h-4 text-semantic-dangerRed shrink-0" />
+                <p className="text-sm text-semantic-dangerRed">{audit.error}</p>
               </div>
             )}
 
@@ -120,7 +134,7 @@ export default function AuditPage() {
                   ((inputType === 'url' || inputType === 'github') && !source.trim()) ||
                   (inputType === 'files' && files.length === 0)
                 }
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-md bg-accent-primary text-surface-base font-medium text-sm hover:bg-accent-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-md bg-primary-light text-primary-dark font-medium text-sm hover:bg-primary-light/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {audit.isSubmitting ? (
                   <>
@@ -134,7 +148,7 @@ export default function AuditPage() {
                   </>
                 )}
               </button>
-              <p className="mt-2 text-xs text-ink-muted text-center">
+              <p className="mt-2 text-xs text-secondary-midGray text-center">
                 {mode === 'basic' && 'Basic: Code-only analysis, fastest option'}
                 {mode === 'recommended' && 'Recommended: Code + light browser testing, best balance'}
                 {mode === 'full' && 'Full: Complete testing with accessibility & performance checks'}
@@ -145,7 +159,7 @@ export default function AuditPage() {
 
         {/* Comparison Table */}
         {!hasReport && (
-          <div className="mt-12">
+          <div className="mt-8">
             <AuditComparisonTable />
           </div>
         )}

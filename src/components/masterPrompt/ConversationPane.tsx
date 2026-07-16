@@ -1,4 +1,4 @@
-﻿import { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import type { Message, SectionType, SectionState } from '../../types';
 import type { SectionMessage } from '../../lib/apiClient';
@@ -81,14 +81,14 @@ export default function ConversationPane({
 
         {isGenerating && !error && (
           <div className="flex items-start gap-3">
-            <div className="w-7 h-7 rounded-md bg-surface-alt border border-border-soft flex items-center justify-center shrink-0 mt-0.5">
-              <Loader2 className="w-3.5 h-3.5 text-accent-purple animate-spin" />
+            <div className="w-7 h-7 rounded-md bg-secondary-darkSurface border border-secondary-borderGray flex items-center justify-center shrink-0 mt-0.5">
+              <Loader2 className="w-3.5 h-3.5 text-accent-blue animate-spin" />
             </div>
-            <div className="bg-surface-alt border border-border-soft rounded-md rounded-tl-sm px-4 py-3">
+            <div className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md rounded-tl-sm px-4 py-3">
               <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-accent-purple/40 animate-pulse-subtle" />
-                <div className="w-1.5 h-1.5 rounded-full bg-accent-purple/40 animate-pulse-subtle" style={{ animationDelay: '300ms' }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-accent-purple/40 animate-pulse-subtle" style={{ animationDelay: '600ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-blue/40 animate-pulse-subtle" />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-blue/40 animate-pulse-subtle" style={{ animationDelay: '300ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-blue/40 animate-pulse-subtle" style={{ animationDelay: '600ms' }} />
               </div>
             </div>
           </div>
@@ -96,14 +96,14 @@ export default function ConversationPane({
 
         {error && (
           <div className="flex items-start gap-3">
-            <div className="w-7 h-7 rounded-md bg-accent-error/10 border border-accent-error/20 flex items-center justify-center shrink-0 mt-0.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-accent-error" />
+            <div className="w-7 h-7 rounded-md bg-semantic-dangerRed/10 border border-semantic-dangerRed/20 flex items-center justify-center shrink-0 mt-0.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-semantic-dangerRed" />
             </div>
-            <div className="bg-accent-error/10 border border-accent-error/20 rounded-md rounded-tl-sm px-4 py-3 max-w-[85%]">
-              <p className="text-sm text-accent-error whitespace-pre-wrap">{error}</p>
+            <div className="bg-semantic-dangerRed/10 border border-semantic-dangerRed/20 rounded-md rounded-tl-sm px-4 py-3 max-w-[85%]">
+              <p className="text-body text-semantic-dangerRed whitespace-pre-wrap">{error}</p>
               <button
                 onClick={() => onGenerate('')}
-                className="mt-2 text-xs text-accent-primary hover:underline"
+                className="mt-2 text-small text-accent-blue hover:underline"
               >
                 Retry
               </button>
@@ -113,7 +113,7 @@ export default function ConversationPane({
       </div>
 
       {/* Input ÔÇö fixed at bottom */}
-      <div className="shrink-0 px-4 sm:px-6 pb-4 pt-3 border-t border-border-soft">
+      <div className="shrink-0 px-4 sm:px-6 pb-4 pt-3 border-t border-secondary-borderGray">
         <UserInputBar
           onSend={onSend}
           onGenerate={onGenerate}
