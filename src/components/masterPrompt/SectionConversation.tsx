@@ -101,39 +101,37 @@ export default function SectionConversation({ sectionType, state, messages, onGe
             {meta.label} Section
           </h3>
         </div>
-        {!compact && (
-          <div className="flex items-center gap-2">
-            {state.data && (
-              <button
-                onClick={() => handleCopy(state.data!.masterPrompt)}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-small font-medium rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-primary-light transition-colors"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-3 h-3 text-success-green" />
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3" />
-                    Copy
-                  </>
-                )}
-              </button>
-            )}
+        <div className="flex items-center gap-2">
+          {!compact && state.data && (
             <button
-              onClick={() => setFullscreen((v) => !v)}
-              aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-              className="p-1.5 rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange transition-colors"
+              onClick={() => handleCopy(state.data!.masterPrompt)}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-small font-medium rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-primary-light transition-colors"
             >
-              {fullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+              {copied ? (
+                <>
+                  <Check className="w-3 h-3 text-success-green" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  Copy
+                </>
+              )}
             </button>
-          </div>
-        )}
+          )}
+          <button
+            onClick={() => setFullscreen((v) => !v)}
+            aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            className="p-1.5 rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange transition-colors"
+          >
+            {fullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
-      <div className={`flex-1 overflow-y-auto ${compact ? 'px-3 py-3' : 'px-4 py-4'} space-y-4 min-h-0`} ref={scrollRef}>
+      <div className={`flex-1 overflow-y-auto ${compact ? 'px-4 py-4' : 'px-4 py-4'} space-y-4 min-h-0`} ref={scrollRef}>
         {messages.length === 0 && !state.isGenerating && !state.error && (
           <div className="h-full flex flex-col items-center justify-center text-center gap-3">
             <div className="inline-flex p-3 rounded-md bg-primary-dark border border-secondary-borderGray">
@@ -152,35 +150,37 @@ export default function SectionConversation({ sectionType, state, messages, onGe
           </div>
         )}
 
-        {messages.map((msg) => (
-          <div key={msg.id} className="flex items-start gap-2.5">
-            {msg.role === 'assistant' ? (
-              <div className="p-1.5 rounded-md bg-primary-dark border border-secondary-borderGray">
-                <meta.icon className={`w-3.5 h-3.5 ${meta.color}`} />
-              </div>
-            ) : (
-              <div className="p-1.5 rounded-md bg-secondary-darkSurface border border-secondary-borderGray">
-                <User className="w-3.5 h-3.5 text-accent-orange" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-small font-medium text-secondary-midGray mb-1">
-                {msg.role === 'assistant' ? meta.label : 'You'}
-              </p>
+        <div className="space-y-4">
+          {messages.map((msg) => (
+            <div key={msg.id} className="flex items-start gap-2.5">
               {msg.role === 'assistant' ? (
-                <SectionContentRenderer content={msg.content} />
+                <div className="p-1.5 rounded-md bg-primary-dark border border-secondary-borderGray shrink-0">
+                  <meta.icon className={`w-3.5 h-3.5 ${meta.color}`} />
+                </div>
               ) : (
-                <div className="text-body text-primary-light leading-relaxed whitespace-pre-wrap">
-                  {msg.content}
+                <div className="p-1.5 rounded-md bg-secondary-darkSurface border border-secondary-borderGray shrink-0">
+                  <User className="w-3.5 h-3.5 text-accent-orange" />
                 </div>
               )}
+              <div className="flex-1 min-w-0">
+                <p className="text-small font-medium text-secondary-midGray mb-1">
+                  {msg.role === 'assistant' ? meta.label : 'You'}
+                </p>
+                {msg.role === 'assistant' ? (
+                  <SectionContentRenderer content={msg.content} />
+                ) : (
+                  <div className="text-body text-primary-light leading-relaxed whitespace-pre-wrap">
+                    {msg.content}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
 
         {state.isGenerating && (
           <div className="flex items-start gap-2.5">
-            <div className="p-1.5 rounded-md bg-primary-dark border border-secondary-borderGray">
+            <div className="p-1.5 rounded-md bg-primary-dark border border-secondary-borderGray shrink-0">
               <Loader2 className={`w-3.5 h-3.5 animate-spin ${meta.color}`} />
             </div>
             <div>
@@ -197,7 +197,7 @@ export default function SectionConversation({ sectionType, state, messages, onGe
         )}
       </div>
 
-      {/* Input — always available so a typed request drives generation */}
+      {/* Input */}
       <div className={`shrink-0 ${compact ? 'px-3 py-2' : 'px-4 py-3'} border-t border-secondary-borderGray`}>
         <div className="flex items-end gap-2">
           <textarea
@@ -248,5 +248,5 @@ export default function SectionConversation({ sectionType, state, messages, onGe
     );
   }
 
-  return <div style={{ height: compact ? 'min(360px, 45vh)' : 'min(500px, 60vh)' }} className="w-full">{card}</div>;
+  return <div className="w-full h-full">{card}</div>;
 }

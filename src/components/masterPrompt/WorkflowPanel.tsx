@@ -49,17 +49,21 @@ export default function WorkflowPanel({
 
   const usedTypes = SECTION_TYPES.filter((t) => sections[t].data || sections[t].isGenerating);
   const laneTypes = Array.from(new Set([...selectedSections, ...usedTypes]));
+  const laneCount = laneTypes.length;
 
   const handleRun = () => {
     if (!canRun) return;
     onRun(continuationInput, selectedSections);
   };
 
+  // Dynamic grid: 1 lane = 1 col, 2 lanes = 2 cols, 3 lanes = 3 cols
+  const gridCols = laneCount === 1 ? 'grid-cols-1' : laneCount === 2 ? 'grid-cols-2' : 'grid-cols-3';
+
   const panel = (
     <div className="flex flex-col h-full min-h-0">
       {/* Controls header */}
       <div className="px-5 sm:px-8 py-5 border-t border-secondary-borderGray shrink-0">
-        <div className="max-w-4xl mx-auto space-y-5">
+        <div className="max-w-5xl mx-auto space-y-5">
           {/* Title row */}
           <div className="flex items-center justify-between">
             <div className="text-small text-secondary-midGray uppercase tracking-wider">
@@ -102,17 +106,18 @@ export default function WorkflowPanel({
         <>
           <div className="mx-5 sm:mx-8 border-t border-secondary-borderGray" />
           <div className="flex-1 overflow-y-auto px-5 sm:px-8 py-5 min-h-0">
-            <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className={`max-w-5xl mx-auto grid ${gridCols} gap-5 h-full`}>
               {laneTypes.map((type) => (
-                <SectionConversation
-                  key={type}
-                  sectionType={type}
-                  state={sections[type]}
-                  messages={sectionMessages[type]}
-                  onGenerate={(request) => generateSection(type, request)}
-                  onLoadMessages={() => Promise.resolve()}
-                  compact
-                />
+                <div key={type} className="min-h-0">
+                  <SectionConversation
+                    sectionType={type}
+                    state={sections[type]}
+                    messages={sectionMessages[type]}
+                    onGenerate={(request) => generateSection(type, request)}
+                    onLoadMessages={() => Promise.resolve()}
+                    compact
+                  />
+                </div>
               ))}
             </div>
           </div>
