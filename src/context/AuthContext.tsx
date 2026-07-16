@@ -1,8 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import {
   onAuthStateChanged,
-  signInWithPopup,
-  GoogleAuthProvider,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -15,7 +13,6 @@ export interface AuthContextValue {
   authReady: boolean;
   loading: boolean;
   error: string | null;
-  loginWithGoogle: () => Promise<void>;
   loginWithEmail: (params: { email: string; password: string; mode: 'signin' | 'signup' }) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
@@ -38,14 +35,24 @@ function describeAuthError(err: unknown): string {
       return 'Invalid email or password.';
     case 'auth/popup-closed-by-user':
       return 'Sign-in was cancelled.';
+    case 'auth/cancelled-popup-request':
+      return 'Another sign-in was started. Please try again.';
     case 'auth/popup-blocked':
       return 'Pop-up blocked by the browser. Allow pop-ups and try again.';
     case 'auth/network-request-failed':
       return 'Network error. Check your connection and try again.';
+    case 'auth/operation-not-allowed':
+      return 'Google sign-in is not enabled in Firebase (Authentication → Sign-in method).';
+    case 'auth/unauthorized-domain':
+      return 'This domain is not authorized. Add it under Authentication → Settings → Authorized domains.';
+    case 'auth/account-exists-with-different-credential':
+      return 'This email is already linked to another sign-in method. Try that method instead.';
     case 'auth/configuration-not-found':
       return 'This sign-in method is not enabled in Firebase.';
+    case 'auth/internal-error':
+      return 'Firebase internal error — check the OAuth consent screen configuration in the Google Cloud console.';
     default:
-      return 'Something went wrong. Please try again.';
+      return `Sign-in failed (${code || 'unknown error'}). Check the Firebase console: Google sign-in enabled, OAuth consent screen configured, and this domain authorized.`;
   }
 }
 
@@ -67,22 +74,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const loginWithGoogle = useCallback(async () => {
-    if (!auth) {
-      setError('Auth is not configured.');
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
-    } catch (err) {
-      setError(describeAuthError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   const loginWithEmail = useCallback(
     async ({ email, password, mode }: { email: string; password: string; mode: 'signin' | 'signup' }) => {
       if (!auth) {
@@ -98,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await signInWithEmailAndPassword(auth, email, password);
         }
       } catch (err) {
+        console.error('[auth] Email sign-in failed:', err);
         setError(describeAuthError(err));
       } finally {
         setLoading(false);
@@ -126,7 +118,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authReady,
     loading,
     error,
-    loginWithGoogle,
     loginWithEmail,
     logout,
     clearError,

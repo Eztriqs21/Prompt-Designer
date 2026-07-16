@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import GoogleLoginButton from './GoogleLoginButton';
 import EmailLoginForm from './EmailLoginForm';
 
 interface LoginDialogProps {
@@ -85,14 +84,6 @@ export default function LoginDialog({ open, onClose }: LoginDialogProps) {
               </div>
 
               <div className="px-5 py-5 space-y-4">
-                <GoogleLoginButton />
-
-                <div className="flex items-center gap-3 text-small text-secondary-midGray">
-                  <span className="h-px flex-1 bg-secondary-borderGray" />
-                  <span>or</span>
-                  <span className="h-px flex-1 bg-secondary-borderGray" />
-                </div>
-
                 <EmailLoginForm />
 
                 <p className="text-small text-secondary-midGray/70 leading-relaxed text-center">
