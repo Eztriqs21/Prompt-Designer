@@ -113,16 +113,33 @@ export function useSectionPrompts(config: UseSectionPromptsConfig): UseSectionPr
           [type]: { isGenerating: false, data: response, error: null },
         }));
 
-        // Add assistant message with the generated content
-        const assistantContent = [
-          response.summary ? `Summary: ${response.summary}` : '',
-          response.analysis ? `Analysis: ${response.analysis}` : '',
-          response.masterPrompt ? `\nMaster Prompt:\n${response.masterPrompt}` : '',
-        ]
-          .filter(Boolean)
-          .join('\n\n');
+        // Normalize fields — sometimes the API returns a single JSON blob
+        // in one of the fields containing the full {summary, analysis, masterPrompt}.
+        let summary = response.summary || '';
+        let analysis = response.analysis || '';
+        let masterPromptText = response.masterPrompt || '';
 
-        if (assistantContent) {
+        const tryParseJson = (raw: string): boolean => {
+          if (!raw.startsWith('{')) return false;
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object' && (parsed.summary || parsed.analysis || parsed.masterPrompt)) {
+              if (parsed.summary) summary = parsed.summary;
+              if (parsed.analysis) analysis = parsed.analysis;
+              if (parsed.masterPrompt) masterPromptText = parsed.masterPrompt;
+              return true;
+            }
+          } catch { /* not JSON */ }
+          return false;
+        };
+
+        // Check each field for a nested JSON blob
+        tryParseJson(masterPromptText) || tryParseJson(summary) || tryParseJson(analysis);
+
+        // Build structured content for the renderer
+        const assistantContent = JSON.stringify({ summary, analysis, masterPrompt: masterPromptText });
+
+        if (summary || analysis || masterPromptText) {
           addSectionMessage(type, 'assistant', assistantContent);
         }
       } catch (err: any) {

@@ -45,7 +45,7 @@ export default function WorkflowPanel({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="px-4 sm:px-6 py-4 border-t border-secondary-borderGray space-y-3 shrink-0">
+      <div className="px-4 sm:px-6 py-4 border-t border-secondary-borderGray space-y-5 shrink-0">
         <div className="text-small text-secondary-midGray uppercase tracking-wider">
           Continue {stage === 'multi-agent' ? '· running agents' : ''}
         </div>
@@ -70,20 +70,24 @@ export default function WorkflowPanel({
       </div>
 
       {laneTypes.length > 0 && (
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-4 min-h-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {laneTypes.map((type) => (
-              <SectionConversation
-                key={type}
-                sectionType={type}
-                state={sections[type]}
-                messages={sectionMessages[type]}
-                onGenerate={(request) => generateSection(type, request)}
-                onLoadMessages={() => Promise.resolve()}
-              />
-            ))}
+        <>
+          <div className="mx-4 sm:mx-6 border-t border-secondary-borderGray" />
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 min-h-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {laneTypes.map((type) => (
+                <SectionConversation
+                  key={type}
+                  sectionType={type}
+                  state={sections[type]}
+                  messages={sectionMessages[type]}
+                  onGenerate={(request) => generateSection(type, request)}
+                  onLoadMessages={() => Promise.resolve()}
+                  compact
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
