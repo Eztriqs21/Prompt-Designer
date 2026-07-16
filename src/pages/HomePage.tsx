@@ -113,21 +113,21 @@ export default function HomePage() {
                     {row.basic ? (
                       <Check className="w-4 h-4 text-success-green mx-auto" />
                     ) : (
-                      <span className="text-secondary-midGray/30">â€”</span>
+                      <span className="text-secondary-midGray/30">-</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {row.recommended ? (
                       <Check className="w-4 h-4 text-success-green mx-auto" />
                     ) : (
-                      <span className="text-secondary-midGray/30">â€”</span>
+                      <span className="text-secondary-midGray/30">-</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {row.full ? (
-                      <Check className="w-4 h-4 text-secondary-midGray mx-auto" />
+                      <Check className="w-4 h-4 text-success-green mx-auto" />
                     ) : (
-                      <span className="text-secondary-midGray/30">â€”</span>
+                      <span className="text-secondary-midGray/30">-</span>
                     )}
                   </td>
                 </tr>
@@ -140,7 +140,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="py-8 border-t border-secondary-borderGray">
           <p className="text-small text-secondary-midGray">
-          Prompt Designer â€” built for developers who write code, not marketing copy.
+          Prompt Designer - built for developers who write code, not marketing copy.
         </p>
       </footer>
     </PageShell>

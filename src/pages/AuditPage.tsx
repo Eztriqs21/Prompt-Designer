@@ -82,7 +82,7 @@ export default function AuditPage() {
               <div className="flex items-center gap-3 p-4 mb-6 rounded-md bg-secondary-midGray/10 border border-secondary-midGray/20">
                 <AlertTriangle className="w-4 h-4 text-secondary-midGray shrink-0" />
                 <p className="text-sm text-secondary-midGray">
-                  Partial results â€” the report stage failed, so some findings may be missing. What was collected is shown below.
+                  Partial results - the report stage failed, so some findings may be missing. What was collected is shown below.
                 </p>
               </div>
             )}

@@ -12,7 +12,7 @@ interface ChatListProps {
 function previewOf(content: string | undefined): string {
   if (!content) return 'No messages yet';
   const text = content.replace(/\s+/g, ' ').trim();
-  return text.length > 42 ? `${text.slice(0, 42)}â€¦` : text;
+  return text.length > 42 ? `${text.slice(0, 42)}...` : text;
 }
 
 export default function ChatList({ onNewChat }: ChatListProps) {
