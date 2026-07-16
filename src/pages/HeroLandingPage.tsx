@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Button from '../components/ui/Button';
+import { openLoginDialog } from '../components/auth/AuthStatus';
 
 export default function HeroLandingPage() {
   const navigate = useNavigate();
@@ -17,9 +18,12 @@ export default function HeroLandingPage() {
         className="pointer-events-none absolute -bottom-32 -left-24 w-96 h-96 rounded-full bg-accent-purple/5 blur-3xl"
       />
 
-      {/* Brand wordmark */}
-      <header className="relative px-6 sm:px-10 py-6">
+      {/* Brand wordmark + sign in */}
+      <header className="relative flex items-center justify-between px-6 sm:px-10 py-6">
         <span className="text-lg font-bold tracking-tight text-accent-orange">Prompt Designer</span>
+        <Button variant="ghost" size="sm" onClick={openLoginDialog}>
+          Sign in
+        </Button>
       </header>
 
       {/* Hero content */}

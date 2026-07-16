@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { ChatSession, Message, MasterPromptResponse, NewChatFormValues, PromptVersion } from '../types';
 import * as api from '../lib/apiClient';
 import type { SectionMessage } from '../lib/apiClient';
+import { useAuth } from '../hooks/useAuth';
 
 const STORAGE_KEY = 'prompt-workspace-chats-v2';
 const STORAGE_VERSION = 2;
@@ -218,9 +219,22 @@ function generateSmartTitle(form: NewChatFormValues): string {
   return 'New Chat';
 }
 
-function loadPersistedState(): PersistedState | null {
+function emptyPersisted(): PersistedState {
+  return {
+    version: STORAGE_VERSION,
+    chats: [],
+    activeChatId: null,
+    messagesByChatId: {},
+    promptsByChatId: {},
+    promptVersionsByChatId: {},
+    sectionMessagesByChatId: {},
+    timestamp: Date.now(),
+  };
+}
+
+function loadPersistedState(key: string): PersistedState | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PersistedState;
     if (parsed.version !== STORAGE_VERSION) return null;
@@ -230,7 +244,7 @@ function loadPersistedState(): PersistedState | null {
   }
 }
 
-function savePersistedState(state: ChatState): void {
+function savePersistedState(state: ChatState, key: string): void {
   try {
     const toPersist: PersistedState = {
       version: STORAGE_VERSION,
@@ -242,7 +256,7 @@ function savePersistedState(state: ChatState): void {
       sectionMessagesByChatId: state.sectionMessagesByChatId,
       timestamp: Date.now(),
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(toPersist));
+    localStorage.setItem(key, JSON.stringify(toPersist));
   } catch {
     // ignore storage errors (quota, private mode, etc.)
   }
@@ -270,39 +284,23 @@ const ChatContext = createContext<ChatContextValue | null>(null);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(chatReducer, initialState);
+  const { currentUser, authReady } = useAuth();
 
-  const hydrate = useCallback(() => {
-    const persisted = loadPersistedState();
-    if (persisted) {
-      dispatch({ type: 'HYDRATE', payload: persisted });
-    } else {
-      // Mark hydration complete even when storage is empty so the
-      // persistence effect below can start writing to localStorage.
-      dispatch({
-        type: 'HYDRATE',
-        payload: {
-          version: STORAGE_VERSION,
-          chats: [],
-          activeChatId: null,
-          messagesByChatId: {},
-          promptsByChatId: {},
-          promptVersionsByChatId: {},
-          sectionMessagesByChatId: {},
-          timestamp: Date.now(),
-        },
-      });
-    }
-  }, []);
+  // Memory is namespaced per logged-in user. Anonymous sessions have no key,
+  // so their state is kept in memory only and is never persisted.
+  const storageKey = currentUser ? `${STORAGE_KEY}:${currentUser.uid}` : null;
 
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+    if (!authReady) return;
+    const persisted = storageKey ? loadPersistedState(storageKey) : null;
+    dispatch({ type: 'HYDRATE', payload: persisted ?? emptyPersisted() });
+  }, [authReady, storageKey]);
 
   useEffect(() => {
-    if (state.hydrated && !state.loading) {
-      savePersistedState(state);
+    if (state.hydrated && !state.loading && currentUser && storageKey) {
+      savePersistedState(state, storageKey);
     }
-  }, [state]);
+  }, [state, currentUser, storageKey]);
 
   // Chats/messages/prompt versions are the client's source of truth and are
   // persisted to localStorage. The backend is only used for AI generation, so

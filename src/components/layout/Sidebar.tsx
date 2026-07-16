@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MessageSquare, ShieldCheck, Clock, Menu, X } from 'lucide-react';
+import AuthStatus from '../auth/AuthStatus';
 
 const NAV_ITEMS = [
   { path: '/home', label: 'Home', icon: MessageSquare },
@@ -59,10 +60,11 @@ export default function Sidebar() {
       {/* Footer */}
       <div className="px-5 py-4 shrink-0">
         <div className="h-px bg-secondary-borderGray mb-4" />
+        <AuthStatus />
         <button
           type="button"
           onClick={() => window.dispatchEvent(new CustomEvent('pd:command-palette', { detail: { open: true } }))}
-          className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-small text-secondary-midGray border border-secondary-borderGray hover:text-primary-light hover:border-accent-orange transition-colors duration-150"
+          className="mt-3 w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-small text-secondary-midGray border border-secondary-borderGray hover:text-primary-light hover:border-accent-orange transition-colors duration-150"
         >
           <span>Command Palette</span>
           <span className="text-secondary-midGray">⌘K</span>
