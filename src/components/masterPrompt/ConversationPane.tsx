@@ -6,6 +6,7 @@ import MasterPromptBubble from './MasterPromptBubble';
 import UserInputBar from './UserInputBar';
 import GenerationLoader from './GenerationLoader';
 import FadeIn from '../ui/FadeIn';
+import ScrollToBottom from '../ui/ScrollToBottom';
 
 interface ConversationPaneProps {
   messages: Message[];
@@ -47,7 +48,7 @@ export default function ConversationPane({
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Messages — scrollable */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-5 min-h-0" ref={scrollRef}>
+      <div className="relative flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-5 min-h-0" ref={scrollRef}>
         {messages.map((msg) =>
           msg.role === 'assistant' && (msg.prompt || msg.summary) ? (
             <MasterPromptBubble key={msg.id} message={msg} />
@@ -83,6 +84,8 @@ export default function ConversationPane({
             </div>
           </FadeIn>
         )}
+
+        <ScrollToBottom scrollRef={scrollRef} />
       </div>
 
       {/* Input — fixed at bottom; only for initial idea capture.

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { SectionType, SectionState } from '../../types';
 import type { SectionMessage } from '../../lib/apiClient';
 import SectionContentRenderer from './SectionContentRenderer';
+import ScrollToBottom from '../ui/ScrollToBottom';
 
 interface SectionConversationProps {
   sectionType: SectionType;
@@ -13,6 +14,7 @@ interface SectionConversationProps {
   onLoadMessages: () => Promise<void>;
   compact?: boolean;
   headerOnly?: boolean;
+  showFullscreen?: boolean;
 }
 
 const SECTION_META: Record<SectionType, { label: string; icon: typeof Code; color: string }> = {
@@ -21,7 +23,7 @@ const SECTION_META: Record<SectionType, { label: string; icon: typeof Code; colo
   audit: { label: 'Audit', icon: ShieldCheck, color: 'text-secondary-midGray' },
 };
 
-export default function SectionConversation({ sectionType, state, messages, onGenerate, onLoadMessages, compact, headerOnly }: SectionConversationProps) {
+export default function SectionConversation({ sectionType, state, messages, onGenerate, onLoadMessages, compact, headerOnly, showFullscreen }: SectionConversationProps) {
   const [input, setInput] = useState('');
   const [copied, setCopied] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
@@ -108,13 +110,15 @@ export default function SectionConversation({ sectionType, state, messages, onGe
             {isWorking ? 'Working' : hasData ? 'Done' : 'Idle'}
           </span>
         </div>
-        <button
-          onClick={() => setFullscreen(true)}
-          aria-label={`${meta.label} section fullscreen`}
-          className="p-1.5 rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange transition-colors"
-        >
-          <Maximize2 className="w-3.5 h-3.5" />
-        </button>
+        {showFullscreen && (
+          <button
+            onClick={() => setFullscreen(true)}
+            aria-label={`${meta.label} section fullscreen`}
+            className="p-1.5 rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange transition-colors"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
     );
   }
@@ -148,18 +152,20 @@ export default function SectionConversation({ sectionType, state, messages, onGe
               )}
             </button>
           )}
-          <button
-            onClick={() => setFullscreen((v) => !v)}
-            aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-            className="p-1.5 rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange transition-colors"
-          >
-            {fullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-          </button>
+          {showFullscreen && (
+            <button
+              onClick={() => setFullscreen((v) => !v)}
+              aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+              className="p-1.5 rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange transition-colors"
+            >
+              {fullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Messages */}
-      <div className={`flex-1 overflow-y-auto ${compact ? 'px-4 py-4' : 'px-4 py-4'} space-y-4 min-h-0`} ref={scrollRef}>
+      <div className="relative flex-1 overflow-y-auto px-4 py-4 space-y-4 min-h-0" ref={scrollRef}>
         {messages.length === 0 && !state.isGenerating && !state.error && (
           <div className="h-full flex flex-col items-center justify-center text-center gap-3">
             <div className="inline-flex p-3 rounded-md bg-primary-dark border border-secondary-borderGray">
@@ -223,6 +229,8 @@ export default function SectionConversation({ sectionType, state, messages, onGe
             <p className="text-small text-semantic-dangerRed">{state.error}</p>
           </div>
         )}
+
+        <ScrollToBottom scrollRef={scrollRef} />
       </div>
 
       {/* Input */}
