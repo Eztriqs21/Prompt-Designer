@@ -1,8 +1,10 @@
 import { memo, useState } from 'react';
 import { RotateCcw, Copy, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import AuditFindingCard from './AuditFindingCard';
+import FadeIn from '../ui/FadeIn';
 import type { AuditReport as AuditReportType, AuditFinding, Severity, FindingCategory } from '../../types';
 
 interface AuditReportProps {
@@ -178,45 +180,54 @@ export default memo(function AuditReport({ report, onReset }: AuditReportProps) 
       )}
 
       {/* Findings by Section */}
-      {sections.map((section) => (
-        <div key={section.key} className="space-y-3">
+      {sections.map((section, si) => (
+        <FadeIn key={section.key} delay={Math.min(si * 0.06, 0.3)} className="space-y-3">
           <div>
             <h4 className="text-subheading text-primary-light">{section.title}</h4>
             <p className="text-small text-secondary-midGray mt-1">{section.intro}</p>
           </div>
           <div className="space-y-2">
-            {section.items.map((finding) => (
-              <AuditFindingCard key={finding.id} finding={finding} />
+            {section.items.map((finding, fi) => (
+              <FadeIn key={finding.id} delay={Math.min(fi * 0.04, 0.3)}>
+                <AuditFindingCard finding={finding} />
+              </FadeIn>
             ))}
           </div>
-        </div>
+        </FadeIn>
       ))}
 
       {/* Fix Prompt */}
       {report.fixPrompt && (
-        <Card title="Prompt for Coding Agent">
-          <pre className="font-mono text-small text-secondary-midGray whitespace-pre-wrap leading-relaxed max-h-[400px] overflow-y-auto p-4 bg-primary-dark border border-secondary-borderGray rounded-md">
-            {report.fixPrompt}
-          </pre>
-          <div className="flex items-center justify-between gap-3 mt-3">
-            <p className="text-small text-secondary-midGray">
-              Optimized for coding agents like Claude Code / OpenCode-style tools.
-            </p>
-            <Button variant="secondary" size="sm" onClick={handleCopyFixPrompt}>
-              {fixPromptCopied ? (
-                <>
-                  <Check className="w-3 h-3 text-success-green" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3 h-3" />
-                  Copy for agent
-                </>
-              )}
-            </Button>
-          </div>
-        </Card>
+        <FadeIn delay={0.1}>
+          <Card title="Prompt for Coding Agent">
+            <motion.pre
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="font-mono text-small text-secondary-midGray whitespace-pre-wrap leading-relaxed max-h-[400px] overflow-y-auto p-4 bg-primary-dark border border-secondary-borderGray rounded-md"
+            >
+              {report.fixPrompt}
+            </motion.pre>
+            <div className="flex items-center justify-between gap-3 mt-3">
+              <p className="text-small text-secondary-midGray">
+                Optimized for coding agents like Claude Code / OpenCode-style tools.
+              </p>
+              <Button variant="secondary" size="sm" onClick={handleCopyFixPrompt}>
+                {fixPromptCopied ? (
+                  <>
+                    <Check className="w-3 h-3 text-success-green" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    Copy for agent
+                  </>
+                )}
+              </Button>
+            </div>
+          </Card>
+        </FadeIn>
       )}
 
       {/* Reset Button */}

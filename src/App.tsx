@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { motion, MotionConfig } from 'framer-motion';
 import Sidebar from './components/layout/Sidebar';
 import HomePage from './pages/HomePage';
 import ChatWorkspace from './pages/ChatWorkspace';
@@ -8,25 +9,41 @@ import { ChatProvider } from './context/ChatContext';
 import { ToastProvider } from './components/ui/Toast';
 import CommandPalette from './components/layout/CommandPalette';
 
+function AnimatedRoutes() {
+  const location = useLocation();
+  return (
+    <motion.div
+      key={location.pathname}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+    >
+      <Routes location={location}>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/chat/*" element={<ChatWorkspace />} />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/audit" element={<AuditPage />} />
+      </Routes>
+    </motion.div>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter basename="/Prompt-Designer">
-      <ChatProvider>
-        <ToastProvider>
-          <div className="flex w-full min-h-screen bg-primary-dark text-primary-light">
-            <Sidebar />
-            <main className="flex-1 min-w-0 overflow-x-hidden">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/chat/*" element={<ChatWorkspace />} />
-                <Route path="/history" element={<HistoryPage />} />
-                <Route path="/audit" element={<AuditPage />} />
-              </Routes>
-            </main>
-          <CommandPalette />
-          </div>
-        </ToastProvider>
-      </ChatProvider>
+      <MotionConfig reducedMotion="user">
+        <ChatProvider>
+          <ToastProvider>
+            <div className="flex w-full min-h-screen bg-primary-dark text-primary-light">
+              <Sidebar />
+              <main className="flex-1 min-w-0 overflow-x-hidden">
+                <AnimatedRoutes />
+              </main>
+              <CommandPalette />
+            </div>
+          </ToastProvider>
+        </ChatProvider>
+      </MotionConfig>
     </BrowserRouter>
   );
 }

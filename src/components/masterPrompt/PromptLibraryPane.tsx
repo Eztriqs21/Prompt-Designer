@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react';
 import { Pin, ChevronRight, Loader2, BookOpen, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import type { PromptVersion } from '../../types';
 import Chip from '../ui/Chip';
 import Button from '../ui/Button';
 import FormattedPrompt from './FormattedPrompt';
+import FadeIn from '../ui/FadeIn';
 
 interface PromptLibraryPaneProps {
   promptVersions: PromptVersion[];
@@ -112,8 +114,8 @@ export default function PromptLibraryPane({
 
       {/* Version list */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 min-h-0">
-        {promptVersions.map((prompt) => (
-          <div key={prompt.id} className="mb-3">
+        {promptVersions.map((prompt, i) => (
+          <FadeIn key={prompt.id} delay={Math.min(i * 0.04, 0.3)} className="mb-3">
             <div className="rounded-md bg-secondary-darkSurface border border-secondary-borderGray overflow-hidden">
               {/* Version card */}
               <div className="px-4 py-3">
@@ -172,37 +174,48 @@ export default function PromptLibraryPane({
               </div>
 
               {/* Expanded detail */}
-              {expandedId === prompt.id && (
-                <div className="px-4 pb-4 space-y-3 border-t border-secondary-borderGray">
-                  {prompt.summary && (
-                    <div className="pt-3">
-                      <p className="text-small font-semibold tracking-wider uppercase text-secondary-midGray mb-1">Summary</p>
-                      <p className="text-small text-primary-light leading-relaxed">{prompt.summary}</p>
-                    </div>
-                  )}
-
-                  {prompt.analysis && (
-                    <div>
-                      <p className="text-small font-semibold tracking-wider uppercase text-secondary-midGray mb-1">Analysis</p>
-                      <p className="text-small text-primary-light leading-relaxed">{prompt.analysis}</p>
-                    </div>
-                  )}
-
-                  <div>
-                    <p className="text-small font-semibold tracking-wider uppercase text-secondary-midGray mb-1.5">Master Prompt</p>
-                    <FormattedPrompt content={prompt.masterPrompt} />
-                  </div>
-
-                  <button
-                    onClick={() => onViewPrompt(prompt)}
-                    className="text-small text-secondary-midGray hover:text-primary-light transition-colors"
+              <AnimatePresence initial={false}>
+                {expandedId === prompt.id && (
+                  <motion.div
+                    key="detail"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.22, ease: 'easeOut' }}
+                    className="overflow-hidden"
                   >
-                    Open full view →
-                  </button>
-                </div>
-              )}
+                    <div className="px-4 pb-4 space-y-3 border-t border-secondary-borderGray">
+                      {prompt.summary && (
+                        <div className="pt-3">
+                          <p className="text-small font-semibold tracking-wider uppercase text-secondary-midGray mb-1">Summary</p>
+                          <p className="text-small text-primary-light leading-relaxed">{prompt.summary}</p>
+                        </div>
+                      )}
+
+                      {prompt.analysis && (
+                        <div>
+                          <p className="text-small font-semibold tracking-wider uppercase text-secondary-midGray mb-1">Analysis</p>
+                          <p className="text-small text-primary-light leading-relaxed">{prompt.analysis}</p>
+                        </div>
+                      )}
+
+                      <div>
+                        <p className="text-small font-semibold tracking-wider uppercase text-secondary-midGray mb-1.5">Master Prompt</p>
+                        <FormattedPrompt content={prompt.masterPrompt} />
+                      </div>
+
+                      <button
+                        onClick={() => onViewPrompt(prompt)}
+                        className="text-small text-secondary-midGray hover:text-primary-light transition-colors"
+                      >
+                        Open full view →
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
+          </FadeIn>
         ))}
       </div>
     </div>

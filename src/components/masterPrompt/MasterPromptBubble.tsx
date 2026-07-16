@@ -1,8 +1,10 @@
 import { useState, useRef } from 'react';
 import { Copy, Check, Bot, ArrowLeft, Download } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import FormattedPrompt from './FormattedPrompt';
 import SectionCard from './SectionCard';
 import SectionConversation from './SectionConversation';
+import FadeIn from '../ui/FadeIn';
 import type { SectionType, SectionState } from '../../types';
 import type { SectionMessage } from '../../lib/apiClient';
 import type { Message } from '../../types';
@@ -88,7 +90,7 @@ export default function MasterPromptBubble({
   };
 
   return (
-    <div className="flex items-start gap-3">
+    <FadeIn className="flex items-start gap-3">
       <div className="w-7 h-7 rounded-md bg-secondary-darkSurface border border-secondary-borderGray flex items-center justify-center shrink-0 mt-0.5">
         <Bot className="w-3.5 h-3.5 text-secondary-midGray" />
       </div>
@@ -116,8 +118,17 @@ export default function MasterPromptBubble({
           </div>
         </button>
 
-        {expanded && (
-          <div className="rounded-md border border-secondary-borderGray bg-primary-dark p-4 space-y-4">
+        <AnimatePresence initial={false}>
+          {expanded && (
+            <motion.div
+              key="detail"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className="overflow-hidden"
+            >
+              <div className="rounded-md border border-secondary-borderGray bg-primary-dark p-4 space-y-4">
             {activeSection ? (
               <div className="space-y-3">
                 <button
@@ -213,9 +224,11 @@ export default function MasterPromptBubble({
                 </div>
               </>
             )}
-          </div>
-        )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </FadeIn>
   );
 }

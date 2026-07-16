@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Copy, Check, Trash2, ChevronDown } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useChatContext } from '../context/ChatContext';
 import FormattedPrompt from '../components/masterPrompt/FormattedPrompt';
 import SimpleTable, { tableRowCls, tableCellCls } from '../components/ui/SimpleTable';
@@ -133,8 +134,14 @@ export default function HistoryPage() {
             </div>
           ) : (
             <SimpleTable headers={chatHeaders}>
-              {prompts.map((prompt) => (
-                <tr key={prompt.id} className={`${tableRowCls} hover:bg-primary-light/5`}>
+              {prompts.map((prompt, i) => (
+                <motion.tr
+                  key={prompt.id}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeOut', delay: Math.min(i * 0.03, 0.3) }}
+                  className={`${tableRowCls} hover:bg-primary-light/5`}
+                >
                   <td
                     className={`${tableCellCls} cursor-pointer`}
                     onClick={() => setSelectedId(selectedId === prompt.id ? null : prompt.id)}
@@ -186,17 +193,23 @@ export default function HistoryPage() {
                       </Button>
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
               {prompts.map((prompt) =>
                 selectedId === prompt.id ? (
-                  <tr key={`${prompt.id}-details`} className={`${tableRowCls} hover:bg-primary-light/5`}>
+                  <motion.tr
+                    key={`${prompt.id}-details`}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                    className={`${tableRowCls} hover:bg-primary-light/5`}
+                  >
                     <td className={tableCellCls} colSpan={chatHeaders.length}>
                       <div className="mt-1">
                         <FormattedPrompt content={prompt.masterPrompt} />
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ) : null
               )}
             </SimpleTable>
@@ -221,8 +234,14 @@ export default function HistoryPage() {
             </div>
           ) : (
             <SimpleTable headers={auditHeaders}>
-              {audits.map((audit) => (
-                <tr key={audit.id} className={`${tableRowCls} hover:bg-primary-light/5`}>
+              {audits.map((audit, i) => (
+                <motion.tr
+                  key={audit.id}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeOut', delay: Math.min(i * 0.03, 0.3) }}
+                  className={`${tableRowCls} hover:bg-primary-light/5`}
+                >
                   <td className={tableCellCls}>
                     <span className="text-body text-primary-light">{audit.title}</span>
                   </td>
@@ -259,7 +278,7 @@ export default function HistoryPage() {
                       </Button>
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </SimpleTable>
           )}

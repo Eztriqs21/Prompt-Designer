@@ -4,6 +4,7 @@ import { Plus, Trash2, MessageSquare, Pencil } from 'lucide-react';
 import { useChatContext } from '../../context/ChatContext';
 import ConfirmModal from '../layout/ConfirmModal';
 import { useToast } from '../ui/Toast';
+import FadeIn from '../ui/FadeIn';
 
 interface ChatListProps {
   onNewChat: () => void;
@@ -80,12 +81,13 @@ export default function ChatList({ onNewChat }: ChatListProps) {
             No chats yet. Start a new chat to design your first prompt.
           </p>
         ) : (
-          chats.map((chat) => {
+          chats.map((chat, i) => {
             const isActive = chat.id === activeChatId;
             const lastMsg = (messagesByChatId[chat.id] || [])[messagesByChatId[chat.id]?.length - 1];
             return (
-              <div
+              <FadeIn
                 key={chat.id}
+                delay={Math.min(i * 0.03, 0.3)}
                 className={`group flex items-start gap-2.5 rounded-md px-3 py-2.5 cursor-pointer transition-colors ${
                   isActive ? 'bg-secondary-darkSurface text-primary-light' : 'text-secondary-midGray hover:bg-primary-dark hover:text-primary-light'
                 }`}
@@ -138,7 +140,7 @@ export default function ChatList({ onNewChat }: ChatListProps) {
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
-              </div>
+              </FadeIn>
             );
           })
         )}

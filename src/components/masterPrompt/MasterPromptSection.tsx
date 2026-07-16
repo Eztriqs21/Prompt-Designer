@@ -1,10 +1,11 @@
 import { useMemo, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import ConversationPane from './ConversationPane';
 import PromptLibraryPane from './PromptLibraryPane';
 import FormattedPrompt from './FormattedPrompt';
 import Button from '../ui/Button';
+import FadeIn from '../ui/FadeIn';
 import { useMasterPrompt } from '../../hooks/useMasterPrompt';
 import { usePromptLibrary } from '../../hooks/usePromptLibrary';
 import { useSectionPrompts } from '../../hooks/useSectionPrompts';
@@ -165,7 +166,7 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
           />
         ) : (
           <div className="flex-1 flex items-center justify-center h-full">
-            <div className="text-center space-y-4 px-6">
+            <FadeIn className="text-center space-y-4 px-6">
               <div className="w-16 h-16 rounded-md bg-secondary-darkSurface border border-secondary-borderGray flex items-center justify-center mx-auto">
                 <svg className="w-7 h-7 text-secondary-midGray/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -178,19 +179,25 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
                 <p className="text-body text-secondary-midGray max-w-[280px] mx-auto leading-relaxed">
                   Create a new chat or select an existing one to continue where you left off.
                 </p>
-                <Button variant="secondary" size="sm" className="mt-5" onClick={onNewChat}>
-                  <Plus className="w-3.5 h-3.5" />
-                  Create a new chat
-                </Button>
-              </div>
-            </div>
-          </div>
+                 <Button variant="secondary" size="sm" className="mt-5" onClick={onNewChat}>
+                   <Plus className="w-3.5 h-3.5" />
+                   Create a new chat
+                 </Button>
+               </div>
+             </FadeIn>
+           </div>
         )}
       </div>
 
       <AnimatePresence>
         {showLibrary && (
-          <div className="absolute inset-y-0 right-0 z-30 w-full max-w-md bg-primary-dark border-l border-secondary-borderGray shadow-md overflow-hidden">
+          <motion.div
+            initial={{ x: 24, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 24, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="absolute inset-y-0 right-0 z-30 w-full max-w-md bg-primary-dark border-l border-secondary-borderGray shadow-md overflow-hidden"
+          >
             <PromptLibraryPane
               promptVersions={promptVersions}
               isLoading={versionsLoading}
@@ -200,7 +207,7 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
               onViewPrompt={setViewingPrompt}
               onClose={onToggleLibrary}
             />
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 

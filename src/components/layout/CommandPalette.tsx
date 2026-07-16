@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useToast } from '../ui/Toast';
+import FadeIn from '../ui/FadeIn';
 
 interface Command {
   id: string;
@@ -158,25 +160,33 @@ export default function CommandPalette() {
     }
   };
 
-  if (!open) return null;
-
   const categories = ['Chat', 'Audit', 'History', 'System'] as const;
 
   return (
-    <div
-      className="fixed inset-0 z-[1000] flex items-start justify-center pt-[12vh] bg-primary-dark/70"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) setOpen(false);
-      }}
-      role="presentation"
-    >
-      <div
-        className="w-[560px] max-w-[92vw] bg-secondary-darkSurface border border-secondary-borderGray text-primary-light rounded-md shadow-lg overflow-hidden"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Command palette"
-        onKeyDown={onKeyDown}
-      >
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-[1000] flex items-start justify-center pt-[12vh] bg-primary-dark/70"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setOpen(false);
+          }}
+          role="presentation"
+        >
+          <motion.div
+            className="w-[560px] max-w-[92vw] bg-secondary-darkSurface border border-secondary-borderGray text-primary-light rounded-md shadow-lg overflow-hidden"
+            initial={{ opacity: 0, scale: 0.98, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Command palette"
+            onKeyDown={onKeyDown}
+          >
         <div className="p-3 border-b border-secondary-borderGray">
           <input
             ref={inputRef}
@@ -205,18 +215,19 @@ export default function CommandPalette() {
                   const idx = filtered.indexOf(cmd);
                   const isActive = idx === active;
                   return (
-                    <button
-                      key={cmd.id}
-                      type="button"
-                      onMouseEnter={() => setActive(idx)}
-                      onClick={() => execute(cmd)}
-                      className={`w-full text-left px-4 py-2 text-body flex items-center justify-between transition-colors duration-150 ${
-                        isActive ? 'bg-primary-light/10 text-primary-light' : 'text-primary-light hover:bg-primary-light/5'
-                      }`}
-                    >
-                      <span>{cmd.label}</span>
-                      {isActive && <span className="text-small text-secondary-midGray">↵</span>}
-                    </button>
+                    <FadeIn key={cmd.id} delay={Math.min(idx * 0.025, 0.25)}>
+                      <button
+                        type="button"
+                        onMouseEnter={() => setActive(idx)}
+                        onClick={() => execute(cmd)}
+                        className={`w-full text-left px-4 py-2 text-body flex items-center justify-between transition-colors duration-150 ${
+                          isActive ? 'bg-primary-light/10 text-primary-light' : 'text-primary-light hover:bg-primary-light/5'
+                        }`}
+                      >
+                        <span>{cmd.label}</span>
+                        {isActive && <span className="text-small text-secondary-midGray">↵</span>}
+                      </button>
+                    </FadeIn>
                   );
                 })}
               </div>
@@ -227,7 +238,9 @@ export default function CommandPalette() {
         <div className="px-4 py-2 border-t border-secondary-borderGray text-small text-secondary-midGray">
           ↑↓ navigate · ↵ select · esc close
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

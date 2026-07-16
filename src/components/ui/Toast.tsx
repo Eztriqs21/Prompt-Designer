@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useState, useRef, type ReactNode } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface ToastItem {
   id: number;
@@ -31,14 +32,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         aria-live="polite"
         aria-atomic="false"
       >
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className="pointer-events-auto px-4 py-2.5 rounded-md bg-secondary-darkSurface border border-secondary-borderGray text-primary-light text-sm shadow-lg"
-          >
-            {t.message}
-          </div>
-        ))}
+        <AnimatePresence initial={false}>
+          {toasts.map((t) => (
+            <motion.div
+              key={t.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="pointer-events-auto px-4 py-2.5 rounded-md bg-secondary-darkSurface border border-secondary-borderGray text-primary-light text-sm shadow-lg"
+            >
+              {t.message}
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );

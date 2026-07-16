@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { Bot, User } from 'lucide-react';
+import FadeIn from '../ui/FadeIn';
 import type { Message } from '../../types';
 
 interface QuestionBubbleProps {
@@ -21,7 +22,7 @@ export default memo(function QuestionBubble({ message }: QuestionBubbleProps) {
   const timestamp = formatTimestamp(message.timestamp);
 
   return (
-    <div className="flex items-start gap-3">
+    <FadeIn className="flex items-start gap-3">
       <div className="w-7 h-7 rounded-md bg-secondary-darkSurface border border-secondary-borderGray flex items-center justify-center shrink-0 mt-0.5">
         {isUser ? (
           <User className="w-3.5 h-3.5 text-accent-orange" />
@@ -45,6 +46,6 @@ export default memo(function QuestionBubble({ message }: QuestionBubbleProps) {
           </div>
         </div>
       </div>
-    </div>
+    </FadeIn>
   );
 });

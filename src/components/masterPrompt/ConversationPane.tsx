@@ -5,6 +5,7 @@ import type { SectionMessage } from '../../lib/apiClient';
 import QuestionBubble from './QuestionBubble';
 import MasterPromptBubble from './MasterPromptBubble';
 import UserInputBar from './UserInputBar';
+import FadeIn from '../ui/FadeIn';
 
 interface ConversationPaneProps {
   messages: Message[];
@@ -80,7 +81,7 @@ export default function ConversationPane({
         )}
 
         {isGenerating && !error && (
-          <div className="flex items-start gap-3">
+          <FadeIn className="flex items-start gap-3">
             <div className="w-7 h-7 rounded-md bg-secondary-darkSurface border border-secondary-borderGray flex items-center justify-center shrink-0 mt-0.5">
               <Loader2 className="w-3.5 h-3.5 text-accent-orange animate-spin" />
             </div>
@@ -91,11 +92,11 @@ export default function ConversationPane({
                 <div className="w-1.5 h-1.5 rounded-full bg-accent-orange/40 animate-pulse-subtle" style={{ animationDelay: '600ms' }} />
               </div>
             </div>
-          </div>
+          </FadeIn>
         )}
 
         {error && (
-          <div className="flex items-start gap-3">
+          <FadeIn className="flex items-start gap-3">
             <div className="w-7 h-7 rounded-md bg-semantic-dangerRed/10 border border-semantic-dangerRed/20 flex items-center justify-center shrink-0 mt-0.5">
               <AlertTriangle className="w-3.5 h-3.5 text-semantic-dangerRed" />
             </div>
@@ -108,7 +109,7 @@ export default function ConversationPane({
                 Retry
               </button>
             </div>
-          </div>
+          </FadeIn>
         )}
       </div>
 

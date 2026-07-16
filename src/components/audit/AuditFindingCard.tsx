@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { FileText, Wrench } from 'lucide-react';
+import FadeIn from '../ui/FadeIn';
 import type { AuditFinding, Severity, FindingCategory } from '../../types';
 
 interface AuditFindingCardProps {
@@ -28,7 +29,7 @@ export default memo(function AuditFindingCard({ finding }: AuditFindingCardProps
   const severity = SEVERITY_CONFIG[finding.severity];
 
   return (
-    <div className="p-4 rounded-md bg-secondary-darkSurface border border-secondary-borderGray space-y-2.5">
+    <FadeIn className="p-4 rounded-md bg-secondary-darkSurface border border-secondary-borderGray space-y-2.5">
       {/* Badges Row */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className={`text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md ${severity.bg} ${severity.color} border ${severity.border}`}>
@@ -72,6 +73,6 @@ export default memo(function AuditFindingCard({ finding }: AuditFindingCardProps
           <span className="text-xs text-secondary-midGray/40">{Math.round(finding.confidence * 100)}%</span>
         </div>
       )}
-    </div>
+    </FadeIn>
   );
 });
