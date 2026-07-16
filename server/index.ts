@@ -8,6 +8,12 @@ import promptVersionRoutes from './routes/promptVersions.js';
 import sectionPromptsRoutes from './routes/sectionPrompts.js';
 import sectionMessagesRoutes from './routes/sectionMessages.js';
 import auditRoutes from './routes/audit.js';
+import workspacesRoutes from './routes/workspaces.js';
+import runsRoutes from './routes/runs.js';
+import agentRoutes from './routes/agent.js';
+import vibeloopAuditRoutes from './routes/vibeloopAudit.js';
+import summaryRoutes from './routes/summary.js';
+import vibeloopHistoryRoutes from './routes/vibeloopHistory.js';
 import { loadSectionBlueprints } from './prompts/sectionBlueprints.js';
 
 const app = express();
@@ -43,6 +49,14 @@ app.use('/api/prompt', promptVersionRoutes);
 app.use('/api/sections', sectionPromptsRoutes);
 app.use('/api/section-messages', sectionMessagesRoutes);
 app.use('/api/audit', auditRoutes);
+
+// VibeLoop routes
+app.use('/api', workspacesRoutes);
+app.use('/api', runsRoutes);
+app.use('/api', agentRoutes);
+app.use('/api', vibeloopAuditRoutes);
+app.use('/api', summaryRoutes);
+app.use('/api', vibeloopHistoryRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });

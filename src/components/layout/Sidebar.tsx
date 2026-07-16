@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MessageSquare, ShieldCheck, Clock, Menu, X } from 'lucide-react';
+import { MessageSquare, ShieldCheck, Clock, Zap, Menu, X } from 'lucide-react';
 import AuthStatus from '../auth/AuthStatus';
 
 const NAV_ITEMS = [
   { path: '/home', label: 'Home', icon: MessageSquare },
   { path: '/chat', label: 'Chat Workspace', icon: MessageSquare },
   { path: '/audit', label: 'Website AUDIT', icon: ShieldCheck },
+  { path: '/vibeloop', label: 'VibeLoop', icon: Zap },
   { path: '/history', label: 'History', icon: Clock },
 ];
 

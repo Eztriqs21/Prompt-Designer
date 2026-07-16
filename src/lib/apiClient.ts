@@ -309,3 +309,98 @@ export async function deleteAuditJob(jobId: string): Promise<void> {
   const res = await fetch(`${API_BASE}/audit/${jobId}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete audit job');
 }
+
+// ─── VibeLoop ─────────────────────────────────────────────
+
+import type {
+  Workspace,
+  CreateWorkspacePayload,
+  Run,
+  RunEvent,
+  CompletionSummary,
+} from '../types/vibeloop';
+
+export async function createWorkspace(data: CreateWorkspacePayload): Promise<Workspace> {
+  const res = await fetch(`${API_BASE}/workspaces`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create workspace');
+  return res.json();
+}
+
+export async function getWorkspace(id: string): Promise<Workspace> {
+  const res = await fetch(`${API_BASE}/workspaces/${id}`);
+  if (!res.ok) throw new Error('Workspace not found');
+  return res.json();
+}
+
+export async function listWorkspaces(): Promise<Workspace[]> {
+  const res = await fetch(`${API_BASE}/workspaces`);
+  if (!res.ok) throw new Error('Failed to fetch workspaces');
+  return res.json();
+}
+
+export async function updateWorkspace(id: string, patch: Partial<Workspace>): Promise<Workspace> {
+  const res = await fetch(`${API_BASE}/workspaces/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error('Failed to update workspace');
+  return res.json();
+}
+
+export async function deleteWorkspace(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/workspaces/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete workspace');
+}
+
+export async function revokeWorkspaceKey(id: string): Promise<Workspace> {
+  const res = await fetch(`${API_BASE}/workspaces/${id}/revoke`, { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to revoke key');
+  return res.json();
+}
+
+export async function startRun(workspaceId: string): Promise<Run> {
+  const res = await fetch(`${API_BASE}/workspaces/${workspaceId}/run`, { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to start run');
+  return res.json();
+}
+
+export async function stopRun(workspaceId: string): Promise<Run> {
+  const res = await fetch(`${API_BASE}/workspaces/${workspaceId}/stop`, { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to stop run');
+  return res.json();
+}
+
+export async function getRun(runId: string): Promise<Run> {
+  const res = await fetch(`${API_BASE}/runs/${runId}`);
+  if (!res.ok) throw new Error('Run not found');
+  return res.json();
+}
+
+export async function getRunEvents(runId: string): Promise<RunEvent[]> {
+  const res = await fetch(`${API_BASE}/runs/${runId}/events`);
+  if (!res.ok) throw new Error('Failed to fetch events');
+  return res.json();
+}
+
+export async function getRunSummary(runId: string): Promise<CompletionSummary> {
+  const res = await fetch(`${API_BASE}/runs/${runId}/summary`);
+  if (!res.ok) throw new Error('Failed to fetch summary');
+  return res.json();
+}
+
+export async function getRunHistory(workspaceId: string): Promise<Run[]> {
+  const res = await fetch(`${API_BASE}/workspaces/${workspaceId}/history`);
+  if (!res.ok) throw new Error('Failed to fetch history');
+  return res.json();
+}
+
+export async function getRunFull(runId: string): Promise<{ run: Run; workspace: any }> {
+  const res = await fetch(`${API_BASE}/runs/${runId}/full`);
+  if (!res.ok) throw new Error('Failed to fetch run details');
+  return res.json();
+}

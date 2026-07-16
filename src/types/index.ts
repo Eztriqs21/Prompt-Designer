@@ -216,3 +216,23 @@ export interface AuditJob {
   updatedAt: number;
   completedAt?: number;
 }
+
+// Re-export VibeLoop types
+export type {
+  Workspace,
+  CreateWorkspacePayload,
+  ChecklistItem,
+  WorkspaceStatus,
+  Run,
+  RunStatus,
+  RunEvent,
+  WorkflowStage,
+  AgentResponse,
+  SubmitResultPayload,
+  AuditResult,
+  VibeLoopAuditStatus,
+  Issue,
+  ChecklistCoverageEntry,
+  PromptPayload,
+  CompletionSummary,
+} from './vibeloop';

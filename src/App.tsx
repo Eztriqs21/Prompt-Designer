@@ -7,9 +7,12 @@ import HeroLandingPage from './pages/HeroLandingPage';
 import ChatWorkspace from './pages/ChatWorkspace';
 import HistoryPage from './pages/HistoryPage';
 import AuditPage from './pages/AuditPage';
+import VibeLoopPage from './pages/VibeLoopPage';
+import VibeLoopWorkspace from './pages/VibeLoopWorkspace';
 import { ChatProvider } from './context/ChatContext';
 import { AuthProvider } from './context/AuthContext';
 import { WorkflowProvider } from './context/WorkflowContext';
+import { VibeLoopProvider } from './context/VibeLoopContext';
 import { useAuth } from './hooks/useAuth';
 import { ToastProvider } from './components/ui/Toast';
 import CommandPalette from './components/layout/CommandPalette';
@@ -30,6 +33,8 @@ function AnimatedRoutes() {
         <Route path="/chat/*" element={<ChatWorkspace />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/audit" element={<AuditPage />} />
+        <Route path="/vibeloop" element={<VibeLoopPage />} />
+        <Route path="/vibeloop/:workspaceId" element={<VibeLoopWorkspace />} />
       </Routes>
     </motion.div>
   );
@@ -98,9 +103,11 @@ export default function App() {
         <AuthProvider>
           <ChatProvider>
             <WorkflowProvider>
-              <ToastProvider>
-                <AppLayout />
-              </ToastProvider>
+              <VibeLoopProvider>
+                <ToastProvider>
+                  <AppLayout />
+                </ToastProvider>
+              </VibeLoopProvider>
             </WorkflowProvider>
           </ChatProvider>
         </AuthProvider>
