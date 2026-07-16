@@ -135,13 +135,12 @@ export function useMasterPrompt(config: MasterPromptConfig) {
       setState((prev) => ({ ...prev, isGenerating: true, error: null }));
       console.log(`${new Date().toISOString()} | [fe:hook] generate-start | chatId=${chatId} ideaLen=${idea.length}`);
 
-      // Real abort controller so the in-flight fetch is actually cancelled on
-      // a client timeout / unmount. The server keeps running in the
-      // background and persists the result, which we recover below.
+      // Abort controller for genuine client-side cancellation (e.g. unmount).
+      // NOTE: There is intentionally NO client-side timeout here. Free OpenCode
+      // models can take minutes to reply, and aborting early would throw away a
+      // valid response. The server owns aborting (winner-cancels-losers only),
+      // so we let the fetch run to completion.
       const controller = new AbortController();
-      // Safety net only: the backend normally answers within ~one model's
-      // latency (parallel first-success), so this rarely fires.
-      const timeoutId = setTimeout(() => controller.abort(), 180000);
 
       const applyResult = (response: MasterPromptResponse) => {
         const assistantMsg: Message = {
@@ -212,12 +211,10 @@ export function useMasterPrompt(config: MasterPromptConfig) {
           },
           controller.signal,
         );
-        clearTimeout(timeoutId);
 
         applyResult(response);
         return response;
       } catch (err: any) {
-        clearTimeout(timeoutId);
         const isAbort = err?.name === 'AbortError' || controller.signal.aborted;
 
         // Client aborted (timeout or unmount). The server often keeps

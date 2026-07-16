@@ -92,9 +92,10 @@ async function callOpenCode(
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
-    // Use the caller-provided signal (per-model abort) when present,
-    // otherwise fall back to a 45s hard cap so a single model can never hang forever.
-    signal: signal ?? AbortSignal.timeout(45000),
+    // Use the caller-provided per-model signal (used to cancel losers once a
+    // winner is known). No hard cap is applied here — the caller owns aborting,
+    // so a slow-but-valid model reply is never killed by a local timeout.
+    signal,
   });
 
   // KEY diagnostic: log the moment the HTTP response actually arrives.
@@ -133,9 +134,12 @@ async function callOpenCode(
  * Design notes:
  * - Each model runs its own fetch with its own AbortController so we can cancel
  *   the losers the moment a winner is known (no wasted work / cost).
- * - A 45s timer per model marks that attempt as `timeout` if it overruns.
- * - `attempts` is ALWAYS fully populated — successful, failed, aborted, and
- *   timed-out models all get an entry — so callers and logs see the true picture.
+ * - There is intentionally NO local/per-model timeout. Free OpenCode models can
+ *   take minutes to reply; killing them early would report a false "timed out"
+ *   while the provider is still working. The only abort is the winner-cancels-
+ *   losers signal.
+ * - `attempts` is ALWAYS fully populated — successful, failed, and aborted
+ *   models all get an entry — so callers and logs see the true picture.
  * - On all-fail, the AggregateError from Promise.any is converted into a single
  *   error that still carries the complete `attempts` list.
  */
@@ -161,8 +165,7 @@ export async function generateWithFallback(
   interface TaskState {
     modelName: string;
     controller: AbortController;
-    abortedReason: 'timeout' | 'cancelled' | null;
-    timer: ReturnType<typeof setTimeout>;
+    abortedReason: 'cancelled' | null;
   }
 
   const taskStates: TaskState[] = uniqueModels.map((modelName) => {
@@ -170,46 +173,33 @@ export async function generateWithFallback(
       modelName,
       controller: new AbortController(),
       abortedReason: null,
-      timer: 0 as unknown as ReturnType<typeof setTimeout>,
     };
 
     const startedAt = Date.now();
 
-    state.timer = setTimeout(() => {
-      state.abortedReason = 'timeout';
-      state.controller.abort();
-    }, 45000);
-
     const promise = callOpenCode(messages, modelName, config, state.controller.signal, requestId)
       .then((result) => {
-        clearTimeout(state.timer);
         const durationMs = Date.now() - startedAt;
         attempts.push({ model: modelName, status: 'success', durationMs });
         logStep('gen:model', 'success', { requestId, model: modelName, durationMs });
         return { modelName, result };
       })
       .catch((err: any) => {
-        clearTimeout(state.timer);
         const durationMs = Date.now() - startedAt;
         let status: AttemptMeta['status'] = 'failed';
         let reasonKind = 'provider-error';
-        if (state.abortedReason === 'timeout') { status = 'timeout'; reasonKind = 'timeout-local'; }
-        else if (state.abortedReason === 'cancelled') { status = 'aborted'; reasonKind = 'aborted-by-winner'; }
-        // Safety net for aborts that bypassed our reason flag.
-        else if (err?.name === 'TimeoutError' || err?.name === 'AbortError') { status = 'timeout'; reasonKind = 'timeout-local'; }
+        // The only legitimate abort is the winner-cancels-losers signal.
+        if (state.abortedReason === 'cancelled') { status = 'aborted'; reasonKind = 'aborted-by-winner'; }
+        // Safety net: an unexpected AbortError without our reason flag.
+        else if (err?.name === 'AbortError') { status = 'aborted'; reasonKind = 'aborted-unexpected'; }
 
         const reason = String(err?.message || 'unknown error');
         attempts.push({ model: modelName, status, durationMs, error: reason });
-        // Explicit, non-ambiguous reason so a local abort is never
-        // mistaken for a real provider timeout in the logs.
         logStep('gen:model', reasonKind, {
           requestId,
           model: modelName,
           durationMs,
           httpStatus: err?.status,
-          note: reasonKind === 'timeout-local'
-            ? 'local 45s timer fired; provider may still be completing'
-            : undefined,
           error: reason,
         });
         return Promise.reject({ modelName, status, durationMs, error: reason });
