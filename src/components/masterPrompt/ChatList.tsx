@@ -60,7 +60,7 @@ export default function ChatList({ onNewChat }: ChatListProps) {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-secondary-darkSurface border-r border-secondary-borderGray">
+    <div className="flex flex-col h-full min-h-0 bg-primary-dark border-r border-secondary-borderGray">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-secondary-borderGray shrink-0">
         <h2 className="text-small font-semibold uppercase tracking-wider text-secondary-midGray">Chats</h2>

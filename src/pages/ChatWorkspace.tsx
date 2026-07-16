@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import MasterPromptSection from '../components/masterPrompt/MasterPromptSection';
 import NewChatForm from '../components/masterPrompt/NewChatForm';
 import ChatList from '../components/masterPrompt/ChatList';
@@ -13,6 +13,7 @@ export default function ChatWorkspace() {
   const navigate = useNavigate();
   const [showLibrary, setShowLibrary] = useState(false);
   const [showNewChatForm, setShowNewChatForm] = useState(false);
+  const [chatListOpen, setChatListOpen] = useState(true);
 
   const chatsState = useChats(chatId || null);
 
@@ -36,16 +37,25 @@ export default function ChatWorkspace() {
 
   return (
     <div className="h-screen w-full flex bg-primary-dark">
-      {/* Chat list column */}
-      <div className="w-[260px] shrink-0 hidden sm:block">
-        <ChatList onNewChat={() => setShowNewChatForm(true)} />
-      </div>
+      {/* Chat list column (collapsible) */}
+      {chatListOpen && (
+        <div className="w-[260px] shrink-0 hidden sm:block">
+          <ChatList onNewChat={() => setShowNewChatForm(true)} />
+        </div>
+      )}
 
       {/* Main workspace */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Header */}
         <header className="shrink-0 px-6 py-4 border-b border-secondary-borderGray flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setChatListOpen(v => !v)}
+              className="hidden sm:inline-flex p-1.5 rounded-md text-secondary-midGray hover:text-accent-orange hover:bg-secondary-darkSurface transition-colors"
+              aria-label={chatListOpen ? 'Collapse chat list' : 'Expand chat list'}
+            >
+              {chatListOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+            </button>
             {isInSpecificChat && (
               <button
                 onClick={handleBackToList}
@@ -57,10 +67,12 @@ export default function ChatWorkspace() {
             )}
             <h1 className="text-heading text-primary-light">Chat Workspace</h1>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => setShowNewChatForm(true)}>
-            <Plus className="w-3.5 h-3.5" />
-            New Chat
-          </Button>
+          {chatsState.chats.length > 0 && (
+            <Button variant="secondary" size="sm" onClick={() => setShowNewChatForm(true)}>
+              <Plus className="w-3.5 h-3.5" />
+              New Chat
+            </Button>
+          )}
         </header>
 
         {/* Content */}

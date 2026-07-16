@@ -178,7 +178,7 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
                 <p className="text-body text-secondary-midGray max-w-[280px] mx-auto leading-relaxed">
                   Create a new chat or select an existing one to continue where you left off.
                 </p>
-                <Button variant="secondary" size="sm" onClick={onNewChat}>
+                <Button variant="secondary" size="sm" className="mt-5" onClick={onNewChat}>
                   <Plus className="w-3.5 h-3.5" />
                   Create a new chat
                 </Button>
