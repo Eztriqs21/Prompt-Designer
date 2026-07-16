@@ -97,14 +97,6 @@ export function useMasterPrompt(config: MasterPromptConfig) {
     }
   }, [activeChatId, messagesByChatId, promptsByChatId]);
 
-  // When config.chatId changes (e.g., from URL param), sync with context
-  useEffect(() => {
-    if (config.chatId && config.chatId !== activeChatId) {
-      // This handles the case where URL has a chatId but context doesn't
-      // The context's setActiveChat should be called by parent
-    }
-  }, [config.chatId, activeChatId]);
-
   const addUserMessage = useCallback(
     (content: string) => {
       const chatId = configRef.current.chatId ?? activeChatId;
@@ -133,7 +125,6 @@ export function useMasterPrompt(config: MasterPromptConfig) {
 
       generatingRef.current = true;
       setState((prev) => ({ ...prev, isGenerating: true, error: null }));
-      console.log(`${new Date().toISOString()} | [fe:hook] generate-start | chatId=${chatId} ideaLen=${idea.length}`);
 
       // Abort controller for genuine client-side cancellation (e.g. unmount).
       // NOTE: There is intentionally NO client-side timeout here. Free OpenCode
@@ -170,9 +161,6 @@ export function useMasterPrompt(config: MasterPromptConfig) {
           error: null,
           remaining: Math.max(0, response.remaining ?? prev.remaining - 1),
         }));
-        console.log(
-          `${new Date().toISOString()} | [fe:hook] generate-success | generatedBy=${response.meta?.model} promptLen=${response.prompt?.length}`,
-        );
       };
 
       // Poll the server for a late save after a client abort/timeout.
@@ -230,15 +218,10 @@ export function useMasterPrompt(config: MasterPromptConfig) {
         // running and saves the result — poll for it so a valid reply is
         // never lost to a premature check.
         if (isAbort) {
-          console.log(
-            `${new Date().toISOString()} | [fe:hook] generate-aborted | reason=client-timeout-or-unmount chatId=${chatId}`,
-          );
           const recovered = await recoverLatest();
           if (recovered) {
-            console.log(`${new Date().toISOString()} | [fe:hook] recovery-success | chatId=${chatId}`);
             return null;
           }
-          console.log(`${new Date().toISOString()} | [fe:hook] recovery-failed | chatId=${chatId}`);
           setState((prev) => ({
             ...prev,
             isGenerating: false,

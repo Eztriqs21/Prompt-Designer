@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, AlertTriangle, RotateCcw } from 'lucide-react';
+import { PROMPT_TEMPLATES } from '../../lib/promptTemplates';
 
 interface UserInputBarProps {
   onSend: (message: string) => void;
@@ -52,11 +53,31 @@ export default function UserInputBar({
     }
   };
 
+  const insertTemplate = (scaffold: string) => {
+    setInput((prev) => (prev.trim() ? `${prev}\n\n${scaffold}` : scaffold));
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  };
+
   const hasInput = input.trim().length > 0;
   const showError = error && !isGenerating;
 
   return (
     <div className="w-full">
+      <div className="flex items-center gap-2 flex-wrap px-4 pt-2.5">
+        <span className="text-small text-secondary-midGray uppercase tracking-wider">Templates</span>
+        {PROMPT_TEMPLATES.map((template) => (
+          <button
+            key={template.id}
+            type="button"
+            title={template.description}
+            onClick={() => insertTemplate(template.scaffold)}
+            className="text-small px-2.5 py-1 rounded-md bg-primary-dark border border-secondary-borderGray text-secondary-midGray hover:text-accent-orange hover:border-accent-orange/30 transition-colors"
+          >
+            {template.title}
+          </button>
+        ))}
+      </div>
+
       <div className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md px-4 py-2.5 flex items-end gap-2">
         <textarea
           ref={textareaRef}

@@ -60,6 +60,13 @@ export default memo(function AuditFindingCard({ finding }: AuditFindingCardProps
         </div>
       )}
 
+      {/* Evidence reference */}
+      {finding.evidence && (
+        <p className="text-xs text-secondary-midGray/70 font-mono truncate">
+          Evidence: {finding.evidence}
+        </p>
+      )}
+
       {/* Confidence */}
       {finding.confidence < 1 && (
         <div className="flex items-center gap-2">

@@ -1,9 +1,10 @@
 import { memo, useState } from 'react';
-import { RotateCcw, Copy, Check } from 'lucide-react';
+import { RotateCcw, Copy, Check, Images } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import AuditFindingCard from './AuditFindingCard';
+import EvidenceViewer from './EvidenceViewer';
 import FadeIn from '../ui/FadeIn';
 import type { AuditReport as AuditReportType, AuditFinding, Severity, FindingCategory } from '../../types';
 
@@ -87,6 +88,7 @@ function buildSections(report: AuditReportType): { key: string; title: string; i
 
 export default memo(function AuditReport({ report, onReset }: AuditReportProps) {
   const [fixPromptCopied, setFixPromptCopied] = useState(false);
+  const [showEvidence, setShowEvidence] = useState(false);
   const circumference = 2 * Math.PI * 42;
   const dashOffset = circumference - (report.score / 100) * circumference;
 
@@ -164,6 +166,26 @@ export default memo(function AuditReport({ report, onReset }: AuditReportProps) 
           </div>
         </div>
       </div>
+
+      {/* Evidence */}
+      {report.evidence.length > 0 && (
+        <div className="flex items-center justify-between gap-3 bg-secondary-darkSurface border border-secondary-borderGray rounded-md px-4 py-3">
+          <div>
+            <div className="flex items-center gap-2 text-body text-primary-light">
+              <Images className="w-4 h-4 text-accent-orange" />
+              Captured evidence
+            </div>
+            <p className="text-small text-secondary-midGray mt-0.5">
+              {report.evidence.length} item(s): screenshots, console logs, and snapshots.
+            </p>
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => setShowEvidence(true)}>
+            View evidence
+          </Button>
+        </div>
+      )}
+
+      <EvidenceViewer open={showEvidence} evidence={report.evidence} onClose={() => setShowEvidence(false)} />
 
       {/* Recommendations */}
       {report.recommendations.length > 0 && (

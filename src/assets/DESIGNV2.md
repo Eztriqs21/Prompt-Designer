@@ -115,7 +115,7 @@ components:
     radius: "radius.md"
     paddingX: 12
     paddingY: 8
-    focusRingColor: "accent.blue"
+    focusRingColor: "accent.orange"
   card:
     background: "secondary.darkSurface"
     textColor: "primary.light"
@@ -143,9 +143,9 @@ components:
   segmentedControl:
     background: "primary.dark"
     segmentBackground: "secondary.darkSurface"
-    segmentSelectedBackground: "accent.blue"
+    segmentSelectedBackground: "accent.orange"
     segmentTextColor: "secondary.midGray"
-    segmentSelectedTextColor: "primary.light"
+    segmentSelectedTextColor: "primary.dark"
     borderColor: "secondary.borderGray"
     borderWidth: 1
     radius: "radius.md"
@@ -174,16 +174,18 @@ brand:
 ## 1. Overview
 
 This design system is for a developer-focused AI app that combines a **Prompt Workspace** with a **Website AUDIT** tool.  
-The UI should feel like a serious, reliable developer console, not a marketing site. It is **monochrome-first** with subtle blue accents, built for clarity, keyboard control, and high attention to detail.
+The UI should feel like a serious, reliable developer console, not a marketing site. It is **monochrome-first** with restrained orange accent highlights, built for clarity, keyboard control, and high attention to detail.
 
 Agents MUST treat this app as a **tool interface**, not a landing page. Prioritize legibility, hierarchy, and responsiveness.
+
+> **No-blue palette (intentional).** This build ships a deliberately **no-blue** palette. `Accent.Orange` (`#fab283`) carries every interactive emphasis (selected states, links, focus, progress). `Accent.Purple` (`#9d7cd8`) is reserved for keyword/heading emphasis only. There is no blue token in the system — do not reintroduce one.
 
 Key principles:
 
 - Single monospace font everywhere (code-like feel).
 - Dark base surfaces with lighter text and cards.
 - Minimal shadows; hierarchy expressed via spacing, borders, and typography.
-- Blue accent only for real interactivity (selected states, links, highlights).
+- Orange accent only for real interactivity (selected states, links, highlights).
 - Red only for genuine error/destructive states.
 
 ## 2. Layout & Structure
@@ -214,7 +216,7 @@ Agents SHOULD reuse the same page shell (sidebar + header + content) across all 
 - Active item:
   - Background: `components.sidebar.activeBackground`.
   - Text: `components.sidebar.activeTextColor`.
-  - Optionally, a 2–4px Accent.Blue bar on the left edge.
+  - Optionally, a 2–4px Accent.Orange bar on the left edge.
 - Inactive items:
   - Text: `components.sidebar.textColor` (muted).
   - No strong background; maybe a slight dark hover.
@@ -260,7 +262,7 @@ Baseline:
   - Use `components.button.secondary` tokens.
   - Hover: subtle background and border color shift.
 
-Agents MUST NOT use bright, multi-colored buttons. Keep them monochrome with Accent.Blue carefully used for outlines or focus.
+Agents MUST NOT use bright, multi-colored buttons. Keep them monochrome with Accent.Orange carefully used for outlines or focus.
 
 ### Inputs
 
@@ -270,7 +272,7 @@ Agents MUST NOT use bright, multi-colored buttons. Keep them monochrome with Acc
   - search fields.
 - Placeholder text in `components.input.placeholderColor`.
 - Focus:
-  - show a clear but subtle focus ring in Accent.Blue around the input.
+  - show a clear but subtle focus ring in Accent.Orange around the input.
 
 Keep inputs flat. Do NOT add inner shadows or glassmorphism.
 
@@ -286,7 +288,7 @@ Use `components.card` for:
 Selected card state:
 
 - Maintain background, emphasize border:
-  - strengthen borderColor (toward Accent.Blue or lighter BorderGray),
+  - strengthen borderColor (toward Accent.Orange or lighter BorderGray),
   - optionally add a thin inner glow.
 
 ### Tables
@@ -317,7 +319,7 @@ Severity colors:
 
 - Base chip style plus:
   - DangerRed text/border accent for “critical”/“error”.
-  - Accent.Blue accent for important but non-error labels.
+  - Accent.Orange accent for important but non-error labels.
 
 Chip text stays small and monospace.
 
@@ -330,7 +332,7 @@ Use `components.segmentedControl` for:
 
 Selected segment:
 
-- Background: `components.segmentedControl.segmentSelectedBackground` (Accent.Blue).
+- Background: `components.segmentedControl.segmentSelectedBackground` (Accent.Orange).
 - Text: `components.segmentedControl.segmentSelectedTextColor` (light).
 
 Unselected segment:
@@ -383,7 +385,7 @@ Mode selector:
 
 Progress & report:
 
-- Progress bar using Accent.Blue.
+- Progress bar using Accent.Orange.
 - Stage labels in Small typography and Secondary.MidGray.
 - Report structured into sections (Code, Browser, Accessibility, Performance, Security).
 - Each section uses Card + Table to show findings and evidence.
@@ -403,7 +405,7 @@ Comparison table:
   - date/time,
   - type,
   - status.
-- Use subtle hover states (background tint, Accent.Blue underline on title).
+- Use subtle hover states (background tint, Accent.Orange underline on title).
 
 Empty states:
 
@@ -445,7 +447,7 @@ Agents SHOULD treat motion as a secondary layer. Core layout and hierarchy come 
 
 - Keep the UI calm, serious, and technical.
 - Use monospace for everything.
-- Use Accent.Blue sparingly for interactive states.
+- Use Accent.Orange sparingly for interactive states.
 - Use Small typography for metadata and labels.
 - Use the spacing scale and radius tokens consistently.
 

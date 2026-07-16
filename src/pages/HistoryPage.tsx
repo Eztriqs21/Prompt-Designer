@@ -48,7 +48,7 @@ const MODE_LABELS: Record<AuditHistoryItem['mode'], string> = {
 
 export default function HistoryPage() {
   const navigate = useNavigate();
-  const { promptVersionsByChatId, deletePromptVersion } = useChatContext();
+  const { promptVersionsByChatId, deletePromptVersion, chats } = useChatContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -71,6 +71,14 @@ export default function HistoryPage() {
   }, [promptVersionsByChatId]);
 
   const audits: AuditHistoryItem[] = useMemo(() => readAuditHistory(), []);
+
+  const chatItems: { id: string; title: string; timestamp: number }[] = useMemo(
+    () =>
+      chats
+        .map((c) => ({ id: c.id, title: c.title, timestamp: c.updatedAt }))
+        .sort((a, b) => b.timestamp - a.timestamp),
+    [chats],
+  );
 
   const handleCopy = async (text: string, id: string) => {
     try {
@@ -103,6 +111,7 @@ export default function HistoryPage() {
   };
 
   const chatHeaders = ['Name / Title', 'Type', 'Date / Time', 'Status', 'Actions'];
+  const chatHistoryHeaders = ['Name / Title', 'Type', 'Date / Time', 'Status', 'Actions'];
   const auditHeaders = ['Name / Title', 'Type', 'Mode', 'Date / Time', 'Status', 'Actions'];
 
   return (
@@ -112,7 +121,7 @@ export default function HistoryPage() {
         <div className="mb-12">
           <h1 className="text-heading text-primary-light tracking-tight">Prompt History</h1>
           <p className="mt-2 text-small text-secondary-midGray">
-            Previously generated master prompts and website audits, saved on this device.
+            Saved chats, generated master prompts, and website audits, stored on this device.
           </p>
         </div>
 
@@ -120,13 +129,62 @@ export default function HistoryPage() {
         <section className="mb-12">
           <h2 className="text-subheading text-primary-light">Chat history</h2>
           <p className="text-small text-secondary-midGray mb-4">
+            Conversations started in the Prompt Workspace.
+          </p>
+
+          {chatItems.length === 0 ? (
+            <div className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md p-8">
+              <p className="text-small text-secondary-midGray mb-4">
+                No chats yet. Start your first Prompt Workspace session.
+              </p>
+              <Button variant="primary" size="sm" onClick={() => navigate('/chat')}>
+                Start first chat
+              </Button>
+            </div>
+          ) : (
+            <SimpleTable headers={chatHistoryHeaders}>
+              {chatItems.map((chat, i) => (
+                <motion.tr
+                  key={chat.id}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeOut', delay: Math.min(i * 0.03, 0.3) }}
+                  className={`${tableRowCls} hover:bg-primary-light/5`}
+                >
+                  <td className={tableCellCls}>
+                    <span className="text-body text-primary-light">{chat.title}</span>
+                  </td>
+                  <td className={tableCellCls}>
+                    <Chip variant="accent">Chat</Chip>
+                  </td>
+                  <td className={`${tableCellCls} text-small text-secondary-midGray`}>
+                    {formatDate(chat.timestamp)}
+                  </td>
+                  <td className={tableCellCls}>
+                    <Chip>Saved</Chip>
+                  </td>
+                  <td className={tableCellCls}>
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/chat/${chat.id}`)}>
+                      Open
+                    </Button>
+                  </td>
+                </motion.tr>
+              ))}
+            </SimpleTable>
+          )}
+        </section>
+
+        {/* Prompt versions section */}
+        <section className="mb-12">
+          <h2 className="text-subheading text-primary-light">Prompt versions</h2>
+          <p className="text-small text-secondary-midGray mb-4">
             Master prompts generated from the Chat Workspace.
           </p>
 
           {prompts.length === 0 ? (
             <div className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md p-8">
               <p className="text-small text-secondary-midGray mb-4">
-                No chat history yet. Generate a master prompt in the Chat Workspace to populate this list.
+                No prompt versions yet. Generate a master prompt to begin tracking versions.
               </p>
               <Button variant="primary" size="sm" onClick={() => navigate('/chat')}>
                 Start first chat

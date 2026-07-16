@@ -27,7 +27,6 @@ export async function generateMasterPrompt(
   // Correlation id so one generation can be traced frontend → backend.
   const clientReqId = data.requestId || `fe_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const payload = { ...data, requestId: clientReqId };
-  console.log(`${new Date().toISOString()} | [fe:api] master-start | requestId=${clientReqId} chatId=${data.chatId}`);
   const res = await fetch(`${API_BASE}/master-prompt`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -35,7 +34,6 @@ export async function generateMasterPrompt(
     signal,
   });
 
-  console.log(`${new Date().toISOString()} | [fe:api] master-response | requestId=${clientReqId} status=${res.status}`);
   if (!res.ok) {
     const err = await res.json().catch(() => null);
     const code = err?.code || 'UNKNOWN_ERROR';
@@ -47,9 +45,6 @@ export async function generateMasterPrompt(
   }
 
   const json = await res.json();
-  console.log(
-    `${new Date().toISOString()} | [fe:api] master-parsed | requestId=${clientReqId} hasPrompt=${Boolean(json.prompt)} metaModel=${json.meta?.model}`,
-  );
   return json;
 }
 
@@ -170,7 +165,6 @@ export async function generateSectionPrompt(
 ): Promise<SectionPromptResponse> {
   const clientReqId = data.requestId || `fe_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const payload = { ...data, requestId: clientReqId };
-  console.log(`${new Date().toISOString()} | [fe:api] section-start | requestId=${clientReqId} section=${sectionType} chatId=${data.chatId}`);
   const res = await fetch(`${API_BASE}/sections/${sectionType}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -178,7 +172,6 @@ export async function generateSectionPrompt(
     signal,
   });
 
-  console.log(`${new Date().toISOString()} | [fe:api] section-response | requestId=${clientReqId} status=${res.status}`);
   if (!res.ok) {
     const err = await res.json().catch(() => null);
     const message = err?.details || err?.error || `Request failed with status ${res.status}`;
@@ -186,9 +179,6 @@ export async function generateSectionPrompt(
   }
 
   const json = await res.json();
-  console.log(
-    `${new Date().toISOString()} | [fe:api] section-parsed | requestId=${clientReqId} hasMasterPrompt=${Boolean(json.masterPrompt)} metaModel=${json.meta?.model}`,
-  );
   return json;
 }
 

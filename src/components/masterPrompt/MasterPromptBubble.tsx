@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Copy, Check, Bot, ArrowLeft, Download } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import FormattedPrompt from './FormattedPrompt';
@@ -41,17 +41,9 @@ export default function MasterPromptBubble({
 }: MasterPromptBubbleProps) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
-  const renderedRef = useRef(false);
 
   const prompt = message.prompt ?? message.content;
   const generatedBy = message.generatedBy;
-
-  if (!renderedRef.current) {
-    renderedRef.current = true;
-    console.log(
-      `${new Date().toISOString()} | [fe:ui] MasterPromptBubble-displayed | generatedBy=${generatedBy} promptLen=${prompt?.length}`,
-    );
-  }
 
   const handleCopy = async () => {
     if (!prompt) return;
