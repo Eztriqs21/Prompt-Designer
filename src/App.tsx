@@ -9,6 +9,7 @@ import HistoryPage from './pages/HistoryPage';
 import AuditPage from './pages/AuditPage';
 import { ChatProvider } from './context/ChatContext';
 import { AuthProvider } from './context/AuthContext';
+import { WorkflowProvider } from './context/WorkflowContext';
 import { useAuth } from './hooks/useAuth';
 import { ToastProvider } from './components/ui/Toast';
 import CommandPalette from './components/layout/CommandPalette';
@@ -96,9 +97,11 @@ export default function App() {
       <MotionConfig reducedMotion="user">
         <AuthProvider>
           <ChatProvider>
-            <ToastProvider>
-              <AppLayout />
-            </ToastProvider>
+            <WorkflowProvider>
+              <ToastProvider>
+                <AppLayout />
+              </ToastProvider>
+            </WorkflowProvider>
           </ChatProvider>
         </AuthProvider>
       </MotionConfig>

@@ -1,23 +1,12 @@
 import { useState } from 'react';
-import { Copy, Check, Bot, ArrowLeft, Download } from 'lucide-react';
+import { Copy, Check, Bot, Download } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import FormattedPrompt from './FormattedPrompt';
-import SectionCard from './SectionCard';
-import SectionConversation from './SectionConversation';
 import FadeIn from '../ui/FadeIn';
-import type { SectionType, SectionState } from '../../types';
-import type { SectionMessage } from '../../lib/apiClient';
 import type { Message } from '../../types';
 
 interface MasterPromptBubbleProps {
   message: Message;
-  sections: Record<SectionType, SectionState>;
-  sectionMessages: Record<SectionType, SectionMessage[]>;
-  activeSection: SectionType | null;
-  onSelectSection: (type: SectionType | null) => void;
-  onGenerateSection: (type: SectionType, userRequest?: string) => void;
-  chatId: string | null;
-  onLoadSectionMessages: (chatId: string, sectionType: SectionType) => Promise<void>;
 }
 
 function formatTimestamp(ts?: number): string {
@@ -29,16 +18,7 @@ function formatTimestamp(ts?: number): string {
   }
 }
 
-export default function MasterPromptBubble({
-  message,
-  sections,
-  sectionMessages,
-  activeSection,
-  onSelectSection,
-  onGenerateSection,
-  chatId,
-  onLoadSectionMessages,
-}: MasterPromptBubbleProps) {
+export default function MasterPromptBubble({ message }: MasterPromptBubbleProps) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -54,7 +34,6 @@ export default function MasterPromptBubble({
       ta.value = prompt;
       document.body.appendChild(ta);
       ta.select();
-      document.execCommand('copy');
       document.body.removeChild(ta);
     }
     setCopied(true);
@@ -95,7 +74,6 @@ export default function MasterPromptBubble({
           ) : null}
         </div>
 
-        {/* Compact bubble — single message per generation */}
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
@@ -121,27 +99,6 @@ export default function MasterPromptBubble({
               className="overflow-hidden"
             >
               <div className="rounded-md border border-secondary-borderGray bg-primary-dark p-4 space-y-4">
-            {activeSection ? (
-              <div className="space-y-3">
-                <button
-                  onClick={() => onSelectSection(null)}
-                  className="flex items-center gap-1.5 text-small text-secondary-midGray hover:text-primary-light transition-colors"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  Back to sections
-                </button>
-                <SectionConversation
-                  sectionType={activeSection}
-                  state={sections[activeSection]}
-                  messages={sectionMessages[activeSection]}
-                  onGenerate={(request) => onGenerateSection(activeSection, request)}
-                  onLoadMessages={() =>
-                    chatId ? onLoadSectionMessages(chatId, activeSection) : Promise.resolve()
-                  }
-                />
-              </div>
-            ) : (
-              <>
                 {message.summary && (
                   <div>
                     <p className="text-small font-semibold tracking-wider uppercase text-secondary-midGray mb-1.5">Summary</p>
@@ -183,39 +140,6 @@ export default function MasterPromptBubble({
                     )}
                   </button>
                 </div>
-
-                <div className="space-y-4">
-                  <div className="text-center py-3">
-                    <h3 className="text-subheading font-semibold text-primary-light mb-1">
-                      Your master prompt is ready
-                    </h3>
-                    <p className="text-small text-secondary-midGray">
-                      Choose a section to dive deeper
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-secondary-borderGray" />
-                    <span className="text-small font-medium text-secondary-midGray tracking-wider uppercase">
-                      Sections
-                    </span>
-                    <div className="flex-1 h-px bg-secondary-borderGray" />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {(['coding', 'ui-ux', 'audit'] as SectionType[]).map((type) => (
-                      <SectionCard
-                        key={type}
-                        type={type}
-                        state={sections[type]}
-                        isActive={false}
-                        onClick={() => onSelectSection(type)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
               </div>
             </motion.div>
           )}

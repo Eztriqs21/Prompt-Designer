@@ -1,16 +1,18 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import ConversationPane from './ConversationPane';
 import PromptLibraryPane from './PromptLibraryPane';
 import FormattedPrompt from './FormattedPrompt';
+import WorkflowPanel from './WorkflowPanel';
 import Button from '../ui/Button';
 import FadeIn from '../ui/FadeIn';
 import { useMasterPrompt } from '../../hooks/useMasterPrompt';
 import { usePromptLibrary } from '../../hooks/usePromptLibrary';
 import { useSectionPrompts } from '../../hooks/useSectionPrompts';
 import { useChatContext } from '../../context/ChatContext';
-import type { ChatSession, Message, MasterPromptResponse } from '../../types';
+import { useWorkflow } from '../../hooks/useWorkflow';
+import type { ChatSession, Message, MasterPromptResponse, SectionType } from '../../types';
 import type { PromptVersion } from '../../types';
 
 interface ChatsState {
@@ -76,18 +78,13 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     viewingPrompt,
   } = usePromptLibrary();
 
-  const {
-    sections,
-    sectionMessages,
-    activeSection,
-    setActiveSection,
-    generateSection,
-    loadSectionMessages,
-  } = useSectionPrompts({
+  const { sections, sectionMessages, generateSection } = useSectionPrompts({
     chatId: activeChatId,
     masterPrompt: generatedPrompt,
     conversationHistory: messages,
   });
+
+  const { setStage, resetWorkflow, setSelectedSections, setContinuationInput } = useWorkflow();
 
   useEffect(() => {
     if (activeChatId) {
@@ -98,6 +95,22 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
   useEffect(() => {
     onPromptCountChange?.(promptVersions.length);
   }, [promptVersions.length, onPromptCountChange]);
+
+  // Reset ephemeral workflow UI when switching chats.
+  useEffect(() => {
+    resetWorkflow();
+  }, [activeChatId, resetWorkflow]);
+
+  // Re-derive the stage from whether a master prompt exists for this chat.
+  useEffect(() => {
+    if (generatedPrompt) {
+      setSelectedSections([]);
+      setContinuationInput('');
+      setStage('master');
+    } else {
+      setStage('idea');
+    }
+  }, [generatedPrompt, setStage, setSelectedSections, setContinuationInput]);
 
   const handleGenerate = async (idea: string) => {
     if (!activeChatId) return;
@@ -115,6 +128,18 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     }
   };
 
+  const runSections = useCallback(
+    async (input: string, selected: SectionType[]) => {
+      setStage('multi-agent');
+      try {
+        await Promise.all(selected.map((type) => generateSection(type, input.trim() || undefined)));
+      } finally {
+        setStage('continuation');
+      }
+    },
+    [generateSection, setStage]
+  );
+
   const handlePin = async (promptId: string) => {
     if (!activeChatId) return;
     await pinPrompt(activeChatId, promptId);
@@ -129,45 +154,51 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
 
   return (
     <div className="flex flex-col h-full min-h-0 relative overflow-hidden">
-      <div className="flex-1 min-h-0">
-        {activeChatId ? (
-          <ConversationPane
-            messages={messages}
-            onGenerate={handleGenerate}
-            disabled={isGenerating}
-            isGenerating={isGenerating}
-            error={error}
-            hasPrompt={!!generatedPrompt}
-            sections={sections}
-            sectionMessages={sectionMessages}
-            activeSection={activeSection}
-            onSelectSection={setActiveSection}
-            onGenerateSection={generateSection}
-            chatId={activeChatId}
-            onLoadSectionMessages={loadSectionMessages}
-          />
-        ) : (
-          <div className="flex-1 flex items-center justify-center h-full">
-            <FadeIn className="text-center space-y-4 px-6">
-              <div className="w-16 h-16 rounded-md bg-secondary-darkSurface border border-secondary-borderGray flex items-center justify-center mx-auto">
-                <svg className="w-7 h-7 text-secondary-midGray/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </div>
-               <div>
-                <h2 className="text-xl font-semibold text-primary-light tracking-tight mb-1">
-                  Start a conversation
-                </h2>
-                <p className="text-body text-secondary-midGray max-w-[280px] mx-auto leading-relaxed">
-                  Create a new chat or select an existing one to continue where you left off.
-                </p>
-                 <Button variant="secondary" size="sm" className="mt-5" onClick={onNewChat}>
-                   <Plus className="w-3.5 h-3.5" />
-                   Create a new chat
-                 </Button>
-               </div>
-             </FadeIn>
-           </div>
+      <div className={`flex min-h-0 flex-1 ${generatedPrompt ? 'flex-col' : ''}`}>
+        <div className={generatedPrompt ? 'flex-1 min-h-0' : 'h-full min-h-0'}>
+          {activeChatId ? (
+            <ConversationPane
+              messages={messages}
+              onGenerate={handleGenerate}
+              disabled={isGenerating}
+              isGenerating={isGenerating}
+              error={error}
+              hasPrompt={!!generatedPrompt}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center h-full">
+              <FadeIn className="text-center space-y-4 px-6">
+                <div className="w-16 h-16 rounded-md bg-secondary-darkSurface border border-secondary-borderGray flex items-center justify-center mx-auto">
+                  <svg className="w-7 h-7 text-secondary-midGray/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+                 <div>
+                  <h2 className="text-xl font-semibold text-primary-light tracking-tight mb-1">
+                    Start a conversation
+                  </h2>
+                  <p className="text-body text-secondary-midGray max-w-[280px] mx-auto leading-relaxed">
+                    Create a new chat or select an existing one to continue where you left off.
+                  </p>
+                   <Button variant="secondary" size="sm" className="mt-5" onClick={onNewChat}>
+                     <Plus className="w-3.5 h-3.5" />
+                     Create a new chat
+                   </Button>
+                 </div>
+               </FadeIn>
+             </div>
+          )}
+        </div>
+
+        {generatedPrompt && activeChatId && (
+          <div className="flex-1 min-h-0 border-t border-secondary-borderGray">
+            <WorkflowPanel
+              sections={sections}
+              sectionMessages={sectionMessages}
+              generateSection={generateSection}
+              onRun={runSections}
+            />
+          </div>
         )}
       </div>
 

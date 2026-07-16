@@ -1,7 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { Bot, AlertTriangle } from 'lucide-react';
-import type { Message, SectionType, SectionState } from '../../types';
-import type { SectionMessage } from '../../lib/apiClient';
+import type { Message } from '../../types';
 import QuestionBubble from './QuestionBubble';
 import MasterPromptBubble from './MasterPromptBubble';
 import UserInputBar from './UserInputBar';
@@ -15,13 +14,6 @@ interface ConversationPaneProps {
   isGenerating: boolean;
   error?: string | null;
   hasPrompt: boolean;
-  sections: Record<SectionType, SectionState>;
-  sectionMessages: Record<SectionType, SectionMessage[]>;
-  activeSection: SectionType | null;
-  onSelectSection: (type: SectionType | null) => void;
-  onGenerateSection: (type: SectionType, userRequest?: string) => void;
-  chatId: string | null;
-  onLoadSectionMessages: (chatId: string, sectionType: SectionType) => Promise<void>;
 }
 
 export default function ConversationPane({
@@ -31,13 +23,6 @@ export default function ConversationPane({
   isGenerating,
   error,
   hasPrompt,
-  sections,
-  sectionMessages,
-  activeSection,
-  onSelectSection,
-  onGenerateSection,
-  chatId,
-  onLoadSectionMessages,
 }: ConversationPaneProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
@@ -61,21 +46,11 @@ export default function ConversationPane({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Messages ÔÇö scrollable */}
+      {/* Messages — scrollable */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-5 min-h-0" ref={scrollRef}>
         {messages.map((msg) =>
           msg.role === 'assistant' && (msg.prompt || msg.summary) ? (
-            <MasterPromptBubble
-              key={msg.id}
-              message={msg}
-              sections={sections}
-              sectionMessages={sectionMessages}
-              activeSection={activeSection}
-              onSelectSection={onSelectSection}
-              onGenerateSection={onGenerateSection}
-              chatId={chatId}
-              onLoadSectionMessages={onLoadSectionMessages}
-            />
+            <MasterPromptBubble key={msg.id} message={msg} />
           ) : (
             <QuestionBubble key={msg.id} message={msg} />
           ),
@@ -110,7 +85,8 @@ export default function ConversationPane({
         )}
       </div>
 
-      {/* Input ÔÇö fixed at bottom */}
+      {/* Input — fixed at bottom; only for initial idea capture.
+          After the master prompt exists, continuation is handled by WorkflowPanel. */}
       <div className="shrink-0 px-4 sm:px-6 pb-4 pt-3 border-t border-secondary-borderGray">
         {!hasPrompt && (
           <UserInputBar
