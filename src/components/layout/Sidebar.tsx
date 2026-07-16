@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { MessageSquare, ShieldCheck, Clock, Menu, X } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { path: '/', label: 'Home', icon: MessageSquare },
+  { path: '/home', label: 'Home', icon: MessageSquare },
   { path: '/chat', label: 'Chat Workspace', icon: MessageSquare },
   { path: '/audit', label: 'Website AUDIT', icon: ShieldCheck },
   { path: '/history', label: 'History', icon: Clock },
