@@ -97,6 +97,7 @@ router.post('/:sectionType', async (req, res) => {
     );
 
     const raw = result.content;
+    const meta = result.meta;
 
     let parsed: { summary: string; analysis: string; masterPrompt: string };
     try {
@@ -115,11 +116,13 @@ router.post('/:sectionType', async (req, res) => {
       summary: parsed.summary ?? '',
       analysis: parsed.analysis ?? '',
       masterPrompt: parsed.masterPrompt ?? '',
+      meta,
     });
   } catch (error: any) {
     console.error(`Error in /api/sections/${req.params.sectionType}:`, error);
     res.status(500).json({
       error: 'Failed to generate section prompt',
+      attempts: error?.attempts ?? [],
     });
   }
 });

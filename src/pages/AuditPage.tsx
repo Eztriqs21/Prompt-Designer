@@ -63,7 +63,17 @@ export default function AuditPage() {
 
         {/* Main Content */}
         {hasReport && audit.report ? (
-          <AuditReport report={audit.report} onReset={handleReset} />
+          <>
+            {audit.hasPartialData && (
+              <div className="flex items-center gap-3 p-4 mb-6 rounded-md bg-accent-warning/10 border border-accent-warning/20">
+                <AlertTriangle className="w-4 h-4 text-accent-warning shrink-0" />
+                <p className="text-sm text-accent-warning">
+                  Partial results — the report stage failed, so some findings may be missing. What was collected is shown below.
+                </p>
+              </div>
+            )}
+            <AuditReport report={audit.report} onReset={handleReset} />
+          </>
         ) : isRunning ? (
           <AuditProgress
             status={audit.status!}

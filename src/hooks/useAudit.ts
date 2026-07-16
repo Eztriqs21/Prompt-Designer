@@ -4,9 +4,48 @@ import {
   getAuditJob,
   getAuditReport,
 } from '../lib/apiClient';
-import type { AuditInputType, AuditMode, AuditStatus, AuditReport, AuditJobStages } from '../types';
+import type {
+  AuditInputType,
+  AuditMode,
+  AuditStatus,
+  AuditReport,
+  AuditJobStages,
+  Severity,
+} from '../types';
 
 const POLL_INTERVAL = 2000;
+
+// Build a best-effort report from whatever the pipeline collected before it
+// failed, so partial results are never hidden behind a bare error.
+function buildPartialReport(job: any): AuditReport {
+  const findings: any[] = job.findings ?? [];
+  const severityCounts = {
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    info: 0,
+  } as Record<Severity, number>;
+  for (const f of findings) {
+    if (f?.severity in severityCounts) {
+      severityCounts[f.severity as Severity]++;
+    }
+  }
+  return {
+    summary:
+      'Partial audit results — the report stage did not complete, so findings may be incomplete.',
+    score: 0,
+    severityCounts,
+    findings,
+    codeIssues: [],
+    browserIssues: [],
+    accessibilityIssues: [],
+    performanceIssues: [],
+    recommendations: [],
+    evidence: job.evidence ?? [],
+    fixPrompt: '',
+  };
+}
 
 interface UseAuditReturn {
   jobId: string | null;
@@ -16,6 +55,7 @@ interface UseAuditReturn {
   report: AuditReport | null;
   reportMeta: { inputType: AuditInputType; source: string; mode: AuditMode } | null;
   error: string | null;
+  hasPartialData: boolean;
   isSubmitting: boolean;
   startAudit: (data: {
     inputType: AuditInputType;
@@ -35,6 +75,7 @@ export function useAudit(): UseAuditReturn {
   const [report, setReport] = useState<AuditReport | null>(null);
   const [reportMeta, setReportMeta] = useState<{ inputType: AuditInputType; source: string; mode: AuditMode } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasPartialData, setHasPartialData] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -73,7 +114,22 @@ export function useAudit(): UseAuditReturn {
           }
         } else if (job.status === 'failed') {
           stopPolling();
-          setError(job.error || 'Audit failed unexpectedly');
+          // Even on failure, the pipeline preserves findings/evidence server-side.
+          // Surface them as partial results instead of hiding everything.
+          const partialReport =
+            job.report ?? (job.findings && job.findings.length > 0 ? buildPartialReport(job) : null);
+          if (job.partial && partialReport) {
+            setReport(partialReport);
+            setReportMeta({
+              inputType: job.inputType,
+              source: job.source,
+              mode: job.mode,
+            });
+            setHasPartialData(true);
+            if (job.error) setError(job.error);
+          } else {
+            setError(job.error || 'Audit failed unexpectedly');
+          }
         }
       } catch (err: any) {
         stopPolling();
@@ -122,6 +178,7 @@ export function useAudit(): UseAuditReturn {
     setReport(null);
     setReportMeta(null);
     setError(null);
+    setHasPartialData(false);
     setIsSubmitting(false);
   }, [stopPolling]);
 
@@ -140,6 +197,7 @@ export function useAudit(): UseAuditReturn {
     report,
     reportMeta,
     error,
+    hasPartialData,
     isSubmitting,
     startAudit,
     reset,

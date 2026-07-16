@@ -45,6 +45,15 @@ export interface MasterPromptRequest {
   conversationHistory: Message[];
 }
 
+export type AttemptStatus = 'success' | 'failed' | 'aborted' | 'timeout';
+
+export interface AttemptMeta {
+  model: string;
+  status: AttemptStatus;
+  durationMs?: number;
+  error?: string;
+}
+
 export interface MasterPromptResponse {
   id: string;
   chatId?: string;
@@ -56,6 +65,7 @@ export interface MasterPromptResponse {
   masterPrompt: string;
   timestamp: number;
   remaining?: number;
+  meta?: { model?: string; attempts: AttemptMeta[] };
 }
 
 export interface SavedPrompt {
@@ -95,6 +105,7 @@ export interface SectionPromptResponse {
   summary: string;
   analysis: string;
   masterPrompt: string;
+  meta?: { model?: string; attempts: AttemptMeta[] };
 }
 
 export interface SectionState {
@@ -155,6 +166,7 @@ export interface AuditReport {
   recommendations: string[];
   evidence: AuditEvidence[];
   fixPrompt: string;
+  generatedBy?: string;
 }
 
 export interface AuditJobStages {

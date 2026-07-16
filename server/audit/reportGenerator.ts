@@ -238,6 +238,7 @@ export async function generateReport(
   let summary = '';
   let recommendations: string[] = [];
   let fixPrompt = '';
+  let generatedBy: string | undefined;
 
   if (findings.length > 0) {
     try {
@@ -272,7 +273,8 @@ export async function generateReport(
         },
       );
 
-      console.log(`[Report] AI report generated successfully: model=${result.model}`);
+      console.log(`[Report] AI report generated successfully: model=${result.meta?.model}`);
+      generatedBy = result.meta?.model;
 
       const parsed = JSON.parse(result.content);
       summary = parsed.summary || '';
@@ -307,6 +309,7 @@ export async function generateReport(
     recommendations,
     evidence,
     fixPrompt,
+    generatedBy,
   };
 }
 

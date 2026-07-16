@@ -20,11 +20,15 @@ const API_BASE = rawApiBase.endsWith('/api')
 
 // ─── Prompts ───────────────────────────────────────────────
 
-export async function generateMasterPrompt(data: MasterPromptRequest): Promise<MasterPromptResponse> {
+export async function generateMasterPrompt(
+  data: MasterPromptRequest,
+  signal?: AbortSignal,
+): Promise<MasterPromptResponse> {
   const res = await fetch(`${API_BASE}/master-prompt`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+    signal,
   });
 
   if (!res.ok) {
@@ -152,12 +156,14 @@ export async function clonePromptVersion(
 
 export async function generateSectionPrompt(
   sectionType: SectionType,
-  data: SectionPromptRequest
+  data: SectionPromptRequest,
+  signal?: AbortSignal,
 ): Promise<SectionPromptResponse> {
   const res = await fetch(`${API_BASE}/sections/${sectionType}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+    signal,
   });
 
   if (!res.ok) {
@@ -214,6 +220,10 @@ export interface AuditJobStatus {
   progress: number;
   stages: AuditJobStages;
   error?: string;
+  partial?: boolean;
+  findings?: any[];
+  evidence?: any[];
+  report?: AuditReport | null;
   createdAt: number;
   updatedAt: number;
   completedAt?: number;

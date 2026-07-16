@@ -81,6 +81,7 @@ router.post('/', async (req, res) => {
     let raw: string;
     let parsed: { summary: string; analysis: string; masterPrompt: string };
 
+    let meta: any = undefined;
     try {
       const result = await generateWithFallback(
         [
@@ -96,6 +97,7 @@ router.post('/', async (req, res) => {
       );
 
       raw = result.content;
+      meta = result.meta;
     } catch (genErr: any) {
       console.error('OpenCode generation failed:', genErr);
       const isRateLimit = genErr?.message?.includes('rate limit') || genErr?.message?.includes('429');
@@ -105,6 +107,8 @@ router.post('/', async (req, res) => {
           : 'Failed to generate response from AI service.',
         code: isRateLimit ? 'UPSTREAM_RATE_LIMIT' : 'UPSTREAM_ERROR',
         remaining: rateCheck.remaining,
+        // Always surface per-model attempts so the client knows what happened.
+        attempts: genErr?.attempts ?? meta?.attempts ?? [],
       });
       return;
     }
@@ -176,6 +180,7 @@ router.post('/', async (req, res) => {
       masterPrompt: parsed.masterPrompt ?? '',
       timestamp: saved?.timestamp ?? Date.now(),
       remaining: rateCheck.remaining,
+      meta,
     });
   } catch (error: any) {
     console.error('Error in /api/master-prompt:', error);

@@ -16,6 +16,7 @@ export interface MasterPromptState {
   generatedPrompt: string | null;
   generatedSummary: string | null;
   generatedAnalysis: string | null;
+  generatedBy: string | null;
   error: string | null;
   remaining: number;
 }
@@ -38,6 +39,7 @@ export function useMasterPrompt(config: MasterPromptConfig) {
     generatedPrompt: null,
     generatedSummary: null,
     generatedAnalysis: null,
+    generatedBy: null,
     error: null,
     remaining: 5,
   });
@@ -60,6 +62,7 @@ export function useMasterPrompt(config: MasterPromptConfig) {
           generatedPrompt: null,
           generatedSummary: null,
           generatedAnalysis: null,
+          generatedBy: null,
           isGenerating: false,
           error: null,
         }));
@@ -75,6 +78,7 @@ export function useMasterPrompt(config: MasterPromptConfig) {
           generatedPrompt: chatPrompt?.masterPrompt ?? null,
           generatedSummary: chatPrompt?.summary ?? null,
           generatedAnalysis: chatPrompt?.analysis ?? null,
+          generatedBy: null,
           isGenerating: false,
           error: null,
         }));
@@ -85,6 +89,7 @@ export function useMasterPrompt(config: MasterPromptConfig) {
           generatedPrompt: null,
           generatedSummary: null,
           generatedAnalysis: null,
+          generatedBy: null,
           isGenerating: false,
           error: null,
         }));
@@ -129,27 +134,15 @@ export function useMasterPrompt(config: MasterPromptConfig) {
       generatingRef.current = true;
       setState((prev) => ({ ...prev, isGenerating: true, error: null }));
 
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('GENERATION_TIMEOUT')), 180000)
-      );
+      // Real abort controller so the in-flight fetch is actually cancelled on
+      // a client timeout / unmount. The server keeps running in the
+      // background and persists the result, which we recover below.
+      const controller = new AbortController();
+      // Safety net only: the backend normally answers within ~one model's
+      // latency (parallel first-success), so this rarely fires.
+      const timeoutId = setTimeout(() => controller.abort(), 180000);
 
-      try {
-        const conversationHistory: Message[] = state.messages.map((m) => ({
-          ...m,
-          chatId,
-        }));
-
-        const response: MasterPromptResponse = await Promise.race([
-          api.generateMasterPrompt({
-            chatId,
-            presetKey: configRef.current.presetKey,
-            metadata: configRef.current.metadata,
-            idea,
-            conversationHistory,
-          }),
-          timeoutPromise,
-        ]);
-
+      const applyResult = (response: MasterPromptResponse) => {
         const assistantMsg: Message = {
           id: uuidv4(),
           chatId,
@@ -157,33 +150,25 @@ export function useMasterPrompt(config: MasterPromptConfig) {
           content: `Here's your master prompt:\n\n${response.masterPrompt.slice(0, 500)}${response.masterPrompt.length > 500 ? '...' : ''}`,
           timestamp: Date.now(),
         };
-
-        // Persist assistant message
         addMessage(chatId, assistantMsg);
-
-        // Update context (handleGenerate also records the version history)
         setPrompt(chatId, response);
-
-        // Update local state
         setState((prev) => ({
           ...prev,
           messages: [...prev.messages, assistantMsg],
           generatedPrompt: response.masterPrompt,
           generatedSummary: response.summary,
           generatedAnalysis: response.analysis,
+          generatedBy: response.meta?.model ?? null,
           isGenerating: false,
           error: null,
           remaining: Math.max(0, response.remaining ?? prev.remaining - 1),
         }));
+      };
 
-        return response;
-      } catch (err: any) {
-        const isTimeout = err?.message === 'GENERATION_TIMEOUT';
-
-        // On a client timeout the server often keeps running and saves the
-        // result. Recover it from the server's prompt-version history so the
-        // user sees the generated prompt instead of a false error.
-        if (isTimeout) {
+      // Poll the server for a late save after a client abort/timeout.
+      const recoverLatest = async (): Promise<boolean> => {
+        for (let attempt = 0; attempt < 4; attempt++) {
+          await new Promise((r) => setTimeout(r, 3000));
           try {
             const versions = await api.getPromptVersions(chatId);
             const latest = versions && versions[0];
@@ -197,39 +182,61 @@ export function useMasterPrompt(config: MasterPromptConfig) {
                 masterPrompt: latest.masterPrompt,
                 timestamp: latest.createdAt,
               };
-              const assistantMsg: Message = {
-                id: uuidv4(),
-                chatId,
-                role: 'assistant',
-                content: `Here's your master prompt:\n\n${latest.masterPrompt.slice(0, 500)}${latest.masterPrompt.length > 500 ? '...' : ''}`,
-                timestamp: Date.now(),
-              };
-              addMessage(chatId, assistantMsg);
-              setState((prev) => ({
-                ...prev,
-                messages: [...prev.messages, assistantMsg],
-                generatedPrompt: recovered.masterPrompt,
-                generatedSummary: recovered.summary,
-                generatedAnalysis: recovered.analysis,
-                isGenerating: false,
-                error: null,
-                remaining: prev.remaining,
-              }));
-              return recovered;
+              applyResult(recovered);
+              return true;
             }
           } catch {
-            // fall through to error display
+            // keep polling
           }
         }
+        return false;
+      };
 
-        const message = isTimeout
-          ? 'Generation timed out (3 min). The server may be busy — your prompt may still have been saved. Try refreshing or generating again.'
-          : err?.message || 'Failed to generate master prompt';
+      try {
+        const conversationHistory: Message[] = state.messages.map((m) => ({
+          ...m,
+          chatId,
+        }));
 
+        const response: MasterPromptResponse = await api.generateMasterPrompt(
+          {
+            chatId,
+            presetKey: configRef.current.presetKey,
+            metadata: configRef.current.metadata,
+            idea,
+            conversationHistory,
+          },
+          controller.signal,
+        );
+        clearTimeout(timeoutId);
+
+        applyResult(response);
+        return response;
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        const isAbort = err?.name === 'AbortError' || controller.signal.aborted;
+
+        // Client aborted (timeout or unmount). The server often keeps
+        // running and saves the result — poll for it so a valid reply is
+        // never lost to a premature check.
+        if (isAbort) {
+          const recovered = await recoverLatest();
+          if (recovered) return null;
+          setState((prev) => ({
+            ...prev,
+            isGenerating: false,
+            error:
+              'Generation timed out. The server may still be working — your prompt may appear shortly or after refreshing.',
+          }));
+          return null;
+        }
+
+        // Genuine upstream/HTTP error: show it, but keep any previously
+        // generated prompt visible (errors must be additive, not destructive).
         setState((prev) => ({
           ...prev,
           isGenerating: false,
-          error: message,
+          error: err?.message || 'Failed to generate master prompt',
         }));
         return null;
       } finally {

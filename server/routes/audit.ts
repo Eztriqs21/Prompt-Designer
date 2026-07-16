@@ -151,6 +151,15 @@ router.get('/:jobId', (req, res) => {
     return;
   }
 
+  // Partial data is preserved server-side even when a stage fails
+  // (see pipeline.ts). Expose it so the UI can render findings instead
+  // of a blank error page.
+  const partial =
+    job.status === 'failed' &&
+    ((job.findings?.length ?? 0) > 0 ||
+      (job.evidence?.length ?? 0) > 0 ||
+      Boolean(job.report));
+
   res.json({
     id: job.id,
     inputType: job.inputType,
@@ -160,6 +169,10 @@ router.get('/:jobId', (req, res) => {
     progress: job.progress,
     stages: job.stages,
     error: job.error,
+    partial,
+    findings: job.findings ?? [],
+    evidence: job.evidence ?? [],
+    report: job.report ?? null,
     createdAt: job.createdAt,
     updatedAt: job.updatedAt,
     completedAt: job.completedAt,

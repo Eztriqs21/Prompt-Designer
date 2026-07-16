@@ -59,6 +59,7 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     generatedPrompt,
     generatedSummary,
     generatedAnalysis,
+    generatedBy,
     addUserMessage,
     generate,
     error,
@@ -160,6 +161,7 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
                 summary={generatedSummary}
                 analysis={generatedAnalysis}
                 masterPrompt={generatedPrompt}
+                generatedBy={generatedBy}
                 sections={sections}
                 sectionMessages={sectionMessages}
                 activeSection={activeSection}
