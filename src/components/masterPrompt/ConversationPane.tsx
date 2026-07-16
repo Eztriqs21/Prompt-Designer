@@ -1,7 +1,9 @@
-﻿import { useRef, useEffect, type ReactNode } from 'react';
+﻿import { useRef, useEffect } from 'react';
 import { Loader2, AlertTriangle } from 'lucide-react';
-import type { Message } from '../../types';
+import type { Message, SectionType, SectionState } from '../../types';
+import type { SectionMessage } from '../../lib/apiClient';
 import QuestionBubble from './QuestionBubble';
+import MasterPromptBubble from './MasterPromptBubble';
 import UserInputBar from './UserInputBar';
 
 interface ConversationPaneProps {
@@ -11,7 +13,13 @@ interface ConversationPaneProps {
   disabled: boolean;
   isGenerating: boolean;
   error?: string | null;
-  children?: ReactNode;
+  sections: Record<SectionType, SectionState>;
+  sectionMessages: Record<SectionType, SectionMessage[]>;
+  activeSection: SectionType | null;
+  onSelectSection: (type: SectionType | null) => void;
+  onGenerateSection: (type: SectionType, userRequest?: string) => void;
+  chatId: string | null;
+  onLoadSectionMessages: (chatId: string, sectionType: SectionType) => Promise<void>;
 }
 
 export default function ConversationPane({
@@ -21,7 +29,13 @@ export default function ConversationPane({
   disabled,
   isGenerating,
   error,
-  children,
+  sections,
+  sectionMessages,
+  activeSection,
+  onSelectSection,
+  onGenerateSection,
+  chatId,
+  onLoadSectionMessages,
 }: ConversationPaneProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
@@ -41,17 +55,29 @@ export default function ConversationPane({
     if (scrollRef.current && isNearBottomRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, children]);
+  }, [messages]);
 
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Messages ÔÇö scrollable */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-5 min-h-0" ref={scrollRef}>
-        {messages.map((msg) => (
-          <QuestionBubble key={msg.id} message={msg} />
-        ))}
-
-        {children}
+        {messages.map((msg) =>
+          msg.role === 'assistant' && (msg.prompt || msg.summary) ? (
+            <MasterPromptBubble
+              key={msg.id}
+              message={msg}
+              sections={sections}
+              sectionMessages={sectionMessages}
+              activeSection={activeSection}
+              onSelectSection={onSelectSection}
+              onGenerateSection={onGenerateSection}
+              chatId={chatId}
+              onLoadSectionMessages={onLoadSectionMessages}
+            />
+          ) : (
+            <QuestionBubble key={msg.id} message={msg} />
+          ),
+        )}
 
         {isGenerating && !error && (
           <div className="flex items-start gap-3">

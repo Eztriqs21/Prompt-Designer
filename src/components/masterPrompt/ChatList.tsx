@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, MessageSquare, Pencil } from 'lucide-react';
 import { useChatContext } from '../../context/ChatContext';
+import ConfirmModal from '../layout/ConfirmModal';
+import { useToast } from '../ui/Toast';
 
 interface ChatListProps {
   onNewChat: () => void;
@@ -16,9 +18,11 @@ function previewOf(content: string | undefined): string {
 export default function ChatList({ onNewChat }: ChatListProps) {
   const { chats, activeChatId, messagesByChatId, deleteChat, renameChat, setActiveChat } = useChatContext();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const openChat = (id: string) => {
     setActiveChat(id);
@@ -36,11 +40,11 @@ export default function ChatList({ onNewChat }: ChatListProps) {
     setEditingId(null);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Delete this chat and all its prompts? This cannot be undone.')) {
-      deleteChat(id);
-      if (activeChatId === id) navigate('/chat');
-    }
+  const confirmDelete = (id: string) => {
+    deleteChat(id);
+    setConfirmId(null);
+    if (activeChatId === id) navigate('/chat');
+    toast.show('Chat deleted');
   };
 
   return (
@@ -113,7 +117,7 @@ export default function ChatList({ onNewChat }: ChatListProps) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDelete(chat.id);
+                    setConfirmId(chat.id);
                   }}
                   className="opacity-0 group-hover:opacity-100 p-1 rounded text-ink-muted hover:text-accent-error transition-opacity shrink-0"
                   aria-label="Delete chat"
@@ -125,6 +129,15 @@ export default function ChatList({ onNewChat }: ChatListProps) {
           })
         )}
       </div>
+
+      <ConfirmModal
+        open={confirmId !== null}
+        title="Delete this chat?"
+        message="This will permanently remove this chat and its prompts. This action cannot be undone."
+        confirmLabel="Delete chat"
+        onConfirm={() => confirmId && confirmDelete(confirmId)}
+        onCancel={() => setConfirmId(null)}
+      />
     </div>
   );
 }

@@ -48,7 +48,7 @@ export async function generateMasterPrompt(
 
   const json = await res.json();
   console.log(
-    `${new Date().toISOString()} | [fe:api] master-parsed | requestId=${clientReqId} hasMasterPrompt=${Boolean(json.masterPrompt)} metaModel=${json.meta?.model}`,
+    `${new Date().toISOString()} | [fe:api] master-parsed | requestId=${clientReqId} hasPrompt=${Boolean(json.prompt)} metaModel=${json.meta?.model}`,
   );
   return json;
 }

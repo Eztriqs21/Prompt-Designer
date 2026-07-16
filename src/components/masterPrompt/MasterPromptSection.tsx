@@ -1,7 +1,6 @@
 ﻿import { useMemo, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import ConversationPane from './ConversationPane';
-import MasterPromptOutput from './MasterPromptOutput';
 import PromptLibraryPane from './PromptLibraryPane';
 import { useMasterPrompt } from '../../hooks/useMasterPrompt';
 import { usePromptLibrary } from '../../hooks/usePromptLibrary';
@@ -57,9 +56,6 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
     messages,
     isGenerating,
     generatedPrompt,
-    generatedSummary,
-    generatedAnalysis,
-    generatedBy,
     addUserMessage,
     generate,
     error,
@@ -126,7 +122,7 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
       loadPromptVersions(activeChatId);
       const chat = chats.find((c) => c.id === activeChatId);
       if (chat?.isDefaultTitle) {
-        const name = idea?.trim() || response.summary || response.masterPrompt || '';
+        const name = idea?.trim() || response.summary || response.prompt || '';
         renameChat(activeChatId, name.slice(0, 50).trim());
       }
     }
@@ -155,23 +151,14 @@ export default function MasterPromptSection({ chatsState, onToggleLibrary, showL
             disabled={isGenerating}
             isGenerating={isGenerating}
             error={error}
-          >
-            {generatedPrompt && !isGenerating && (
-              <MasterPromptOutput
-                summary={generatedSummary}
-                analysis={generatedAnalysis}
-                masterPrompt={generatedPrompt}
-                generatedBy={generatedBy}
-                sections={sections}
-                sectionMessages={sectionMessages}
-                activeSection={activeSection}
-                onSelectSection={setActiveSection}
-                onGenerateSection={generateSection}
-                chatId={activeChatId}
-                onLoadSectionMessages={loadSectionMessages}
-              />
-            )}
-          </ConversationPane>
+            sections={sections}
+            sectionMessages={sectionMessages}
+            activeSection={activeSection}
+            onSelectSection={setActiveSection}
+            onGenerateSection={generateSection}
+            chatId={activeChatId}
+            onLoadSectionMessages={loadSectionMessages}
+          />
         ) : (
           <div className="flex-1 flex items-center justify-center h-full">
             <div className="text-center space-y-4 px-6">

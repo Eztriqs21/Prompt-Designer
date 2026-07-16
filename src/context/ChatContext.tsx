@@ -401,7 +401,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         title: (response.summary && response.summary.trim()) || `Master Prompt v${existing.length + 1}`,
         summary: response.summary ?? '',
         analysis: response.analysis ?? '',
-        masterPrompt: response.masterPrompt ?? '',
+        masterPrompt: response.prompt ?? '',
         isPinned: existing.length === 0,
         createdAt: response.timestamp ?? Date.now(),
         updatedAt: Date.now(),
@@ -452,7 +452,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             chatId: newChat.id,
             summary: clonedVersion.summary,
             analysis: clonedVersion.analysis,
-            masterPrompt: clonedVersion.masterPrompt,
+            prompt: clonedVersion.masterPrompt,
+            sections: [],
+            createdAt: new Date(clonedVersion.createdAt).toISOString(),
             timestamp: clonedVersion.createdAt,
           } } });
           newChatId = newChat.id;

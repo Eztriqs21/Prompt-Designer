@@ -14,7 +14,7 @@ Given the user's website idea, preferences, and conversation history, produce a 
 {
   "summary": "3–5 sentence overview of the website concept, audience, and tech direction.",
   "analysis": "Brief analysis of the idea — strengths, challenges, and your interpretation of intent.",
-  "masterPrompt": "The full master prompt with ALL 10 required sections."
+  "prompt": "The full master prompt with ALL 10 required sections."
 }
 </task>
 
@@ -39,8 +39,8 @@ Performance: 90+ Lighthouse, lazy-load images, CSS transforms only for animation
 </defaults>
 
 <output_format>
-Respond with valid JSON: { "summary": "...", "analysis": "...", "masterPrompt": "..." }
-Aim for 2000–3000 words in masterPrompt. Never omit sections. Never go below 1500 words.
+Respond with valid JSON: { "summary": "...", "analysis": "...", "prompt": "..." }
+Aim for 2000–3000 words in prompt. Never omit sections. Never go below 1500 words.
 </output_format>
 
 <constraints>

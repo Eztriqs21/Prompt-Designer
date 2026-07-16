@@ -75,7 +75,7 @@ export function useMasterPrompt(config: MasterPromptConfig) {
         setState((prev) => ({
           ...prev,
           messages: chatMessages,
-          generatedPrompt: chatPrompt?.masterPrompt ?? null,
+          generatedPrompt: chatPrompt?.prompt ?? null,
           generatedSummary: chatPrompt?.summary ?? null,
           generatedAnalysis: chatPrompt?.analysis ?? null,
           generatedBy: null,
@@ -143,11 +143,18 @@ export function useMasterPrompt(config: MasterPromptConfig) {
       const controller = new AbortController();
 
       const applyResult = (response: MasterPromptResponse) => {
+        // Single compact assistant bubble. The full prompt lives in the
+        // expandable panel rendered by MasterPromptBubble, so we never
+        // emit a truncated preview bubble.
         const assistantMsg: Message = {
           id: uuidv4(),
           chatId,
           role: 'assistant',
-          content: `Here's your master prompt:\n\n${response.masterPrompt.slice(0, 500)}${response.masterPrompt.length > 500 ? '...' : ''}`,
+          content: 'Master prompt generated.',
+          summary: response.summary,
+          analysis: response.analysis,
+          generatedBy: response.meta?.model ?? undefined,
+          prompt: response.prompt,
           timestamp: Date.now(),
         };
         addMessage(chatId, assistantMsg);
@@ -155,7 +162,7 @@ export function useMasterPrompt(config: MasterPromptConfig) {
         setState((prev) => ({
           ...prev,
           messages: [...prev.messages, assistantMsg],
-          generatedPrompt: response.masterPrompt,
+          generatedPrompt: response.prompt,
           generatedSummary: response.summary,
           generatedAnalysis: response.analysis,
           generatedBy: response.meta?.model ?? null,
@@ -164,7 +171,7 @@ export function useMasterPrompt(config: MasterPromptConfig) {
           remaining: Math.max(0, response.remaining ?? prev.remaining - 1),
         }));
         console.log(
-          `${new Date().toISOString()} | [fe:hook] generate-success | generatedBy=${response.meta?.model} masterPromptLen=${response.masterPrompt?.length}`,
+          `${new Date().toISOString()} | [fe:hook] generate-success | generatedBy=${response.meta?.model} promptLen=${response.prompt?.length}`,
         );
       };
 
@@ -182,7 +189,9 @@ export function useMasterPrompt(config: MasterPromptConfig) {
                 chatId,
                 summary: latest.summary,
                 analysis: latest.analysis,
-                masterPrompt: latest.masterPrompt,
+                prompt: latest.masterPrompt,
+                sections: [],
+                createdAt: new Date(latest.createdAt).toISOString(),
                 timestamp: latest.createdAt,
               };
               applyResult(recovered);

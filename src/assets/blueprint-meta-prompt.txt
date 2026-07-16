@@ -24,15 +24,15 @@ You will receive three clearly labeled blocks of user input:
 </what_you_receive>
 
 <task>
-Given the above input, produce a JSON response with exactly three keys:
+Given the above input, produce a JSON response with exactly three keys: 
 
 {
   "summary": "3–5 sentence overview of the website concept, audience, and technical direction.",
   "analysis": "3–6 sentence analysis of the idea — strengths, risks, edge cases, and your interpretation of the user's intent, constraints, and best architectural approach.",
-  "masterPrompt": "The full master prompt text — a single, self-contained specification document with ALL sections listed below."
+  "prompt": "The full master prompt text — a single, self-contained specification document with ALL sections listed below."
 }
 
-The summary and analysis are for the human operator. The masterPrompt is what the coding agent will actually execute.
+The summary and analysis are for the human operator. The prompt is what the coding agent will actually execute.
 </task>
 
 <length_and_quality_targets>
@@ -323,15 +323,15 @@ When the user has not specified a preference, use these defaults and state them 
 </defaults>
 
 <output_format>
-Your response MUST be a valid JSON object with exactly these three keys:
+Your response MUST be a valid JSON object with exactly these three keys: 
 
 {
   "summary": "3–5 sentence overview.",
   "analysis": "3–6 sentence analysis of the idea, constraints, and your chosen architectural approach.",
-  "masterPrompt": "The complete master prompt with all sections, using markdown-style headers (=== SECTION N: NAME ===) and \\n for line breaks."
+  "prompt": "The complete master prompt with all sections, using markdown-style headers (=== SECTION N: NAME ===) and \n for line breaks."
 }
 
-The masterPrompt value MUST be:
+The prompt value MUST be: 
 
 - A single string.
 - Structured with the exact section headers listed above.

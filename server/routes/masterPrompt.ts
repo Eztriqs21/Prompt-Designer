@@ -1,11 +1,50 @@
 import { Router } from 'express';
+import { randomUUID } from 'crypto';
 import { generateWithFallback, logStep } from '../geminiClient.js';
 import { checkRateLimit } from '../middleware/rateLimit.js';
 import { savePrompt, saveMessage, updateChatSession, getChatSessionById, savePromptVersion, getPromptVersionsByChatId } from '../db/store.js';
 import { buildFullMetaPrompt } from '../prompts/metaPrompt.js';
-import type { MasterPromptRequest, Message } from '../src/types/index.js';
+import type { MasterPromptRequest, Message, MasterPromptSpec, SectionSpec } from '../src/types/index.js';
 
 const router = Router();
+
+/**
+ * Derive SectionSpec[] from a master prompt string by splitting on the
+ * `=== SECTION N: NAME ===` headers the LLM is instructed to emit.
+ * Anything before the first header becomes an implicit intro section.
+ */
+function splitSections(prompt: string): SectionSpec[] {
+  if (!prompt) return [];
+  const headerRe = /^=== SECTION \s*(\d+)\s*:\s*(.+?)\s*===\s*$/gim;
+  const sections: SectionSpec[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let first = true;
+
+  while ((match = headerRe.exec(prompt)) !== null) {
+    const start = match.index;
+    if (first) {
+      const intro = prompt.slice(0, start).trim();
+      if (intro) {
+        sections.push({ id: randomUUID(), title: 'Overview', body: intro });
+      }
+      first = false;
+    } else if (start > lastIndex) {
+      const body = prompt.slice(lastIndex, start).trim();
+      if (body) sections[sections.length - 1].body += `\n\n${body}`;
+    }
+    sections.push({ id: randomUUID(), title: match[2].trim(), body: '' });
+    lastIndex = headerRe.lastIndex;
+  }
+
+  if (sections.length === 0) return [];
+  const tail = prompt.slice(lastIndex).trim();
+  if (tail) {
+    if (sections.length > 0) sections[sections.length - 1].body += `\n\n${tail}`;
+  }
+  return sections;
+}
+
 
 function getClientIp(req: any): string {
   return (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || 'unknown';
@@ -79,8 +118,7 @@ router.post('/', async (req, res) => {
     const systemPrompt = buildFullMetaPrompt(presetKey, metadata);
 
     let raw: string;
-    let parsed: { summary: string; analysis: string; masterPrompt: string };
-
+    let spec: MasterPromptSpec;
     let meta: any = undefined;
     const requestId = (req.body?.requestId as string | undefined) || undefined;
     try {
@@ -120,17 +158,34 @@ router.post('/', async (req, res) => {
       return;
     }
 
+    // ── Normalize the raw LLM output into the structured MasterPromptSpec ──
+    // Robust migration: accept both the new `prompt` key and the legacy
+    // `masterPrompt` key; fall back to the whole string if JSON parse fails.
+    let parsedObj: any = null;
     try {
-      parsed = JSON.parse(raw);
+      parsedObj = JSON.parse(raw);
     } catch (parseErr) {
       console.error('Failed to parse JSON from OpenCode:', parseErr);
       console.error('Raw response (first 500 chars):', raw.slice(0, 500));
-      parsed = {
-        summary: '',
-        analysis: '',
-        masterPrompt: raw || 'Failed to generate master prompt.',
-      };
     }
+
+    const promptText: string =
+      (parsedObj && (parsedObj.prompt ?? parsedObj.masterPrompt)) ||
+      raw ||
+      'Failed to generate master prompt.';
+    const summaryText: string = (parsedObj && parsedObj.summary) || '';
+    const analysisText: string = (parsedObj && parsedObj.analysis) || '';
+
+    const id = randomUUID();
+    spec = {
+      id,
+      summary: summaryText,
+      analysis: analysisText,
+      prompt: promptText,
+      sections: splitSections(promptText),
+      createdAt: new Date().toISOString(),
+      meta,
+    };
 
     const title = idea
       ? idea.slice(0, 80) + (idea.length > 80 ? '...' : '')
@@ -138,7 +193,8 @@ router.post('/', async (req, res) => {
 
     let saved, versionedRecord;
     try {
-      saved = savePrompt(title, parsed.summary ?? '', parsed.masterPrompt ?? '', chatId);
+      // DB still stores the prompt string under `masterPrompt`.
+      saved = savePrompt(title, spec.summary, spec.prompt, chatId);
       logStep('master', 'saved-prompt', { requestId, chatId, promptId: saved?.id });
     } catch (dbErr) {
       console.error('DB savePrompt failed:', dbErr);
@@ -151,9 +207,9 @@ router.post('/', async (req, res) => {
         versionedRecord = savePromptVersion({
           chatId,
           title,
-          summary: parsed.summary ?? '',
-          analysis: parsed.analysis ?? '',
-          masterPrompt: parsed.masterPrompt ?? '',
+          summary: spec.summary,
+          analysis: spec.analysis,
+          masterPrompt: spec.prompt,
           isPinned: isFirstVersion,
         });
         logStep('master', 'saved-version', {
@@ -169,10 +225,11 @@ router.post('/', async (req, res) => {
 
     try {
       if (chatId) {
+        // Compact server-side mirror; the rich panel lives in the frontend bubble.
         saveMessage({
           chatId,
           role: 'assistant',
-          content: `Here's your master prompt:\n\n${(parsed.masterPrompt ?? '').slice(0, 500)}${(parsed.masterPrompt ?? '').length > 500 ? '...' : ''}`,
+          content: 'Master prompt generated.',
         });
         logStep('master', 'saved-assistant-msg', { requestId, chatId });
         const chat = getChatSessionById(chatId);
@@ -189,20 +246,18 @@ router.post('/', async (req, res) => {
       chatId,
       status: 200,
       hasMeta: Boolean(meta),
+      hasPrompt: Boolean(spec.prompt),
+      sections: spec.sections.length,
       attempts: meta?.attempts?.length,
     });
     res.json({
-      id: saved?.id ?? 'unknown',
+      ...spec,
       chatId,
       promptId: versionedRecord?.id ?? null,
       version: versionedRecord?.version ?? null,
       isPinned: versionedRecord?.isPinned ?? null,
-      summary: parsed.summary ?? '',
-      analysis: parsed.analysis ?? '',
-      masterPrompt: parsed.masterPrompt ?? '',
       timestamp: saved?.timestamp ?? Date.now(),
       remaining: rateCheck.remaining,
-      meta,
     });
   } catch (error: any) {
     console.error('Error in /api/master-prompt:', error);

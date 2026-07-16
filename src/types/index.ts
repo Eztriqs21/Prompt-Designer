@@ -29,6 +29,12 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  // Optional structured payload for assistant master-prompt messages.
+  // Old persisted messages may lack these and degrade to plain rendering.
+  summary?: string;
+  analysis?: string;
+  generatedBy?: string;
+  prompt?: string;
 }
 
 export interface MasterPromptRequest {
@@ -55,18 +61,31 @@ export interface AttemptMeta {
   error?: string;
 }
 
-export interface MasterPromptResponse {
+export interface SectionSpec {
   id: string;
+  title: string;
+  body: string;
+}
+
+// Normalized master-prompt shape returned by the backend. The LLM emits a
+// single root object; the backend fills id/createdAt/meta and derives `sections`.
+export interface MasterPromptSpec {
+  id: string;
+  summary: string;
+  analysis: string;
+  prompt: string;
+  sections: SectionSpec[];
+  createdAt: string;
+  meta?: { model?: string; attempts?: AttemptMeta[] };
+}
+
+export interface MasterPromptResponse extends MasterPromptSpec {
   chatId?: string;
   promptId?: string | null;
   version?: number | null;
   isPinned?: boolean | null;
-  summary: string;
-  analysis: string;
-  masterPrompt: string;
-  timestamp: number;
+  timestamp?: number;
   remaining?: number;
-  meta?: { model?: string; attempts: AttemptMeta[] };
 }
 
 export interface SavedPrompt {
