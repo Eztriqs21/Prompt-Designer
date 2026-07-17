@@ -1,13 +1,25 @@
-// ─── Workspace ──────────────────────────────────────────────
+// ─── VibeLoop Types ────────────────────────────────────────
+// Canonical type definitions for the VibeLoop automation system.
+// Used by both frontend and backend.
 
-export type WorkspaceStatus = 'draft' | 'ready' | 'connected' | 'active';
+// ─── Workspace ─────────────────────────────────────────────
+
+export type WorkspaceStatus = 'active' | 'revoked' | 'completed';
 
 export interface ChecklistItem {
   id: string;
   label: string;
   description: string;
-  priority: 'low' | 'medium' | 'high';
+  priority: 'critical' | 'high' | 'medium' | 'low';
   status: 'pending' | 'in_progress' | 'done' | 'blocked';
+}
+
+export interface CreateWorkspacePayload {
+  projectName: string;
+  objective: string;
+  checklist: Omit<ChecklistItem, 'id' | 'status'>[];
+  constraints?: string[];
+  referenceNotes?: string;
 }
 
 export interface Workspace {
@@ -19,68 +31,69 @@ export interface Workspace {
   constraints: string[];
   referenceNotes: string;
   status: WorkspaceStatus;
+  revokedAt?: string;
   createdAt: string;
   updatedAt: string;
-  connectedAt?: string;
-  revokedAt?: string;
 }
 
-export interface CreateWorkspacePayload {
-  projectName: string;
-  objective: string;
-  checklist: Omit<ChecklistItem, 'id' | 'status'>[];
-  constraints: string[];
-  referenceNotes: string;
-}
+// ─── Run ───────────────────────────────────────────────────
 
-// ─── Run ────────────────────────────────────────────────────
-
-export type RunStatus = 'idle' | 'running' | 'paused' | 'completed' | 'failed' | 'stopped';
-
-export type WorkflowStage =
-  | 'initial_implementation'
-  | 'agent_executing'
-  | 'awaiting_result'
+export type RunStage =
+  | 'draft'
+  | 'planning'
+  | 'planned'
+  | 'building'
+  | 'awaiting_agent_completion'
+  | 'maybe_done'
+  | 'context_compacted'
   | 'auditing'
   | 'needs_fix'
-  | 'generating_fix_prompt'
   | 'continuing'
-  | 'final_summary'
-  | 'complete';
+  | 'complete'
+  | 'partial_complete'
+  | 'failed'
+  | 'stopped';
+
+export type RunStatus = 'running' | 'paused' | 'completed' | 'failed' | 'stopped';
+
+export interface RunEvent {
+  id: string;
+  runId: string;
+  stage: RunStage;
+  type: 'info' | 'prompt_sent' | 'result_received' | 'audit_complete' | 'error' | 'state_change';
+  data: Record<string, unknown>;
+  timestamp: string;
+}
 
 export interface Run {
   id: string;
   workspaceId: string;
   status: RunStatus;
+  stage: RunStage;
   iteration: number;
-  stage: WorkflowStage;
-  latestPrompt: string;
-  latestResponse: AgentResponse | null;
-  latestAudit: AuditResult | null;
-  unresolvedIssues: Issue[];
-  completedItems: string[];
-  events: RunEvent[];
+  maxIterations: number;
+  latestPrompt?: string;
+  latestResponse?: AgentResponse;
+  latestAudit?: AuditResult;
+  plan?: string;
   startedAt: string;
-  endedAt?: string;
+  updatedAt: string;
+  completedAt?: string;
+  stoppedAt?: string;
 }
 
-export interface RunEvent {
-  timestamp: string;
-  stage: WorkflowStage;
-  type: 'prompt_sent' | 'result_received' | 'audit_complete' | 'fix_generated' | 'stage_change' | 'error' | 'started' | 'stopped';
-  data: Record<string, unknown>;
-}
-
-// ─── Agent Communication ────────────────────────────────────
+// ─── Agent Communication ───────────────────────────────────
 
 export interface AgentResponse {
   message: string;
-  diffSummary: string;
-  filesTouched: string[];
-  commandsRun: string[];
-  testResults: string;
-  errorsFound: string[];
-  suggestedFixes: string[];
+  diffSummary?: string;
+  filesTouched?: string[];
+  commandsRun?: string[];
+  testResults?: string;
+  errorsFound?: string[];
+  suggestedFixes?: string[];
+  done?: boolean;
+  compacted?: boolean;
 }
 
 export interface SubmitResultPayload {
@@ -91,57 +104,70 @@ export interface SubmitResultPayload {
   testResults?: string;
   errorsFound?: string[];
   suggestedFixes?: string[];
+  done?: boolean;
+  compacted?: boolean;
 }
 
-// ─── Audit ──────────────────────────────────────────────────
+// ─── Audit ─────────────────────────────────────────────────
 
-export type VibeLoopAuditStatus = 'pass' | 'pass_with_notes' | 'needs_fix' | 'blocked';
+export type AuditStatus = 'pass' | 'pass_with_notes' | 'needs_fix' | 'blocked';
 
 export interface Issue {
   id: string;
   severity: 'critical' | 'major' | 'minor' | 'info';
   category: string;
   description: string;
-  suggestion: string;
+  suggestion?: string;
   fixable: boolean;
-}
-
-export interface AuditResult {
-  status: VibeLoopAuditStatus;
-  issues: Issue[];
-  summary: string;
-  checklistCoverage: ChecklistCoverageEntry[];
 }
 
 export interface ChecklistCoverageEntry {
   itemId: string;
+  label: string;
   covered: boolean;
-  notes: string;
+  notes?: string;
 }
 
-// ─── Prompt Payload ─────────────────────────────────────────
+export interface AuditResult {
+  status: AuditStatus;
+  summary: string;
+  issues: Issue[];
+  checklistCoverage: ChecklistCoverageEntry[];
+  regressionDetected: boolean;
+}
+
+// ─── Prompt ────────────────────────────────────────────────
+
+export type PromptMode = 'blueprint' | 'build' | 'audit' | 'fix' | 'summary';
 
 export interface PromptPayload {
-  objective: string;
-  checklist: ChecklistItem[];
-  constraints: string[];
-  referenceNotes: string;
-  stage: WorkflowStage;
+  mode: PromptMode;
+  content: string;
+  workspaceId: string;
+  runId: string;
   iteration: number;
-  lastResponse: AgentResponse | null;
-  lastAudit: AuditResult | null;
-  unresolvedIssues: Issue[];
-  nextAction: string;
 }
 
-// ─── Summary ────────────────────────────────────────────────
+// ─── Completion ────────────────────────────────────────────
+
+export type CompletionStatus = 'complete' | 'partial_complete' | 'failed';
 
 export interface CompletionSummary {
-  totalChecklistItems: number;
-  completedItems: { id: string; label: string }[];
-  unresolvedIssues: Issue[];
-  totalIterations: number;
+  status: CompletionStatus;
+  totalItems: number;
+  completedItems: number;
+  unresolvedIssues: number;
+  iterations: number;
   duration: string;
-  finalStatus: 'complete' | 'partial_complete' | 'failed';
+  completedChecklistItems: string[];
+  unresolvedIssueList: Issue[];
   notes: string;
+}
+
+// ─── Config ────────────────────────────────────────────────
+
+export interface VibeLoopConfig {
+  maxIterations: number;
+  staleRunTimeoutMs: number;
+  resultTimeoutMs: number;
 }

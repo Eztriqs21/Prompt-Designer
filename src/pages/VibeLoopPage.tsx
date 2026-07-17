@@ -1,109 +1,114 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ArrowRight, Trash2 } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useVibeLoopContext } from '../context/VibeLoopContext';
-import WorkspaceSetupForm from '../components/vibeloop/WorkspaceSetupForm';
-import FadeIn from '../components/ui/FadeIn';
+import { Plus, Trash2, ExternalLink } from 'lucide-react';
+import { useVibeLoop } from '../hooks/useVibeLoop';
 
 export default function VibeLoopPage() {
-  const { workspaces, loading, createWorkspace, deleteWorkspace } = useVibeLoopContext();
+  const { workspaces, loading, error, loadWorkspaces, deleteWorkspace } = useVibeLoop();
   const navigate = useNavigate();
-  const [showForm, setShowForm] = useState(false);
 
-  const handleCreate = async (data: any) => {
-    const ws = await createWorkspace(data);
-    setShowForm(false);
-    navigate(`/vibeloop/${ws.id}`);
+  useEffect(() => {
+    loadWorkspaces();
+  }, [loadWorkspaces]);
+
+  const handleCreate = () => {
+    navigate('/vibeloop/new');
+  };
+
+  const handleSelect = (id: string) => {
+    navigate(`/vibeloop/${id}`);
+  };
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Are you sure you want to delete this workspace?')) {
+      await deleteWorkspace(id);
+    }
   };
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-        <FadeIn>
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-xl font-semibold text-primary-light tracking-tight">VibeLoop</h1>
-              <p className="text-body text-secondary-midGray mt-1">
-                Automate your project with AI-driven implementation loops
-              </p>
-            </div>
+    <div className="min-h-screen bg-primary-dark p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-primary-light">VibeLoop</h1>
+            <p className="text-secondary-midGray mt-1">
+              Server-orchestrated automation loop for AI-driven development
+            </p>
+          </div>
+          <button
+            onClick={handleCreate}
+            className="flex items-center gap-2 px-4 py-2 bg-accent-orange text-primary-dark rounded-md font-medium hover:bg-accent-orange/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            New Workspace
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-semantic-dangerRed/10 border border-semantic-dangerRed/30 rounded-md text-semantic-dangerRed">
+            {error}
+          </div>
+        )}
+
+        {loading && workspaces.length === 0 ? (
+          <div className="text-center py-12 text-secondary-midGray">Loading...</div>
+        ) : workspaces.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-secondary-midGray mb-4">No workspaces yet</p>
             <button
-              onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 px-4 py-2 text-small font-medium rounded-md bg-accent-orange text-primary-dark hover:bg-accent-orange/90 transition-colors"
+              onClick={handleCreate}
+              className="text-accent-orange hover:text-accent-orange/80 transition-colors"
             >
-              <Plus className="w-4 h-4" />
-              New Workspace
+              Create your first workspace
             </button>
           </div>
-        </FadeIn>
-
-        {showForm && (
-          <FadeIn>
-            <div className="mb-8">
-              <WorkspaceSetupForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
-            </div>
-          </FadeIn>
-        )}
-
-        {loading && workspaces.length === 0 && (
-          <div className="text-center py-12 text-secondary-midGray">Loading...</div>
-        )}
-
-        {!loading && workspaces.length === 0 && !showForm && (
-          <FadeIn>
-            <div className="text-center py-16 border border-dashed border-secondary-borderGray rounded-md">
-              <p className="text-body text-secondary-midGray mb-4">No workspaces yet</p>
-              <button
-                onClick={() => setShowForm(true)}
-                className="text-small text-accent-orange hover:underline"
+        ) : (
+          <div className="grid gap-4">
+            {workspaces.map((workspace) => (
+              <div
+                key={workspace.id}
+                onClick={() => handleSelect(workspace.id)}
+                className="p-4 bg-secondary-darkSurface border border-secondary-borderGray rounded-lg cursor-pointer hover:border-accent-orange/50 transition-colors"
               >
-                Create your first workspace
-              </button>
-            </div>
-          </FadeIn>
-        )}
-
-        <div className="space-y-3">
-          {workspaces.map((ws) => (
-            <motion.div
-              key={ws.id}
-              layout
-              className="bg-secondary-darkSurface border border-secondary-borderGray rounded-md p-4 flex items-center justify-between"
-            >
-              <div className="flex-1 min-w-0">
-                <h3 className="text-body font-medium text-primary-light truncate">{ws.projectName}</h3>
-                <p className="text-small text-secondary-midGray mt-0.5 truncate">{ws.objective}</p>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className={`text-small px-2 py-0.5 rounded ${
-                    ws.status === 'active' ? 'bg-accent-orange/10 text-accent-orange' :
-                    ws.status === 'connected' ? 'bg-success-green/10 text-success-green' :
-                    'bg-secondary-darkSurface text-secondary-midGray'
-                  }`}>
-                    {ws.status}
-                  </span>
-                  <span className="text-small text-secondary-midGray">
-                    {ws.checklist.length} items
-                  </span>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-medium text-primary-light truncate">
+                      {workspace.projectName}
+                    </h3>
+                    <p className="text-sm text-secondary-midGray mt-1 line-clamp-2">
+                      {workspace.objective}
+                    </p>
+                    <div className="flex items-center gap-4 mt-3 text-xs text-secondary-midGray">
+                      <span>{workspace.checklist.length} items</span>
+                      <span>Created {new Date(workspace.createdAt).toLocaleDateString()}</span>
+                      <span
+                        className={`px-2 py-0.5 rounded ${
+                          workspace.status === 'active'
+                            ? 'bg-success-green/20 text-success-green'
+                            : workspace.status === 'revoked'
+                            ? 'bg-semantic-dangerRed/20 text-semantic-dangerRed'
+                            : 'bg-secondary-midGray/20 text-secondary-midGray'
+                        }`}
+                      >
+                        {workspace.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <button
+                      onClick={(e) => handleDelete(workspace.id, e)}
+                      className="p-2 text-secondary-midGray hover:text-semantic-dangerRed transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <ExternalLink className="w-4 h-4 text-secondary-midGray" />
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 ml-4">
-                <button
-                  onClick={() => deleteWorkspace(ws.id)}
-                  className="p-1.5 rounded-md text-secondary-midGray hover:text-semantic-dangerRed transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => navigate(`/vibeloop/${ws.id}`)}
-                  className="p-1.5 rounded-md text-secondary-midGray hover:text-accent-orange transition-colors"
-                >
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

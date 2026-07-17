@@ -1,4 +1,5 @@
 import type { MasterPromptRequest, MasterPromptResponse, SavedPrompt, ChatSession, PromptVersion, SectionType, SectionPromptRequest, SectionPromptResponse, Message, AuditInputType, AuditMode, AuditStatus, AuditReport, AuditJobStages } from '../types';
+import type { Workspace, CreateWorkspacePayload, Run, RunEvent, CompletionSummary } from '../types/vibeloop';
 
 export interface SectionMessage {
   id: string;
@@ -312,14 +313,6 @@ export async function deleteAuditJob(jobId: string): Promise<void> {
 
 // ─── VibeLoop ─────────────────────────────────────────────
 
-import type {
-  Workspace,
-  CreateWorkspacePayload,
-  Run,
-  RunEvent,
-  CompletionSummary,
-} from '../types/vibeloop';
-
 export async function createWorkspace(data: CreateWorkspacePayload): Promise<Workspace> {
   const res = await fetch(`${API_BASE}/workspaces`, {
     method: 'POST',
@@ -399,8 +392,18 @@ export async function getRunHistory(workspaceId: string): Promise<Run[]> {
   return res.json();
 }
 
-export async function getRunFull(runId: string): Promise<{ run: Run; workspace: any }> {
+export async function getRunFull(runId: string): Promise<{ run: Run; workspace: Workspace }> {
   const res = await fetch(`${API_BASE}/runs/${runId}/full`);
   if (!res.ok) throw new Error('Failed to fetch run details');
+  return res.json();
+}
+
+export async function triggerAudit(runId: string): Promise<{ status: string; audit: any; nextStage: string }> {
+  const res = await fetch(`${API_BASE}/audit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ runId }),
+  });
+  if (!res.ok) throw new Error('Failed to trigger audit');
   return res.json();
 }
