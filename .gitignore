@@ -38,3 +38,7 @@ server/db/*.json
 
 # Bridge files (runtime state, should not be committed)
 bridge/*.json
+
+# Python cache
+__pycache__/
+*.pyc
