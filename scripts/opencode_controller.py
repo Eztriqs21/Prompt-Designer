@@ -126,8 +126,8 @@ class OpenCodeController:
             time.sleep(0.5)
             return True
 
-        except ImportError:
-            # No pytesseract, just click the calibrated position
+        except Exception:
+            # No pytesseract or Tesseract binary missing, just click the calibrated position
             pyautogui.click(pos['x'], pos['y'])
             time.sleep(0.5)
             return True
