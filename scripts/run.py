@@ -22,8 +22,10 @@ import json
 import time
 import argparse
 import signal
+import traceback
 import requests
 from typing import Optional, Dict, Any
+from datetime import datetime
 
 # Add scripts directory to path
 sys.path.insert(0, os.path.dirname(__file__))
@@ -43,12 +45,28 @@ running = True
 
 def signal_handler(sig, frame):
     global running
-    print("\n[runner] Shutting down gracefully...")
+    log("Shutting down gracefully...")
     running = False
 
 
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
+
+
+def log(msg: str, level: str = "INFO"):
+    """Print a timestamped log message."""
+    ts = datetime.now().strftime("%H:%M:%S")
+    print(f"[{ts}] [{level}] {msg}", flush=True)
+
+
+def log_error(msg: str):
+    """Print a timestamped error message."""
+    log(msg, "ERROR")
+
+
+def log_warn(msg: str):
+    """Print a timestamped warning message."""
+    log(msg, "WARN")
 
 
 class BridgeClient:
@@ -77,38 +95,56 @@ class BridgeClient:
     def _get_prompt_http(self) -> Optional[Dict[str, Any]]:
         """Get prompt via HTTP API."""
         try:
-            # Get the full prompt data
+            log(f"Polling backend for prompt: {self._api_url('/bridge/prompt')}")
             resp = requests.get(
                 self._api_url('/bridge/prompt'),
                 headers=self._headers(),
                 timeout=10
             )
+            log(f"Backend responded: status={resp.status_code}")
+
             if resp.status_code == 204:
+                log("No pending prompt (204)")
                 return None
             if resp.status_code != 200:
+                log_error(f"Unexpected status code: {resp.status_code}, body: {resp.text[:200]}")
                 return None
 
             prompt_data = resp.json()
+            log(f"Received prompt data: id={prompt_data.get('id', '?')}, status={prompt_data.get('status', '?')}, mode={prompt_data.get('mode', '?')}")
+
             if not prompt_data or prompt_data.get('status') != 'pending':
+                log("Prompt is not pending, skipping")
                 return None
 
             return prompt_data
 
+        except requests.exceptions.ConnectionError as e:
+            log_error(f"Connection failed: {e}")
+            return None
+        except requests.exceptions.Timeout:
+            log_error("Request timed out (10s)")
+            return None
         except Exception as e:
-            print(f"[bridge] HTTP error: {e}", file=sys.stderr)
+            log_error(f"HTTP error: {e}")
+            traceback.print_exc()
             return None
 
     def _get_prompt_file(self) -> Optional[Dict[str, Any]]:
         """Get prompt from local file."""
         if not os.path.exists(PROMPT_PATH):
+            log(f"Prompt file not found: {PROMPT_PATH}")
             return None
         try:
             with open(PROMPT_PATH, 'r') as f:
                 data = json.load(f)
+            log(f"Read prompt file: id={data.get('id', '?')}, status={data.get('status', '?')}, mode={data.get('mode', '?')}")
             if data.get('status') != 'pending' or not data.get('prompt'):
+                log("Prompt is not pending or has no text, skipping")
                 return None
             return data
-        except Exception:
+        except Exception as e:
+            log_error(f"Error reading prompt file: {e}")
             return None
 
     def submit_response(self, response: Dict[str, Any]):
@@ -121,25 +157,29 @@ class BridgeClient:
     def _submit_response_http(self, response: Dict[str, Any]):
         """Submit response via HTTP API."""
         try:
+            log(f"Submitting response via HTTP to: {self._api_url('/agent/result')}")
             resp = requests.post(
                 self._api_url('/agent/result'),
                 headers=self._headers(),
                 json=response,
                 timeout=10
             )
+            log(f"Submit response: status={resp.status_code}")
             if resp.status_code == 200:
-                print("[bridge] Response submitted via HTTP")
+                log("Response submitted successfully via HTTP")
             else:
-                print(f"[bridge] HTTP submit failed: {resp.status_code}", file=sys.stderr)
+                log_error(f"HTTP submit failed: {resp.status_code}, body: {resp.text[:200]}")
+        except requests.exceptions.ConnectionError as e:
+            log_error(f"Connection failed on submit: {e}")
         except Exception as e:
-            print(f"[bridge] HTTP error: {e}", file=sys.stderr)
+            log_error(f"HTTP error on submit: {e}")
 
     def _submit_response_file(self, response: Dict[str, Any]):
         """Submit response to local file."""
         os.makedirs(BRIDGE_DIR, exist_ok=True)
         with open(RESPONSE_PATH, 'w') as f:
             json.dump(response, f, indent=2)
-        print("[bridge] Response written to file")
+        log("Response written to file")
 
     def update_prompt_status(self, prompt_id: str, status: str):
         """Update prompt status."""
@@ -178,61 +218,72 @@ class AutomationRunner:
 
     def process_prompt(self, prompt_data: Dict[str, Any]) -> bool:
         """Process a single prompt: execute, wait for completion, extract response."""
-        prompt_id = prompt_data['id']
+        prompt_id = prompt_data.get('id', 'unknown')
         mode = prompt_data.get('mode', 'build')
         prompt_text = prompt_data.get('prompt', '')
         chat_name = prompt_data.get('chatName', self.chat_name)
 
-        # For HTTP mode, we might not have the full prompt text yet
-        # The prompt text should be in the prompt_data
         if not prompt_text:
-            print("[runner] WARNING: No prompt text found in prompt data")
+            log_warn("No prompt text found in prompt data, skipping")
             return False
 
         self.current_prompt_id = prompt_id
-        print(f"\n{'='*60}")
-        print(f"[runner] Processing prompt: {prompt_id}")
-        print(f"[runner] Mode: {mode}")
-        print(f"[runner] Chat: {chat_name}")
-        print(f"[runner] Prompt length: {len(prompt_text)} chars")
-        print(f"{'='*60}\n")
+        log(f"=" * 60)
+        log(f"Processing prompt: {prompt_id}")
+        log(f"Mode: {mode}")
+        log(f"Chat: {chat_name}")
+        log(f"Prompt length: {len(prompt_text)} chars")
+        log(f"Prompt preview: {prompt_text[:100]}...")
+        log(f"=" * 60)
 
         # Update status to in_progress
         self.bridge.update_prompt_status(prompt_id, 'in_progress')
 
         # Execute the prompt in OpenCode
-        print("[runner] Step 1: Executing prompt in OpenCode...")
+        log("Step 1: Executing prompt in OpenCode...")
         success = False
         for attempt in range(self.max_retries):
             try:
+                log(f"Attempt {attempt + 1}/{self.max_retries}: Calling execute_prompt...")
                 success = self.controller.execute_prompt(prompt_text, mode, chat_name)
                 if success:
+                    log("Prompt executed successfully in OpenCode")
                     break
-                print(f"[runner] Attempt {attempt + 1} failed, retrying...")
+                log_warn(f"Attempt {attempt + 1} returned False, retrying...")
                 time.sleep(2)
             except Exception as e:
-                print(f"[runner] Attempt {attempt + 1} error: {e}")
+                log_error(f"Attempt {attempt + 1} exception: {e}")
+                traceback.print_exc()
                 time.sleep(2)
 
         if not success:
-            print("[runner] ERROR: Could not execute prompt after max retries")
+            log_error("Could not execute prompt after max retries")
             self.bridge.update_prompt_status(prompt_id, 'failed')
             self._submit_error_response(prompt_id, "Failed to execute prompt in OpenCode")
             return False
 
         # Wait for completion
-        print("\n[runner] Step 2: Waiting for OpenCode to complete...")
+        log("Step 2: Waiting for OpenCode to complete...")
+        log(f"Timeout: 600s, Check interval: 5s")
         completion_result = self.detector.wait_for_completion(
             timeout_seconds=600,
             check_interval=5.0
         )
 
+        log(f"Completion result: {completion_result}")
+
         if not completion_result['is_complete']:
-            print(f"[runner] WARNING: {completion_result['reason']}")
+            log_warn(f"Completion not confirmed: {completion_result['reason']}")
 
         # Extract response (only for plan mode)
-        print(f"\n[runner] Step 3: Extracting response (mode: {mode})...")
+        log(f"Step 3: Extracting response (mode: {mode})...")
         raw_response = self.extractor.extract_response(mode=mode)
+
+        if raw_response:
+            log(f"Response extracted: {len(raw_response)} chars")
+            log(f"Response preview: {raw_response[:100]}...")
+        else:
+            log("No response extracted (expected for build mode)")
 
         # Parse response (or create minimal response for build mode)
         if raw_response:
@@ -247,7 +298,7 @@ class AutomationRunner:
             }
 
         # Submit response to bridge
-        print("\n[runner] Step 4: Submitting response to bridge...")
+        log("Step 4: Submitting response to bridge...")
         response = {
             'promptId': prompt_id,
             'response': parsed['message'],
@@ -257,15 +308,16 @@ class AutomationRunner:
             'errorsFound': parsed['errorsFound'],
             'completedAt': time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime()),
         }
+        log(f"Response payload: done={parsed['done']}, compacted={completion_result.get('compaction_detected', False)}")
         self.bridge.submit_response(response)
 
         # Update prompt status
         self.bridge.update_prompt_status(prompt_id, 'completed')
 
-        print(f"\n[runner] Prompt {prompt_id} completed successfully")
-        print(f"[runner] Done: {parsed['done']}")
-        print(f"[runner] Files touched: {len(parsed['filesTouched'])}")
-        print(f"[runner] Errors: {len(parsed['errorsFound'])}")
+        log(f"Prompt {prompt_id} completed successfully")
+        log(f"  Done: {parsed['done']}")
+        log(f"  Files touched: {len(parsed['filesTouched'])}")
+        log(f"  Errors: {len(parsed['errorsFound'])}")
 
         return True
 
@@ -285,50 +337,57 @@ class AutomationRunner:
     def run(self):
         """Main run loop: poll for prompts, process them, repeat."""
         mode = "HTTP API" if self.bridge.use_http else "Local Files"
-        print(f"\n{'='*60}")
-        print(f"  VibeLoop Automation Runner")
-        print(f"{'='*60}")
-        print(f"Chat name: {self.chat_name}")
-        print(f"Mode: {mode}")
+        log("=" * 60)
+        log("  VibeLoop Automation Runner")
+        log("=" * 60)
+        log(f"Chat name: {self.chat_name}")
+        log(f"Mode: {mode}")
         if self.bridge.use_http:
-            print(f"Backend: {self.bridge.backend_url}")
-        print(f"Poll interval: {self.poll_interval}s")
-        print(f"Max retries: {self.max_retries}")
-        print(f"Press Ctrl+C to stop")
-        print(f"{'='*60}\n")
+            log(f"Backend: {self.bridge.backend_url}")
+            log(f"Workspace key: {self.workspace_key[:12]}..." if self.workspace_key else "No key")
+        log(f"Poll interval: {self.poll_interval}s")
+        log(f"Max retries: {self.max_retries}")
+        log(f"Press Ctrl+C to stop")
+        log("=" * 60)
 
         # Find OpenCode window
-        print("[runner] Finding OpenCode window...")
+        log("Finding OpenCode window...")
         if not self.controller.find_window():
-            print("[runner] ERROR: Could not find OpenCode window")
-            print("[runner] Make sure OpenCode is open and visible")
+            log_error("Could not find OpenCode window")
+            log_error("Make sure OpenCode is open and visible")
             sys.exit(1)
 
-        print(f"[runner] Found OpenCode: {self.controller.window.title}")
-        print(f"[runner] Window position: ({self.controller.window.left}, {self.controller.window.top})")
-        print(f"[runner] Window size: {self.controller.window.width}x{self.controller.window.height}")
+        log(f"Found OpenCode: {self.controller.window.title}")
+        log(f"Window position: ({self.controller.window.left}, {self.controller.window.top})")
+        log(f"Window size: {self.controller.window.width}x{self.controller.window.height}")
 
         # Main loop
-        print("\n[runner] Starting main loop...")
+        log("Starting main loop...")
+        poll_count = 0
         while running:
             try:
+                poll_count += 1
+                log(f"--- Poll #{poll_count} ---")
+
                 # Check for new prompt
                 prompt_data = self.bridge.get_prompt()
                 if prompt_data:
-                    print(f"\n[runner] New prompt detected: {prompt_data.get('id', 'unknown')}")
+                    log(f"New prompt detected: {prompt_data.get('id', 'unknown')}")
                     self.process_prompt(prompt_data)
+                    log("Waiting for next prompt...")
                 else:
-                    # No prompt, wait and check again
+                    log(f"No prompt available, waiting {self.poll_interval}s...")
                     time.sleep(self.poll_interval)
 
             except KeyboardInterrupt:
-                print("\n[runner] Interrupted by user")
+                log("Interrupted by user")
                 break
             except Exception as e:
-                print(f"[runner] Error in main loop: {e}", file=sys.stderr)
+                log_error(f"Error in main loop: {e}")
+                traceback.print_exc()
                 time.sleep(self.poll_interval)
 
-        print("\n[runner] Automation stopped")
+        log("Automation stopped")
 
 
 def main():
