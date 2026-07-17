@@ -388,6 +388,7 @@ class AutomationRunner:
                 time.sleep(self.poll_interval)
 
         log("Automation stopped")
+        self.detector.cleanup()
 
 
 def main():
