@@ -1,71 +1,174 @@
 import { Router } from 'express';
-import { requireWorkspaceAuth, type AuthenticatedRequest } from '../middleware/authWorkspaceKey.js';
 import * as runStore from '../db/runStore.js';
-import { nextStage, canTransition } from '../lib/workflow/stateMachine.js';
+import * as workspaceStore from '../db/workspaceStore.js';
+import { canTransition } from '../lib/workflow/stateMachine.js';
 import { buildBuildPrompt } from '../lib/workflow/buildPrompt.js';
-import { buildAuditPrompt } from '../lib/workflow/auditPrompt.js';
-import { buildFinalSummaryPrompt } from '../lib/workflow/finalSummaryPrompt.js';
 import { auditAgentResponse } from '../lib/workflow/auditEngine.js';
 import { decideNextAction } from '../lib/workflow/continueDecider.js';
 import { generateSummary } from '../lib/workflow/summaryGenerator.js';
-import * as workspaceStore from '../db/workspaceStore.js';
-import type { SubmitResultPayload, AgentResponse } from '../../src/types/vibeloop.js';
+import {
+  writePromptFile,
+  readPromptFile,
+  updatePromptStatus,
+  readResponseFile,
+  clearResponseFile,
+  writeConfigFile,
+  readConfigFile,
+  type BridgePrompt,
+  type BridgeConfig,
+} from '../lib/workflow/bridgeManager.js';
+import type { AgentResponse } from '../../src/types/vibeloop.js';
 
 const router = Router();
 
-// Get next task for agent
-router.get('/agent/next-task', requireWorkspaceAuth, (req: AuthenticatedRequest, res) => {
-  const workspace = req.workspace;
-  const activeRun = runStore.getActiveRun(workspace.id);
+// ─── Bridge Config ─────────────────────────────────────────
 
-  if (!activeRun) {
-    res.status(404).json({ error: 'No active run found' });
-    return;
-  }
+// Get bridge config
+router.get('/bridge/config', (_req, res) => {
+  const config = readConfigFile();
+  res.json(config || { calibrated: false });
+});
 
-  // Check if there's a prompt ready
-  if (!activeRun.latestPrompt) {
-    res.status(204).end();
-    return;
-  }
+// Update bridge config (used by calibration script)
+router.post('/bridge/config', (req, res) => {
+  const config: BridgeConfig = req.body;
+  writeConfigFile(config);
+  res.json({ status: 'ok' });
+});
 
+// ─── Bridge Prompt/Response ────────────────────────────────
+
+// Get current prompt status (for polling)
+router.get('/bridge/status', (_req, res) => {
+  const prompt = readPromptFile();
+  const response = readResponseFile();
   res.json({
-    runId: activeRun.id,
-    workspaceId: workspace.id,
-    stage: activeRun.stage,
-    iteration: activeRun.iteration,
-    prompt: activeRun.latestPrompt,
-    plan: activeRun.plan,
+    prompt: prompt ? { id: prompt.id, status: prompt.status, mode: prompt.mode } : null,
+    response: response ? { promptId: response.promptId, done: response.done } : null,
   });
 });
 
-// Submit agent result
-router.post('/agent/result', requireWorkspaceAuth, (req: AuthenticatedRequest, res) => {
-  const workspace = req.workspace;
-  const payload = req.body as SubmitResultPayload;
+// Write a new prompt to the bridge (called by website when starting a run)
+router.post('/bridge/prompt', (req, res) => {
+  const { mode, prompt, chatName, runId, workspaceId } = req.body;
 
-  if (!payload.message) {
-    res.status(400).json({ error: 'message is required' });
+  if (!mode || !prompt || !chatName) {
+    res.status(400).json({ error: 'mode, prompt, and chatName are required' });
+    return;
+  }
+
+  const bridgePrompt = writePromptFile(mode, prompt, chatName);
+
+  // Also update the run's latestPrompt
+  if (runId) {
+    runStore.setRunLatestPrompt(runId, prompt);
+    runStore.addRunEvent(runId, {
+      stage: 'building',
+      type: 'prompt_sent',
+      data: { mode, bridgePromptId: bridgePrompt.id },
+    });
+  }
+
+  res.json(bridgePrompt);
+});
+
+// Read the response from the bridge (called by website to check for results)
+router.get('/bridge/response', (_req, res) => {
+  const response = readResponseFile();
+  if (!response || !response.response) {
+    res.status(204).end();
+    return;
+  }
+  res.json(response);
+});
+
+// Clear the response file (called after processing)
+router.delete('/bridge/response', (_req, res) => {
+  clearResponseFile();
+  res.json({ status: 'cleared' });
+});
+
+// ─── Run Lifecycle (modified for bridge) ────────────────────
+
+// Start run - generates first prompt and writes to bridge
+router.post('/workspaces/:id/run', (req, res) => {
+  const workspace = workspaceStore.getWorkspace(req.params.id);
+  if (!workspace) {
+    res.status(404).json({ error: 'Workspace not found' });
     return;
   }
 
   const activeRun = runStore.getActiveRun(workspace.id);
+  if (activeRun) {
+    res.status(409).json({ error: 'A run is already active' });
+    return;
+  }
+
+  const maxIterations = parseInt(process.env.VIBELOOP_MAX_ITERATIONS || '10', 10);
+  const run = runStore.createRun(workspace.id, maxIterations);
+
+  // Generate initial blueprint prompt
+  const { buildBlueprintPrompt } = require('../lib/workflow/blueprintPrompt.js');
+  const prompt = buildBlueprintPrompt(workspace, run);
+  runStore.setRunLatestPrompt(run.id, prompt);
+  runStore.transitionRunStage(run.id, 'planning', { trigger: 'start' });
+
+  // Write to bridge file
+  const config = readConfigFile();
+  const chatName = config?.chatName || workspace.projectName;
+  writePromptFile('plan', prompt, chatName);
+
+  res.status(201).json(run);
+});
+
+// Stop run
+router.post('/workspaces/:id/stop', (req, res) => {
+  const activeRun = runStore.getActiveRun(req.params.id);
   if (!activeRun) {
     res.status(404).json({ error: 'No active run found' });
     return;
   }
 
-  // Convert payload to AgentResponse
+  const stopped = runStore.stopRun(activeRun.id);
+
+  // Clear bridge files
+  clearResponseFile();
+
+  res.json(stopped);
+});
+
+// ─── Agent Result Submission (via bridge) ───────────────────
+
+// Submit agent result (called by Python after OpenCode finishes)
+router.post('/agent/result', (req, res) => {
+  const { promptId, message, done, compacted, filesTouched, errorsFound } = req.body;
+
+  if (!promptId || !message) {
+    res.status(400).json({ error: 'promptId and message are required' });
+    return;
+  }
+
+  const prompt = readPromptFile();
+  if (!prompt || prompt.id !== promptId) {
+    res.status(404).json({ error: 'Prompt not found or already processed' });
+    return;
+  }
+
+  // Find the active run
+  const runs = runStore.getRunsForWorkspace(prompt.chatName);
+  const activeRun = runs.find((r) => r.status === 'running');
+  if (!activeRun) {
+    res.status(404).json({ error: 'No active run found' });
+    return;
+  }
+
+  // Convert to AgentResponse
   const response: AgentResponse = {
-    message: payload.message,
-    diffSummary: payload.diffSummary,
-    filesTouched: payload.filesTouched,
-    commandsRun: payload.commandsRun,
-    testResults: payload.testResults,
-    errorsFound: payload.errorsFound,
-    suggestedFixes: payload.suggestedFixes,
-    done: payload.done,
-    compacted: payload.compacted,
+    message,
+    filesTouched,
+    errorsFound,
+    done,
+    compacted,
   };
 
   // Store the response
@@ -75,20 +178,18 @@ router.post('/agent/result', requireWorkspaceAuth, (req: AuthenticatedRequest, r
   runStore.addRunEvent(activeRun.id, {
     stage: activeRun.stage,
     type: 'result_received',
-    data: { done: payload.done, compacted: payload.compacted },
+    data: { done, compacted, promptId },
   });
 
   // Handle completion signals
-  if (payload.done && !payload.compacted) {
-    // Agent claims done and no compaction - move to audit
+  if (done && !compacted) {
     if (canTransition(activeRun.stage, 'agent_done_signal')) {
       runStore.transitionRunStage(activeRun.id, 'maybe_done', {
         trigger: 'agent_done_signal',
         done: true,
       });
     }
-  } else if (payload.compacted) {
-    // Context exhaustion
+  } else if (compacted) {
     if (canTransition(activeRun.stage, 'compaction_detected')) {
       runStore.transitionRunStage(activeRun.id, 'context_compacted', {
         trigger: 'compaction_detected',
@@ -96,31 +197,17 @@ router.post('/agent/result', requireWorkspaceAuth, (req: AuthenticatedRequest, r
     }
   }
 
-  // Clear the prompt so agent doesn't get it again
-  runStore.setRunLatestPrompt(activeRun.id, '');
+  // Update prompt status
+  updatePromptStatus(promptId, 'completed');
+
+  // Clear the response file
+  clearResponseFile();
 
   res.json({ status: 'received', stage: runStore.getRun(activeRun.id)?.stage });
 });
 
-// Check agent status (optional endpoint)
-router.get('/agent/status', requireWorkspaceAuth, (req: AuthenticatedRequest, res) => {
-  const workspace = req.workspace;
-  const activeRun = runStore.getActiveRun(workspace.id);
+// ─── Audit (triggered after result submission) ──────────────
 
-  if (!activeRun) {
-    res.json({ active: false });
-    return;
-  }
-
-  res.json({
-    active: true,
-    runId: activeRun.id,
-    stage: activeRun.stage,
-    iteration: activeRun.iteration,
-  });
-});
-
-// Trigger audit
 router.post('/audit', (req, res) => {
   const { runId } = req.body as { runId: string };
 
@@ -171,27 +258,37 @@ router.post('/audit', (req, res) => {
     const decision = decideNextAction(audit, run, workspace);
 
     // Transition to next stage
-    if (canTransition(run.stage, decision.nextStage === 'complete' ? 'all_clear' : decision.nextStage === 'needs_fix' ? 'fix_required' : 'more_work_needed')) {
-      const trigger = decision.nextStage === 'complete' ? 'all_clear' :
-                      decision.nextStage === 'needs_fix' ? 'fix_required' :
-                      decision.nextStage === 'partial_complete' ? 'partial_done' : 'more_work_needed';
+    const triggerMap: Record<string, string> = {
+      complete: 'all_clear',
+      needs_fix: 'fix_required',
+      partial_complete: 'partial_done',
+      continuing: 'more_work_needed',
+    };
+    const trigger = triggerMap[decision.nextStage] || 'more_work_needed';
+
+    if (canTransition(run.stage, trigger)) {
       runStore.transitionRunStage(run.id, decision.nextStage as any, { trigger });
     }
 
-    // If continuing, generate next prompt
+    // If continuing, generate next prompt and write to bridge
     if (decision.shouldContinue) {
+      const { buildFixPrompt } = require('../lib/workflow/buildPrompt.js');
       const nextPrompt = decision.nextStage === 'needs_fix'
         ? buildFixPrompt(workspace, run, audit)
         : buildBuildPrompt(workspace, run, run.plan || '');
 
       runStore.setRunLatestPrompt(run.id, nextPrompt);
       runStore.incrementRunIteration(run.id);
+
+      // Write to bridge
+      const config = readConfigFile();
+      const chatName = config?.chatName || workspace.projectName;
+      writePromptFile('build', nextPrompt, chatName);
     } else {
       // Complete the run
       const summary = generateSummary(run, workspace, audit, [audit]);
       runStore.completeRun(run.id, decision.nextStage as any);
 
-      // Store summary
       runStore.addRunEvent(run.id, {
         stage: decision.nextStage as any,
         type: 'info',
@@ -211,7 +308,8 @@ router.post('/audit', (req, res) => {
   }
 });
 
-// Get run summary
+// ─── Run Summary ───────────────────────────────────────────
+
 router.get('/runs/:runId/summary', (req, res) => {
   const run = runStore.getRun(req.params.runId);
   if (!run) {
@@ -228,40 +326,5 @@ router.get('/runs/:runId/summary', (req, res) => {
   const summary = generateSummary(run, workspace, run.latestAudit || null, []);
   res.json(summary);
 });
-
-function buildFixPrompt(workspace: any, run: any, audit: any): string {
-  const issues = audit.issues
-    .filter((i: any) => i.severity === 'critical' || i.severity === 'major')
-    .map((i: any) => `- ${i.severity}: ${i.description}\n  Suggestion: ${i.suggestion}`)
-    .join('\n');
-
-  return `# VibeLoop Fix Mode
-
-You are in **Fix Mode**. The audit found issues that need to be fixed.
-
-## Project: ${workspace.projectName}
-
-### Issues to Fix
-${issues}
-
-### Current Iteration: ${run.iteration}
-
-## Instructions
-
-1. Fix each issue listed above
-2. Ensure the fixes don't introduce new problems
-3. Output DONE when all fixes are complete
-
-## Response Format
-
-### Fixes Applied
-- [List of fixes made]
-
-### Files Modified
-- [List of files changed]
-
-### Status
-- DONE (when all fixes are complete)`;
-}
 
 export default router;

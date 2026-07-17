@@ -35,3 +35,6 @@ ms-playwright/
 
 # Server data (user-generated, should not be committed)
 server/db/*.json
+
+# Bridge files (runtime state, should not be committed)
+bridge/*.json

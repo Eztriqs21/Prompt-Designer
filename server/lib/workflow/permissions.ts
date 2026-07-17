@@ -1,20 +1,4 @@
 import type { Workspace, Run } from '../../src/types/vibeloop.js';
-import { getConfig } from './guardrails.js';
-
-export function validateWorkspaceKey(key: string, workspaceStore: any): boolean {
-  const workspace = workspaceStore.getWorkspaceByKey(key);
-  if (!workspace) return false;
-  if (workspace.status === 'revoked') return false;
-  return true;
-}
-
-export function canAccessRun(
-  workspaceId: string,
-  run: Run | undefined
-): boolean {
-  if (!run) return false;
-  return run.workspaceId === workspaceId;
-}
 
 export function canStartRun(
   workspace: Workspace,
