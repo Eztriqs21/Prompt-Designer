@@ -100,8 +100,8 @@ router.post('/workspaces/:id/run', (req, res) => {
   runStore.transitionRunStage(run.id, 'planning', { trigger: 'start' });
 
   // Write to bridge so Python automation can pick it up
-  const config = readConfigFile();
-  const chatName = config?.chatName || workspace.projectName;
+  const bridgeConfig = readConfigFile();
+  const chatName = bridgeConfig?.chatName || workspace.projectName;
   writePromptFile('plan', prompt, chatName, workspace.id);
 
   res.status(201).json(run);
