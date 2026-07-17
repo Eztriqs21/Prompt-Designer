@@ -1,19 +1,184 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, ExternalLink, X } from 'lucide-react';
 import { useVibeLoop } from '../hooks/useVibeLoop';
+import type { CreateWorkspacePayload } from '../types/vibeloop';
+
+function CreateWorkspaceModal({ onClose, onCreated }: { onClose: () => void; onCreated: (id: string) => void }) {
+  const { createWorkspace, loading } = useVibeLoop();
+  const [form, setForm] = useState<CreateWorkspacePayload>({
+    projectName: '',
+    objective: '',
+    checklist: [{ label: '', description: '', priority: 'high' }],
+    constraints: [],
+    referenceNotes: '',
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const addItem = () => {
+    setForm((f) => ({
+      ...f,
+      checklist: [...f.checklist, { label: '', description: '', priority: 'high' }],
+    }));
+  };
+
+  const removeItem = (idx: number) => {
+    setForm((f) => ({
+      ...f,
+      checklist: f.checklist.filter((_, i) => i !== idx),
+    }));
+  };
+
+  const updateItem = (idx: number, patch: Partial<{ label: string; description: string; priority: 'critical' | 'high' | 'medium' | 'low' }>) => {
+    setForm((f) => ({
+      ...f,
+      checklist: f.checklist.map((item, i) => (i === idx ? { ...item, ...patch } : item)),
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.projectName.trim() || !form.objective.trim()) {
+      setError('Project name and objective are required');
+      return;
+    }
+    const validItems = form.checklist.filter((item) => item.label.trim());
+    if (validItems.length === 0) {
+      setError('Add at least one checklist item');
+      return;
+    }
+    try {
+      const ws = await createWorkspace({ ...form, checklist: validItems });
+      onCreated(ws.id);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create workspace');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary-dark/80">
+      <div className="w-full max-w-xl bg-secondary-darkSurface border border-secondary-borderGray rounded-lg p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-primary-light">New Workspace</h2>
+          <button onClick={onClose} className="p-1 text-secondary-midGray hover:text-primary-light">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-semantic-dangerRed/10 border border-semantic-dangerRed/30 rounded text-sm text-semantic-dangerRed">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-secondary-midGray mb-1">Project Name</label>
+            <input
+              type="text"
+              value={form.projectName}
+              onChange={(e) => setForm((f) => ({ ...f, projectName: e.target.value }))}
+              className="w-full px-3 py-2 bg-primary-dark border border-secondary-borderGray rounded text-primary-light text-sm focus:border-accent-orange focus:outline-none"
+              placeholder="My Project"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-secondary-midGray mb-1">Objective</label>
+            <textarea
+              value={form.objective}
+              onChange={(e) => setForm((f) => ({ ...f, objective: e.target.value }))}
+              className="w-full px-3 py-2 bg-primary-dark border border-secondary-borderGray rounded text-primary-light text-sm focus:border-accent-orange focus:outline-none"
+              rows={3}
+              placeholder="What should be built..."
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-secondary-midGray">Feature Checklist</label>
+              <button type="button" onClick={addItem} className="text-xs text-accent-orange hover:text-accent-orange/80">
+                + Add item
+              </button>
+            </div>
+            <div className="space-y-2">
+              {form.checklist.map((item, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={item.label}
+                    onChange={(e) => updateItem(idx, { label: e.target.value })}
+                    className="flex-1 px-3 py-2 bg-primary-dark border border-secondary-borderGray rounded text-primary-light text-sm focus:border-accent-orange focus:outline-none"
+                    placeholder="Feature label"
+                  />
+                  <select
+                    value={item.priority}
+                    onChange={(e) => updateItem(idx, { priority: e.target.value as any })}
+                    className="px-2 py-2 bg-primary-dark border border-secondary-borderGray rounded text-primary-light text-sm focus:border-accent-orange focus:outline-none"
+                  >
+                    <option value="critical">Critical</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                  {form.checklist.length > 1 && (
+                    <button type="button" onClick={() => removeItem(idx)} className="p-2 text-secondary-midGray hover:text-semantic-dangerRed">
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-secondary-midGray mb-1">Constraints (optional)</label>
+            <input
+              type="text"
+              value={form.constraints?.join(', ') || ''}
+              onChange={(e) => setForm((f) => ({ ...f, constraints: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) }))}
+              className="w-full px-3 py-2 bg-primary-dark border border-secondary-borderGray rounded text-primary-light text-sm focus:border-accent-orange focus:outline-none"
+              placeholder="e.g. Use Firebase Auth, No external UI libraries"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-secondary-midGray mb-1">Reference Notes (optional)</label>
+            <textarea
+              value={form.referenceNotes || ''}
+              onChange={(e) => setForm((f) => ({ ...f, referenceNotes: e.target.value }))}
+              className="w-full px-3 py-2 bg-primary-dark border border-secondary-borderGray rounded text-primary-light text-sm focus:border-accent-orange focus:outline-none"
+              rows={2}
+              placeholder="Links to designs, docs, etc."
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-secondary-midGray hover:text-primary-light transition-colors">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-4 py-2 text-sm font-medium bg-accent-orange text-primary-dark rounded hover:bg-accent-orange/90 transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Creating...' : 'Create Workspace'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export default function VibeLoopPage() {
   const { workspaces, loading, error, loadWorkspaces, deleteWorkspace } = useVibeLoop();
   const navigate = useNavigate();
+  const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => {
     loadWorkspaces();
   }, [loadWorkspaces]);
-
-  const handleCreate = () => {
-    navigate('/vibeloop/new');
-  };
 
   const handleSelect = (id: string) => {
     navigate(`/vibeloop/${id}`);
@@ -37,7 +202,7 @@ export default function VibeLoopPage() {
             </p>
           </div>
           <button
-            onClick={handleCreate}
+            onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 bg-accent-orange text-primary-dark rounded-md font-medium hover:bg-accent-orange/90 transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -57,7 +222,7 @@ export default function VibeLoopPage() {
           <div className="text-center py-12">
             <p className="text-secondary-midGray mb-4">No workspaces yet</p>
             <button
-              onClick={handleCreate}
+              onClick={() => setShowCreate(true)}
               className="text-accent-orange hover:text-accent-orange/80 transition-colors"
             >
               Create your first workspace
@@ -110,6 +275,16 @@ export default function VibeLoopPage() {
           </div>
         )}
       </div>
+
+      {showCreate && (
+        <CreateWorkspaceModal
+          onClose={() => setShowCreate(false)}
+          onCreated={(id) => {
+            setShowCreate(false);
+            navigate(`/vibeloop/${id}`);
+          }}
+        />
+      )}
     </div>
   );
 }
