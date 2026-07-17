@@ -3,8 +3,8 @@
 Completion Detector
 
 Detects when OpenCode has finished a task using:
-1. Audio monitoring via sounddevice (microphone picks up speaker sound)
-2. Continuous background monitoring with callback (no blocking, no dead zones)
+1. System audio loopback via soundcard (captures speaker output directly)
+2. Continuous background monitoring (no dead zones)
 3. Screen OCR fallback (check for "DONE" marker) — optional, requires Tesseract
 """
 
@@ -24,11 +24,11 @@ except ImportError:
     sys.exit(1)
 
 try:
-    import sounddevice as sd
-    SOUNDDEVICE_AVAILABLE = True
+    import soundcard as sc
+    SOUNDCARD_AVAILABLE = True
 except ImportError:
-    SOUNDDEVICE_AVAILABLE = False
-    print("Warning: sounddevice not installed. Sound detection disabled.", file=sys.stderr)
+    SOUNDCARD_AVAILABLE = False
+    print("Warning: soundcard not installed. Sound detection disabled.", file=sys.stderr)
 
 try:
     import pytesseract
@@ -38,118 +38,76 @@ except ImportError:
 
 
 class AudioMonitor:
-    """Continuously monitors audio via sounddevice callback (non-blocking)."""
+    """Continuously monitors system audio via loopback in a background thread."""
 
     def __init__(self, history_seconds: int = 10):
         self.history_seconds = history_seconds
         self._running = False
-        self._stream = None
+        self._thread = None
+        self._recorder = None
         self._rms_history = deque(maxlen=history_seconds * 30)
         self._lock = threading.Lock()
         self._last_spike_time = 0
         self._spike_cooldown = 2.0
         self.rms_threshold = 0.005
-        self._device_id = None
-        self._device_name = "none"
 
     def start(self) -> bool:
-        """Start audio monitoring using sounddevice callback."""
-        if not SOUNDDEVICE_AVAILABLE:
-            print("[detector] sounddevice not installed")
+        """Start background audio monitoring via loopback."""
+        if not SOUNDCARD_AVAILABLE:
+            print("[detector] soundcard not installed")
             return False
 
-        # Try Stereo Mix first, then default input
-        for dev_id in self._find_devices():
-            if self._try_device(dev_id):
-                return True
+        # Find loopback microphone
+        mics = sc.all_microphones(include_loopback=True)
+        loopback_mic = None
+        for mic in mics:
+            if mic.isloopback:
+                loopback_mic = mic
+                break
 
-        print("[detector] No audio input device available")
-        return False
-
-    def _find_devices(self) -> list:
-        """Find candidate devices: Stereo Mix first, then default input."""
-        devices = sd.query_devices()
-        candidates = []
-
-        # Stereo Mix (captures system audio output)
-        for i, d in enumerate(devices):
-            if "stereo mix" in d["name"].lower() and d["max_input_channels"] > 0:
-                candidates.append(i)
-
-        # Default input
-        try:
-            default_idx = sd.default.device[0]
-            if default_idx not in candidates:
-                candidates.append(default_idx)
-        except Exception:
-            pass
-
-        # Any microphone as last resort
-        for i, d in enumerate(devices):
-            if d["max_input_channels"] > 0 and i not in candidates:
-                candidates.append(i)
-
-        return candidates
-
-    def _try_device(self, device_id: int) -> bool:
-        """Try to start monitoring on a specific device."""
-        try:
-            info = sd.query_devices(device_id)
-        except Exception:
+        if not loopback_mic:
+            print("[detector] No loopback microphone found")
             return False
 
-        channels = min(info["max_input_channels"], 2)
-        rate = int(info["default_samplerate"])
+        print(f"[detector] Loopback device: {loopback_mic.name}")
 
         try:
-            stream = sd.InputStream(
-                device=device_id,
-                channels=channels,
-                samplerate=rate,
-                blocksize=1024,
-                callback=self._audio_callback,
-            )
-            stream.start()
+            self._recorder = loopback_mic.recorder(samplerate=48000, channels=[0])
+            self._recorder.__enter__()
         except Exception as e:
-            print(f"[detector] Device {device_id} ({info['name']}) failed: {e}")
+            print(f"[detector] Failed to open loopback recorder: {e}")
             return False
 
-        # Verify data flows
-        self._device_id = device_id
-        self._device_name = info["name"]
-        self._stream = stream
         self._running = True
-        time.sleep(2)
+        self._thread = threading.Thread(target=self._monitor_loop, daemon=True)
+        self._thread.start()
+        print("[detector] Audio monitor started (loopback)")
+        return True
 
-        with self._lock:
-            has_data = len(self._rms_history) > 0
-
-        if has_data:
-            print(f"[detector] Audio active: {info['name']} ({rate}Hz, {channels}ch)")
-            return True
-        else:
-            print(f"[detector] {info['name']}: no data, trying next...")
-            stream.stop()
-            stream.close()
-            self._stream = None
-            self._running = False
-            return False
-
-    def _audio_callback(self, indata, frames, time_info, status):
-        """Called by sounddevice on audio thread. Non-blocking."""
-        rms = float(np.sqrt(np.mean(indata.astype(np.float32) ** 2)))
-        with self._lock:
-            self._rms_history.append((time.time(), rms))
-
-    def stop(self):
-        self._running = False
-        if self._stream:
+    def _monitor_loop(self):
+        """Background loop: read audio, compute RMS, store in history."""
+        while self._running:
             try:
-                self._stream.stop()
-                self._stream.close()
+                data = self._recorder.record(numframes=4096)
+                if data is not None and len(data) > 0:
+                    mono = data.flatten().astype(np.float32)
+                    rms = float(np.sqrt(np.mean(mono ** 2)))
+                    with self._lock:
+                        self._rms_history.append((time.time(), rms))
             except Exception:
                 pass
-            self._stream = None
+
+    def stop(self):
+        """Stop background monitoring."""
+        self._running = False
+        if self._thread:
+            self._thread.join(timeout=2)
+        if self._recorder:
+            try:
+                self._recorder.__exit__(None, None, None)
+            except Exception:
+                pass
+            self._recorder = None
 
     def get_recent_rms(self, seconds: float = 3.0) -> list:
         cutoff = time.time() - seconds
@@ -157,6 +115,7 @@ class AudioMonitor:
             return [rms for ts, rms in self._rms_history if ts >= cutoff]
 
     def detect_spike(self, window_seconds: float = 3.0) -> Dict[str, Any]:
+        """Check if there was a recent audio spike (sound played)."""
         recent = self.get_recent_rms(window_seconds)
         if not recent:
             return {'spike_detected': False, 'peak_rms': 0, 'avg_rms': 0, 'threshold': self.rms_threshold}
@@ -173,6 +132,7 @@ class AudioMonitor:
         return {'spike_detected': False, 'peak_rms': peak, 'avg_rms': avg, 'threshold': self.rms_threshold}
 
     def auto_calibrate(self, duration: float = 3.0) -> float:
+        """Measure ambient noise level and set threshold above it."""
         time.sleep(duration)
         recent = self.get_recent_rms(duration)
         if not recent:
@@ -180,13 +140,9 @@ class AudioMonitor:
 
         ambient = float(np.mean(recent))
         peak = float(max(recent))
+        self.rms_threshold = max(ambient * 3, 0.003)
 
-        if "stereo mix" in self._device_name.lower():
-            self.rms_threshold = max(ambient * 3, 0.003)
-        else:
-            self.rms_threshold = max(ambient * 50, 0.001)
-
-        print(f"[detector] Calibrated ({self._device_name}): ambient={ambient:.6f}, peak={peak:.6f}, threshold={self.rms_threshold:.6f}")
+        print(f"[detector] Calibrated: ambient={ambient:.6f}, peak={peak:.6f}, threshold={self.rms_threshold:.6f}")
         return self.rms_threshold
 
 
@@ -221,9 +177,13 @@ class CompletionDetector:
             return None
 
     def check_completion(self) -> Dict[str, Any]:
+        """Check all completion signals and return combined result."""
         result = {
-            'sound_detected': False, 'done_detected': False,
-            'compaction_detected': False, 'is_complete': False, 'reason': '',
+            'sound_detected': False,
+            'done_detected': False,
+            'compaction_detected': False,
+            'is_complete': False,
+            'reason': '',
         }
 
         result['sound_detected'] = self.detect_sound()
@@ -231,6 +191,7 @@ class CompletionDetector:
             result['reason'] = 'No sound detected'
             return result
 
+        # Sound detected — check OCR if available
         if TESSERACT_AVAILABLE:
             text = self.capture_screen_text()
             if text:
@@ -249,11 +210,12 @@ class CompletionDetector:
                 result['reason'] = 'Sound detected (no OCR)'
         else:
             result['is_complete'] = True
-            result['reason'] = 'Sound detected (no OCR)'
+            result['reason'] = 'Sound detected'
 
         return result
 
     def wait_for_completion(self, timeout_seconds: int = 600, check_interval: float = 3.0) -> Dict[str, Any]:
+        """Wait for OpenCode to complete by monitoring system audio."""
         self._ensure_audio()
         print(f"[detector] Waiting for completion (timeout: {timeout_seconds}s)...")
         start_time = time.time()
