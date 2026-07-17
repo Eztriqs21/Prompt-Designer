@@ -8,6 +8,7 @@ import { buildFinalSummaryPrompt } from '../lib/workflow/finalSummaryPrompt.js';
 import { auditAgentResponse } from '../lib/workflow/auditEngine.js';
 import { decideNextAction } from '../lib/workflow/continueDecider.js';
 import { generateSummary } from '../lib/workflow/summaryGenerator.js';
+import * as workspaceStore from '../db/workspaceStore.js';
 import type { SubmitResultPayload, AgentResponse } from '../../src/types/vibeloop.js';
 
 const router = Router();
@@ -134,7 +135,7 @@ router.post('/audit', (req, res) => {
     return;
   }
 
-  const workspace = (await import('../db/workspaceStore.js')).getWorkspace(run.workspaceId);
+  const workspace = workspaceStore.getWorkspace(run.workspaceId);
   if (!workspace) {
     res.status(404).json({ error: 'Workspace not found' });
     return;
@@ -218,7 +219,7 @@ router.get('/runs/:runId/summary', (req, res) => {
     return;
   }
 
-  const workspace = (require('../db/workspaceStore.js') as any).getWorkspace(run.workspaceId);
+  const workspace = workspaceStore.getWorkspace(run.workspaceId);
   if (!workspace) {
     res.status(404).json({ error: 'Workspace not found' });
     return;
