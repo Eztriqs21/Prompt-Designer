@@ -145,16 +145,21 @@ class AutomationRunner:
             print(f"[runner] WARNING: {completion_result['reason']}")
             # Still try to extract whatever response is available
 
-        # Extract response
-        print("\n[runner] Step 3: Extracting response...")
-        raw_response = self.extractor.extract_response()
+        # Extract response (only for plan mode)
+        print(f"\n[runner] Step 3: Extracting response (mode: {mode})...")
+        raw_response = self.extractor.extract_response(mode=mode)
 
-        if not raw_response:
-            print("[runner] WARNING: Could not extract response, using placeholder")
-            raw_response = "[Response could not be extracted]"
-
-        # Parse response
-        parsed = self.extractor.parse_response(raw_response)
+        # Parse response (or create minimal response for build mode)
+        if raw_response:
+            parsed = self.extractor.parse_response(raw_response)
+        else:
+            # Build mode: no response needed, just completion confirmation
+            parsed = {
+                'message': f'Build task completed (iteration completed)',
+                'filesTouched': [],
+                'errorsFound': [],
+                'done': completion_result.get('done_detected', False),
+            }
 
         # Write response to bridge
         print("\n[runner] Step 4: Writing response to bridge...")

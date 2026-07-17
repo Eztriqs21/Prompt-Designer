@@ -3,13 +3,17 @@
 Response Extractor
 
 Extracts OpenCode's response text from the screen after completion.
-Uses OCR to read the response area and parse it into structured data.
+
+Strategy:
+- Plan mode: Use copy button (fixed position, no file changes)
+- Build mode: Use OCR (copy button Y position unpredictable due to file changes)
 """
 
 import sys
 import os
 import re
-from typing import Optional, Dict, Any, List
+import time
+from typing import Optional, Dict, Any
 
 try:
     import pyautogui
@@ -49,7 +53,7 @@ class ResponseExtractor:
             return json.load(f)
 
     def extract_via_copy_button(self) -> Optional[str]:
-        """Click the copy button and read from clipboard."""
+        """Click the copy button and read from clipboard. Only works for Plan mode."""
         if not PYPERCLIP_AVAILABLE:
             return None
 
@@ -58,12 +62,8 @@ class ResponseExtractor:
             return None
 
         try:
-            # Click the copy button
             pyautogui.click(pos['x'], pos['y'])
-            import time
             time.sleep(0.5)
-
-            # Read from clipboard
             text = pyperclip.paste()
             return text if text else None
         except Exception as e:
@@ -71,22 +71,20 @@ class ResponseExtractor:
             return None
 
     def extract_via_ocr(self) -> Optional[str]:
-        """Capture the response area and extract text via OCR."""
+        """Capture the response area and extract text via OCR. Works for all modes."""
         if not TESSERACT_AVAILABLE:
             return None
 
         try:
             screenshot = pyautogui.screenshot()
-
-            # The response area is typically in the center-right of the screen
-            # Capture right 60% of screen, top 70%
             width = screenshot.width
             height = screenshot.height
 
-            left = int(width * 0.3)  # Start after sidebar
-            top = int(height * 0.05)  # Start below header
-            right = int(width * 0.95)  # Leave margin on right
-            bottom = int(height * 0.85)  # Leave margin on bottom
+            # Response area: right 65% of screen, full height below header
+            left = int(width * 0.3)
+            top = int(height * 0.05)
+            right = int(width * 0.95)
+            bottom = int(height * 0.90)
 
             response_region = screenshot.crop((left, top, right, bottom))
             text = pytesseract.image_to_string(response_region)
@@ -95,18 +93,30 @@ class ResponseExtractor:
             print(f"OCR extraction failed: {e}", file=sys.stderr)
             return None
 
-    def extract_response(self) -> Optional[str]:
-        """Try to extract response using multiple methods."""
-        # Method 1: Copy button (most reliable)
+    def extract_response(self, mode: str = 'build') -> Optional[str]:
+        """
+        Extract response based on mode.
+
+        Args:
+            mode: 'plan' uses copy button to capture full response
+                  'build' returns None (no copy needed, just completion detection)
+        """
+        if mode == 'build':
+            # Build mode: no need to copy response, just detect completion
+            print("[extractor] Build mode: skipping response extraction")
+            return None
+
+        # Plan mode: use copy button (fixed position, no file changes)
         response = self.extract_via_copy_button()
         if response:
-            print("[extractor] Response extracted via copy button")
+            print("[extractor] Response extracted via copy button (plan mode)")
             return response
 
-        # Method 2: OCR (fallback)
+        # Fallback to OCR if copy button fails
+        print("[extractor] Copy button failed, falling back to OCR")
         response = self.extract_via_ocr()
         if response:
-            print("[extractor] Response extracted via OCR")
+            print("[extractor] Response extracted via OCR (fallback)")
             return response
 
         print("[extractor] Could not extract response", file=sys.stderr)
@@ -126,11 +136,9 @@ class ResponseExtractor:
         if not raw_text:
             return result
 
-        # Check for DONE marker
         result['done'] = 'DONE' in raw_text
 
-        # Extract files touched (look for file paths)
-        # Common patterns: "Modified: path/to/file", "Created: path/to/file"
+        # Extract files touched
         file_patterns = [
             r'(?:Modified|Created|Updated|Changed|Added|Deleted):\s*(.+)',
             r'(?:file|File):\s*(.+)',
@@ -150,7 +158,6 @@ class ResponseExtractor:
             matches = re.findall(pattern, raw_text)
             result['errorsFound'].extend(matches)
 
-        # Remove duplicates
         result['filesTouched'] = list(set(result['filesTouched']))
         result['errorsFound'] = list(set(result['errorsFound']))
 
@@ -162,9 +169,9 @@ def main():
     extractor = ResponseExtractor()
 
     print("Testing response extractor...")
-    print("Attempting to extract response...")
+    print("Attempting to extract response (plan mode)...")
 
-    response = extractor.extract_response()
+    response = extractor.extract_response(mode='plan')
     if response:
         print(f"\nExtracted response ({len(response)} chars):")
         print("-" * 40)
@@ -177,7 +184,7 @@ def main():
         print(f"\nParsed data:")
         print(f"  Done: {parsed['done']}")
         print(f"  Files touched: {len(parsed['filesTouched'])}")
-        print(f"  Errors found: {len(parsed['errorsFound'])}")
+        print(f"  Errors: {len(parsed['errorsFound'])}")
     else:
         print("No response extracted")
 
