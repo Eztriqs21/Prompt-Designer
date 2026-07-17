@@ -65,3 +65,52 @@ When you complete the task, output your response in this structure:
 - Include all files touched
 - Report any errors or issues encountered`;
 }
+
+export function buildFixPrompt(
+  workspace: Workspace,
+  run: Run,
+  audit: { findings?: Array<{ title: string; description: string; severity: string }> }
+): string {
+  const findings = audit.findings || [];
+  const issues = findings
+    .filter((f) => f.severity === 'critical' || f.severity === 'major')
+    .map((f) => `- **${f.title}**: ${f.description}`)
+    .join('\n');
+
+  return `# VibeLoop Fix Mode
+
+You are in **Fix Mode**. The previous build had issues that need to be fixed.
+
+## Project: ${workspace.projectName}
+
+### Current Iteration: ${run.iteration}
+
+### Issues to Fix
+${issues || 'No critical issues found. Verify everything works correctly.'}
+
+### All Audit Findings
+${findings.map((f) => `- [${f.severity}] ${f.title}: ${f.description}`).join('\n') || 'None'}
+
+### Objective
+${workspace.objective}
+
+## Instructions
+
+1. **Fix all critical and major issues** listed above
+2. **Verify fixes don't introduce regressions**
+3. **Output DONE when** all fixes are complete
+
+## Response Format
+
+When you complete the fixes, output your response in this structure:
+
+### What was fixed
+- [List of fixes made]
+
+### Files modified
+- [List of files changed]
+
+### Status
+- DONE (only if all critical/major issues are fixed)
+- NOT_DONE (if more fixes are needed)`;
+}

@@ -147,32 +147,30 @@ class BridgeClient:
             log_error(f"Error reading prompt file: {e}")
             return None
 
-    def submit_response(self, response: Dict[str, Any]):
-        """Submit the response back to the bridge."""
+    def submit_response(self, response: Dict[str, Any]) -> bool:
+        """Submit the response back to the bridge. Returns True on success."""
         if self.use_http:
-            self._submit_response_http(response)
+            return self._submit_response_http(response)
         else:
             self._submit_response_file(response)
+            return True
 
-    def _submit_response_http(self, response: Dict[str, Any]):
-        """Submit response via HTTP API."""
-        try:
-            log(f"Submitting response via HTTP to: {self._api_url('/agent/result')}")
-            resp = requests.post(
-                self._api_url('/agent/result'),
-                headers=self._headers(),
-                json=response,
-                timeout=10
-            )
-            log(f"Submit response: status={resp.status_code}")
-            if resp.status_code == 200:
-                log("Response submitted successfully via HTTP")
-            else:
-                log_error(f"HTTP submit failed: {resp.status_code}, body: {resp.text[:200]}")
-        except requests.exceptions.ConnectionError as e:
-            log_error(f"Connection failed on submit: {e}")
-        except Exception as e:
-            log_error(f"HTTP error on submit: {e}")
+    def _submit_response_http(self, response: Dict[str, Any]) -> bool:
+        """Submit response via HTTP API. Raises on failure."""
+        log(f"Submitting response via HTTP to: {self._api_url('/agent/result')}")
+        resp = requests.post(
+            self._api_url('/agent/result'),
+            headers=self._headers(),
+            json=response,
+            timeout=30
+        )
+        log(f"Submit response: status={resp.status_code}")
+        if resp.status_code == 200:
+            log("Response submitted successfully via HTTP")
+            return True
+        else:
+            log_error(f"HTTP submit failed: {resp.status_code}, body: {resp.text[:200]}")
+            return False
 
     def _submit_response_file(self, response: Dict[str, Any]):
         """Submit response to local file."""
@@ -301,7 +299,7 @@ class AutomationRunner:
         log("Step 4: Submitting response to bridge...")
         response = {
             'promptId': prompt_id,
-            'response': parsed['message'],
+            'message': parsed['message'],
             'done': parsed['done'],
             'compacted': completion_result.get('compaction_detected', False),
             'filesTouched': parsed['filesTouched'],
@@ -309,10 +307,12 @@ class AutomationRunner:
             'completedAt': time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime()),
         }
         log(f"Response payload: done={parsed['done']}, compacted={completion_result.get('compaction_detected', False)}")
-        self.bridge.submit_response(response)
+        submit_ok = self.bridge.submit_response(response)
 
-        # Update prompt status
-        self.bridge.update_prompt_status(prompt_id, 'completed')
+        if not submit_ok:
+            log_error("Failed to submit response to server")
+            self.bridge.update_prompt_status(prompt_id, 'failed')
+            return False
 
         log(f"Prompt {prompt_id} completed successfully")
         log(f"  Done: {parsed['done']}")
@@ -325,7 +325,7 @@ class AutomationRunner:
         """Submit an error response to the bridge."""
         response = {
             'promptId': prompt_id,
-            'response': f"ERROR: {error}",
+            'message': f"ERROR: {error}",
             'done': False,
             'compacted': False,
             'filesTouched': [],

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import * as runStore from '../db/runStore.js';
 import * as workspaceStore from '../db/workspaceStore.js';
 import { canTransition } from '../lib/workflow/stateMachine.js';
-import { buildBuildPrompt } from '../lib/workflow/buildPrompt.js';
+import { buildBuildPrompt, buildFixPrompt } from '../lib/workflow/buildPrompt.js';
 import { auditAgentResponse } from '../lib/workflow/auditEngine.js';
 import { decideNextAction } from '../lib/workflow/continueDecider.js';
 import { generateSummary } from '../lib/workflow/summaryGenerator.js';
@@ -100,7 +100,7 @@ router.delete('/bridge/response', (_req, res) => {
 
 // ─── Agent Result Submission (via bridge) ───────────────────
 
-// Submit agent result (called by Python after OpenCode finishes)
+// Submit agent result + audit + generate next prompt (all in one)
 router.post('/agent/result', (req, res) => {
   const { promptId, message, done, compacted, filesTouched, errorsFound } = req.body;
 
@@ -123,48 +123,128 @@ router.post('/agent/result', (req, res) => {
     return;
   }
 
-  // Convert to AgentResponse
-  const response: AgentResponse = {
-    message,
-    filesTouched,
-    errorsFound,
-    done,
-    compacted,
-  };
+  const run = runStore.getRun(activeRun.id)!;
+  const workspace = workspaceStore.getWorkspace(run.workspaceId);
+  if (!workspace) {
+    res.status(404).json({ error: 'Workspace not found' });
+    return;
+  }
 
   // Store the response
+  const response: AgentResponse = { message, filesTouched, errorsFound, done, compacted };
   runStore.setRunLatestResponse(activeRun.id, response);
 
-  // Add event
   runStore.addRunEvent(activeRun.id, {
     stage: activeRun.stage,
     type: 'result_received',
     data: { done, compacted, promptId },
   });
 
-  // Handle completion signals
-  if (done && !compacted) {
-    if (canTransition(activeRun.stage, 'agent_done_signal')) {
-      runStore.transitionRunStage(activeRun.id, 'maybe_done', {
-        trigger: 'agent_done_signal',
-        done: true,
-      });
-    }
-  } else if (compacted) {
-    if (canTransition(activeRun.stage, 'compaction_detected')) {
-      runStore.transitionRunStage(activeRun.id, 'context_compacted', {
-        trigger: 'compaction_detected',
-      });
-    }
+  // If plan mode completed, save the response as the plan
+  if (prompt.mode === 'plan') {
+    runStore.setRunPlan(activeRun.id, message);
+    runStore.addRunEvent(activeRun.id, {
+      stage: activeRun.stage,
+      type: 'info',
+      data: { info: 'Plan saved from agent response' },
+    });
   }
 
   // Update prompt status
   updatePromptStatus(promptId, 'completed');
 
-  // Clear the response file
-  clearResponseFile();
+  // Handle compaction — don't audit, just mark
+  if (compacted) {
+    if (canTransition(activeRun.stage, 'compaction_detected')) {
+      runStore.transitionRunStage(activeRun.id, 'context_compacted', { trigger: 'compaction_detected' });
+    }
+    clearResponseFile();
+    res.json({ status: 'received', stage: runStore.getRun(activeRun.id)?.stage });
+    return;
+  }
 
-  res.json({ status: 'received', stage: runStore.getRun(activeRun.id)?.stage });
+  // ─── Run audit and decide next action ───────────────────────
+  try {
+    const currentStage = runStore.getRun(activeRun.id)?.stage || activeRun.stage;
+
+    // Transition to auditing
+    if (canTransition(currentStage, 'audit_start')) {
+      runStore.transitionRunStage(activeRun.id, 'auditing', { trigger: 'audit_start' });
+    }
+
+    // Run audit
+    const audit = auditAgentResponse(
+      { agentMessage: message, filesTouched, errorsFound, testResults: undefined, done, compacted },
+      workspace,
+      runStore.getRun(activeRun.id)!
+    );
+    runStore.setRunLatestAudit(activeRun.id, audit);
+
+    // Decide next action
+    const decision = decideNextAction(audit, runStore.getRun(activeRun.id)!, workspace);
+
+    const triggerMap: Record<string, string> = {
+      complete: 'all_clear',
+      needs_fix: 'fix_required',
+      partial_complete: 'partial_done',
+      continuing: 'more_work_needed',
+    };
+    const trigger = triggerMap[decision.nextStage] || 'more_work_needed';
+
+    const latestRun = runStore.getRun(activeRun.id)!;
+    if (canTransition(latestRun.stage, trigger)) {
+      runStore.transitionRunStage(activeRun.id, decision.nextStage as any, { trigger });
+    }
+
+    // If continuing, generate next prompt and write to bridge
+    if (decision.shouldContinue) {
+      const latestRun2 = runStore.getRun(activeRun.id)!;
+      const nextPrompt = decision.nextStage === 'needs_fix'
+        ? buildFixPrompt(workspace, latestRun2, audit)
+        : buildBuildPrompt(workspace, latestRun2, latestRun2.plan || '');
+
+      runStore.setRunLatestPrompt(activeRun.id, nextPrompt);
+      runStore.incrementRunIteration(activeRun.id);
+
+      const config = readConfigFile();
+      const chatName = config?.chatName || workspace.projectName;
+      const nextMode = decision.nextStage === 'needs_fix' ? 'build' : 'build';
+      writePromptFile(nextMode, nextPrompt, chatName, workspace.id);
+
+      runStore.addRunEvent(activeRun.id, {
+        stage: decision.nextStage as any,
+        type: 'prompt_sent',
+        data: { mode: nextMode, iteration: latestRun2.iteration + 1 },
+      });
+    } else {
+      // Complete the run
+      const summary = generateSummary(runStore.getRun(activeRun.id)!, workspace, audit, [audit]);
+      runStore.completeRun(activeRun.id, decision.nextStage as any);
+      runStore.addRunEvent(activeRun.id, {
+        stage: decision.nextStage as any,
+        type: 'info',
+        data: { summary },
+      });
+    }
+
+    clearResponseFile();
+
+    res.json({
+      status: 'processed',
+      stage: runStore.getRun(activeRun.id)?.stage,
+      nextStage: decision.nextStage,
+      shouldContinue: decision.shouldContinue,
+    });
+  } catch (err: any) {
+    console.error('Post-result processing failed:', err);
+    runStore.addRunEvent(activeRun.id, {
+      stage: 'auditing',
+      type: 'error',
+      data: { error: err.message },
+    });
+    clearResponseFile();
+    res.status(500).json({ error: 'Post-result processing failed', details: err.message });
+  }
 });
 
 // ─── Audit (triggered after result submission) ──────────────

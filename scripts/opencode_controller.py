@@ -38,6 +38,7 @@ class OpenCodeController:
     def __init__(self):
         self.config = self._load_config()
         self.window = None
+        self._current_mode = 'plan'  # Track current mode (start in plan)
 
     def _load_config(self) -> Dict[str, Any]:
         """Load calibration config."""
@@ -159,14 +160,16 @@ class OpenCodeController:
         time.sleep(0.5)
 
     def switch_mode(self, mode: str):
-        """Switch OpenCode mode using Ctrl + ."""
-        # Ctrl + . toggles between Plan and Build mode
+        """Switch OpenCode to the target mode using Ctrl + ."""
+        if mode == self._current_mode:
+            print(f"[controller] Already in {mode} mode, no toggle needed")
+            return
+
+        # Toggle once: Ctrl+. switches between plan <-> build
         pyautogui.hotkey('ctrl', '.')
         time.sleep(0.5)
-
-        # If we need to be in a specific mode, we may need to press it multiple times
-        # For now, assume one press toggles to the next mode
-        # User may need to calibrate based on their OpenCode setup
+        self._current_mode = 'build' if self._current_mode == 'plan' else 'plan'
+        print(f"[controller] Toggled to {self._current_mode} mode")
 
     def submit_prompt(self):
         """Press Enter to submit the prompt."""
