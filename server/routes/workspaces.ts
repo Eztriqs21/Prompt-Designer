@@ -5,6 +5,7 @@ import * as runStore from '../db/runStore.js';
 import { getConfig } from '../lib/workflow/guardrails.js';
 import { canStartRun, canStopRun } from '../lib/workflow/permissions.js';
 import { buildBlueprintPrompt } from '../lib/workflow/blueprintPrompt.js';
+import { writePromptFile, clearResponseFile, readConfigFile } from '../lib/workflow/bridgeManager.js';
 
 const router = Router();
 
@@ -98,6 +99,11 @@ router.post('/workspaces/:id/run', (req, res) => {
   runStore.setRunLatestPrompt(run.id, prompt);
   runStore.transitionRunStage(run.id, 'planning', { trigger: 'start' });
 
+  // Write to bridge so Python automation can pick it up
+  const config = readConfigFile();
+  const chatName = config?.chatName || workspace.projectName;
+  writePromptFile('plan', prompt, chatName, workspace.id);
+
   res.status(201).json(run);
 });
 
@@ -116,6 +122,7 @@ router.post('/workspaces/:id/stop', (req, res) => {
   }
 
   const stopped = runStore.stopRun(activeRun.id);
+  clearResponseFile();
   res.json(stopped);
 });
 

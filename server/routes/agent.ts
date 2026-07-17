@@ -98,55 +98,6 @@ router.delete('/bridge/response', (_req, res) => {
   res.json({ status: 'cleared' });
 });
 
-// ─── Run Lifecycle (modified for bridge) ────────────────────
-
-// Start run - generates first prompt and writes to bridge
-router.post('/workspaces/:id/run', (req, res) => {
-  const workspace = workspaceStore.getWorkspace(req.params.id);
-  if (!workspace) {
-    res.status(404).json({ error: 'Workspace not found' });
-    return;
-  }
-
-  const activeRun = runStore.getActiveRun(workspace.id);
-  if (activeRun) {
-    res.status(409).json({ error: 'A run is already active' });
-    return;
-  }
-
-  const maxIterations = parseInt(process.env.VIBELOOP_MAX_ITERATIONS || '10', 10);
-  const run = runStore.createRun(workspace.id, maxIterations);
-
-  // Generate initial blueprint prompt
-  const { buildBlueprintPrompt } = require('../lib/workflow/blueprintPrompt.js');
-  const prompt = buildBlueprintPrompt(workspace, run);
-  runStore.setRunLatestPrompt(run.id, prompt);
-  runStore.transitionRunStage(run.id, 'planning', { trigger: 'start' });
-
-  // Write to bridge file
-  const config = readConfigFile();
-  const chatName = config?.chatName || workspace.projectName;
-  writePromptFile('plan', prompt, chatName);
-
-  res.status(201).json(run);
-});
-
-// Stop run
-router.post('/workspaces/:id/stop', (req, res) => {
-  const activeRun = runStore.getActiveRun(req.params.id);
-  if (!activeRun) {
-    res.status(404).json({ error: 'No active run found' });
-    return;
-  }
-
-  const stopped = runStore.stopRun(activeRun.id);
-
-  // Clear bridge files
-  clearResponseFile();
-
-  res.json(stopped);
-});
-
 // ─── Agent Result Submission (via bridge) ───────────────────
 
 // Submit agent result (called by Python after OpenCode finishes)
@@ -165,7 +116,7 @@ router.post('/agent/result', (req, res) => {
   }
 
   // Find the active run
-  const runs = runStore.getRunsForWorkspace(prompt.chatName);
+  const runs = runStore.getRunsForWorkspace(prompt.workspaceId);
   const activeRun = runs.find((r) => r.status === 'running');
   if (!activeRun) {
     res.status(404).json({ error: 'No active run found' });

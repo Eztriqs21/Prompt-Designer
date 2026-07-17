@@ -20,6 +20,7 @@ export interface BridgePrompt {
   mode: 'plan' | 'build';
   prompt: string;
   chatName: string;
+  workspaceId: string;
   status: 'idle' | 'pending' | 'in_progress' | 'completed' | 'failed';
   createdAt: string | null;
   completedAt: string | null;
@@ -50,7 +51,8 @@ export interface BridgeConfig {
 export function writePromptFile(
   mode: 'plan' | 'build',
   prompt: string,
-  chatName: string
+  chatName: string,
+  workspaceId: string = ''
 ): BridgePrompt {
   ensureBridgeExists();
 
@@ -59,6 +61,7 @@ export function writePromptFile(
     mode,
     prompt,
     chatName,
+    workspaceId,
     status: 'pending',
     createdAt: new Date().toISOString(),
     completedAt: null,
