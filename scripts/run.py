@@ -344,7 +344,7 @@ class AutomationRunner:
         log(f"Mode: {mode}")
         if self.bridge.use_http:
             log(f"Backend: {self.bridge.backend_url}")
-            log(f"Workspace key: {self.workspace_key[:12]}..." if self.workspace_key else "No key")
+            log(f"Workspace key: {self.bridge.workspace_key[:12]}..." if self.bridge.workspace_key else "No key")
         log(f"Poll interval: {self.poll_interval}s")
         log(f"Max retries: {self.max_retries}")
         log(f"Press Ctrl+C to stop")
