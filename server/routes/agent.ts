@@ -48,6 +48,16 @@ router.get('/bridge/status', (_req, res) => {
   });
 });
 
+// Get full prompt data (for Python to fetch the prompt text)
+router.get('/bridge/prompt', (_req, res) => {
+  const prompt = readPromptFile();
+  if (!prompt || prompt.status !== 'pending' || !prompt.prompt) {
+    res.status(204).end();
+    return;
+  }
+  res.json(prompt);
+});
+
 // Write a new prompt to the bridge (called by website when starting a run)
 router.post('/bridge/prompt', (req, res) => {
   const { mode, prompt, chatName, runId, workspaceId } = req.body;
